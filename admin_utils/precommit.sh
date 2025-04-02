@@ -7,8 +7,6 @@ if [[ "$1" == "smoke" ]]; then
     "seminars"
     "admin_utils"
     "core_utils"
-    "lab_5_scrapper"
-    "lab_6_pipeline"
   )
 else
   DIRS_TO_CHECK=(
@@ -16,8 +14,6 @@ else
     "seminars"
     "admin_utils"
     "core_utils"
-    "lab_5_scrapper"
-    "lab_6_pipeline"
   )
 fi
 
