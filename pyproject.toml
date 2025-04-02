@@ -193,6 +193,7 @@ disable_error_code = [
     'no-any-unimported',
     'assignment',
     'import-not-found',
+    'import-untyped',
 ]
 
 [[tool.mypy.overrides]]

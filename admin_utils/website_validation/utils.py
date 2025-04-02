@@ -2,7 +2,7 @@
 Utils for websites validation.
 """
 
-# pylint: disable=import-error,wrong-import-order
+# pylint: disable=import-error,wrong-import-order,no-name-in-module
 import dataclasses
 import json
 from dataclasses import dataclass

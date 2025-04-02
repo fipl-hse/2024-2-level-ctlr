@@ -2,7 +2,7 @@
 Validate websites parameters.
 """
 
-# pylint: disable=import-error,assignment-from-no-return,wrong-import-order
+# pylint: disable=import-error,assignment-from-no-return,wrong-import-order,no-name-in-module
 import json
 import re
 import time
