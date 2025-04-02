@@ -2,7 +2,7 @@
 Validate websites parameters.
 """
 
-# pylint: disable=import-error,assignment-from-no-return
+# pylint: disable=import-error,assignment-from-no-return,wrong-import-order
 import json
 import re
 import time
@@ -39,7 +39,8 @@ from admin_utils.website_validation.utils import (
     SiteCheckStatus,
 )
 from config.console_logging import get_child_logger
-from lab_5_scrapper.scrapper import Config, make_request
+
+from lab_5_scrapper.scrapper import Config, make_request  # isort:skip
 
 logger = get_child_logger(__file__)
 

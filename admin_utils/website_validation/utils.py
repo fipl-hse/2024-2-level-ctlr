@@ -2,7 +2,7 @@
 Utils for websites validation.
 """
 
-# pylint: disable=import-error
+# pylint: disable=import-error,wrong-import-order
 import dataclasses
 import json
 from dataclasses import dataclass
@@ -22,7 +22,8 @@ from admin_utils.website_validation.constants import (
     JSON_REPORT_PATH,
     JSON_WHITELIST_PATH,
 )
-from lab_5_scrapper.scrapper import Config
+
+from lab_5_scrapper.scrapper import Config  # isort: skip
 
 
 @dataclass

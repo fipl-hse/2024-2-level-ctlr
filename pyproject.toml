@@ -191,7 +191,8 @@ module = [
 ]
 disable_error_code = [
     'no-any-unimported',
-    'assignment'
+    'assignment',
+    'import-not-found',
 ]
 
 [[tool.mypy.overrides]]
