@@ -1,0 +1,28 @@
+{
+    "labs": [],
+    "addons": [
+        {
+            "name": "core_utils"
+        },
+        {
+            "name": "admin_utils"
+        },
+        {
+            "name": "config"
+        },
+        {
+            "name": "seminars"
+        }
+    ],
+    "repository": {
+        "admins": [
+            "demid5111",
+            "dmitry-uraev",
+            "sofianurtdinova",
+            "AnPruch",
+            "EkaterinaKhomutova"
+        ],
+        "pr_name_regex": "(Scrapper|Pipeline), \\w+ \\w+ - 2\\dFPL\\d",
+        "pr_name_example": "Scrapper, Andrei Kashchikhin - 21FPL2 \nPipeline, Andrei Kashchikhin - 21FPL2"
+    }
+}
