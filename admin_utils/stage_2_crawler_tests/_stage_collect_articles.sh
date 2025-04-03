@@ -3,7 +3,7 @@ set -ex
 source venv/bin/activate
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
-export TARGET_SCORE=$(jq -r '.target_score' lab_5_pipeline/settings.json)
+export TARGET_SCORE=$(jq -r '.target_score' lab_5_scrapper/settings.json)
 
 if [[ ${TARGET_SCORE} == 0 ]]; then
   echo "Skip stage"
