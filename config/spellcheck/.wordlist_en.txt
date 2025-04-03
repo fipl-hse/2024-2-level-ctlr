@@ -436,6 +436,7 @@ entities
 entity
 entry
 entrypoint
+enum
 env
 environment
 equal
@@ -519,8 +520,8 @@ finding
 finds
 finished
 finishes
-first
 fipl-hse
+first
 flexible
 focus
 folder
@@ -1149,9 +1150,9 @@ relate
 related
 relation
 relationships
-relevant
 release
 releases
+relevant
 reliable
 rely
 remember

@@ -2,13 +2,36 @@
 Settings manager.
 """
 
-import json
+import enum
 
 # pylint: disable=no-name-in-module
 from pathlib import Path
+from typing import Optional
 
 from pydantic.dataclasses import dataclass
-from pydantic.tools import parse_obj_as
+
+
+class Metrics(enum.Enum):
+    """
+    Metrics enum.
+    """
+
+    BLEU = "bleu"
+    ROUGE = "rouge"
+    SQUAD = "squad"
+    F1 = "f1"
+    PRECISION = "precision"
+    RECALL = "recall"
+    ACCURACY = "accuracy"
+
+    def __str__(self) -> str:
+        """
+        String representation of a metric.
+
+        Returns:
+             str: Name of a metric
+        """
+        return self.value
 
 
 @dataclass
@@ -19,7 +42,7 @@ class ParametersModel:
 
     model: str
     dataset: str
-    metrics: list[str]
+    metrics: list[Metrics]
 
 
 @dataclass
@@ -36,13 +59,28 @@ class InferenceParams:
 
 
 @dataclass
+class SFTParams:
+    """
+    Fine-tuning parameters.
+    """
+
+    max_length: int
+    batch_size: int
+    max_fine_tuning_steps: int
+    device: str
+    finetuned_model_path: Path
+    learning_rate: float
+    target_modules: list[str] | None = None
+
+
+@dataclass
 class LabSettingsModel:
     """
     DTO for storing labs settings.
     """
 
     target_score: int
-    parameters: ParametersModel | None = None
+    parameters: Optional[ParametersModel] = None
 
 
 class LabSettings:
@@ -58,12 +96,12 @@ class LabSettings:
         Initialize LabSettings.
 
         Args:
-            config_path (Path): Path to configuration
+            config_path (pathlib.Path): Path to configuration
         """
         super().__init__()
         with config_path.open(encoding="utf-8") as config_file:
             # pylint: disable=no-member
-            self._dto = parse_obj_as(LabSettingsModel, json.load(config_file))
+            self._dto = LabSettingsModel.__pydantic_validator__.validate_json(config_file.read())
 
     @property
     def target_score(self) -> int:

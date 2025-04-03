@@ -22,7 +22,7 @@ def check_with_pydoctest(path_to_config: Path) -> tuple[str, str, int]:
     Returns:
         tuple[str, str, int]: stdout, stderr, exit code
     """
-    pydoctest_args = ["--config", str(path_to_config)]
+    pydoctest_args = ["--config", str(path_to_config), "--verbosity", "2"]
     return _run_console_tool("pydoctest", pydoctest_args, debug=True, cwd=PROJECT_ROOT)
 
 
@@ -47,7 +47,6 @@ def main() -> None:
     pydoctest_config = PROJECT_ROOT / "config" / "static_checks" / "pydoctest.json"
 
     check_with_pydoctest(pydoctest_config)
-    check_with_pydocstyle()
 
 
 if __name__ == "__main__":

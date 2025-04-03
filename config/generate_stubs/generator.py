@@ -50,6 +50,8 @@ def remove_implementation_from_function(
             opening_files.extend(original_declaration.body[1:])
 
         if isinstance(decl, ast.With) and decl not in opening_files:
+            if not ast.unparse(decl.items[0].context_expr.args):
+                continue
             if "assets" in ast.unparse(decl.items[0].context_expr.args[0]):  # type: ignore
                 opening_files.append(decl)
 
@@ -121,7 +123,12 @@ def cleanup_code(source_code_path: Path) -> str:
             decl = []  # type: ignore
 
         if source_code_path.name == "service.py" and isinstance(decl, ast.Assign):
-            decl = ast.parse("app, pipeline = None, None")  # type: ignore
+            if source_code_path.parent.name == "lab_7_llm":
+                decl = ast.parse("app, pipeline = None, None")  # type: ignore
+            elif source_code_path.parent.name == "lab_8_sft":
+                decl = ast.parse(  # type: ignore
+                    "app, pre_trained_pipeline, fine_tuned_pipeline = None, None, None"
+                )
 
         if isinstance(decl, (ast.Import, ast.ImportFrom)):
             if (module_name := getattr(decl, "module", None)) is None:

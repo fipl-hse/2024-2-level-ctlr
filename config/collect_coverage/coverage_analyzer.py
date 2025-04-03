@@ -115,7 +115,7 @@ def main() -> None:
     if any_degradation:
         logger.info(
             "Some of labs have worse coverage. We cannot accept this. Write more tests!\n"
-            "You can copy-paste the following content to the ./config/project_config.json "
+            "You can copy-paste the following content to the ./project_config.json "
             "to update thresholds. \n\n"
         )
 

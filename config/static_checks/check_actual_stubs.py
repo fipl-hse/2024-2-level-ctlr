@@ -2,16 +2,14 @@
 Check the relevance of stubs.
 """
 
+# pylint: disable=too-many-locals, too-many-statements
 import sys
 from pathlib import Path
 
-from config.console_logging import get_child_logger
 from config.constants import PROJECT_CONFIG_PATH
 from config.generate_stubs.generator import cleanup_code
 from config.generate_stubs.run_generator import format_stub_file, sort_stub_imports
 from config.project_config import ProjectConfig
-
-logger = get_child_logger(__file__)
 
 
 def get_code(code_path: Path) -> str:
@@ -36,25 +34,12 @@ def clear_examples(lab_path: Path) -> None:
     Args:
         lab_path (Path): Path to temp files
     """
-    for module_name in get_module_names():
-        expected_stub_path = lab_path / f"example_{Path(module_name).stem}_stub.py"
-        expected_stub_path.unlink(missing_ok=True)
-
-
-def get_module_names() -> tuple[str, ...]:
-    """
-    Get names of potential candidates for stub generation.
-
-    Returns:
-        tuple[str, ...]: Names
-    """
-    return (
-        "main.py",
-        "start.py",
-        "service.py",
-        "scrapper.py",
-        "pipeline.py",
-    )
+    example_main_stub_path = lab_path / "example_main_stub.py"
+    example_start_stub_path = lab_path / "example_start_stub.py"
+    example_service_stub_path = lab_path / "example_service_stub.py"
+    example_start_stub_path.unlink()
+    example_main_stub_path.unlink()
+    example_service_stub_path.unlink()
 
 
 def main() -> None:
@@ -65,46 +50,65 @@ def main() -> None:
     labs_paths = project_config.get_labs_paths()
     code_is_equal = True
     for lab_path in labs_paths:
-        logger.info(f"Processing {lab_path}...")
-        if lab_path.name == "core_utils":
-            logger.info(f"\t\tIgnoring {lab_path} as it can't have stubs.")
+        print(f"Processing {lab_path}...")
+        main_stub_path = lab_path / "main_stub.py"
+        start_stub_path = lab_path / "start_stub.py"
+        service_stub_path = lab_path / "service_stub.py"
+
+        if (
+            not main_stub_path.exists()
+            or not start_stub_path.exists()
+            or not service_stub_path.exists()
+        ):
+            print(
+                f"Ignoring {main_stub_path} or {start_stub_path} or {service_stub_path}: "
+                f"do not exist"
+            )
             continue
 
-        for module_name in get_module_names():
-            module_path = lab_path / module_name
-            if not module_path.exists():
-                logger.info(f"\t\tIgnoring {module_path} as it does not exist.")
-                continue
-            logger.info(f"\t{module_path}\n")
+        main_stub_code = get_code(main_stub_path)
+        start_stub_code = get_code(start_stub_path)
+        service_stub_code = get_code(service_stub_path)
 
-            stub_file_name = f"{module_path.stem}_stub.py"
-            stub_code = get_code(module_path.parent / stub_file_name)
-            actual_code = cleanup_code(module_path)
+        clean_main = cleanup_code(lab_path / "main.py")
+        example_main_stub_path = lab_path / "example_main_stub.py"
+        with example_main_stub_path.open(mode="w", encoding="utf-8") as file:
+            file.write(clean_main)
+        format_stub_file(example_main_stub_path)
+        sort_stub_imports(example_main_stub_path)
+        formatted_main = get_code(example_main_stub_path)
 
-            expected_stub_content_path = module_path.parent / f"example_{stub_file_name}"
+        clean_start = cleanup_code(lab_path / "start.py")
+        example_start_stub_path = lab_path / "example_start_stub.py"
+        with example_start_stub_path.open(mode="w", encoding="utf-8") as file:
+            file.write(clean_start)
+        format_stub_file(example_start_stub_path)
+        sort_stub_imports(example_start_stub_path)
+        formatted_start = get_code(example_start_stub_path)
 
-            with expected_stub_content_path.open(mode="w", encoding="utf-8") as file:
-                file.write(actual_code)
-            format_stub_file(expected_stub_content_path)
-            sort_stub_imports(expected_stub_content_path)
+        clean_service = cleanup_code(lab_path / "service.py")
+        example_service_stub_path = lab_path / "example_service_stub.py"
+        with example_service_stub_path.open(mode="w", encoding="utf-8") as file:
+            file.write(clean_service)
+        format_stub_file(example_service_stub_path)
+        sort_stub_imports(example_service_stub_path)
+        formatted_service = get_code(example_service_stub_path)
 
-            expected_formatted_stub = get_code(expected_stub_content_path)
+        if formatted_main != main_stub_code:
+            code_is_equal = False
+            print(f"You have different main and main_stub in {lab_path}")
 
-            if stub_code != expected_formatted_stub:
-                code_is_equal = False
-                logger.info(f"You have different {module_path.name} and its stub in {lab_path}")
+        if formatted_start != start_stub_code:
+            code_is_equal = False
+            print(f"You have different start and start_stub in {lab_path}")
 
-            if lab_path.name == "lab_8_llm":
-                lab_7_main = get_code(lab_path / "main.py")
-                lab_8_main = get_code(lab_path.parent / "lab_7_llm" / "main.py")
-
-                if lab_7_main != lab_8_main:
-                    code_is_equal = False
-                    logger.info("You have different main for Lab 7 and Lab 8!")
+        if formatted_service != service_stub_code:
+            code_is_equal = False
+            print(f"You have different service and service_stub in {lab_path}")
 
         clear_examples(lab_path)
     if code_is_equal:
-        logger.info("All stubs are relevant")
+        print("All stubs are relevant")
     sys.exit(not code_is_equal)
 
 

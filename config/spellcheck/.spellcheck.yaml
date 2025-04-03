@@ -57,6 +57,7 @@ matrix:
   sources:
   - 'lab*/**/*.py'
   - 'lab*/*.py'
+  - 'reference*/*.py'
   - 'config/**/*.py'
   - 'config/*.py'
   default_encoding: utf-8
