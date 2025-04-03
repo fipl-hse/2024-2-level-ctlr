@@ -7,6 +7,7 @@ if [[ "$1" == "smoke" ]]; then
     "seminars"
     "admin_utils"
     "core_utils"
+    "lab_5_scrapper"
   )
 else
   DIRS_TO_CHECK=(
@@ -14,6 +15,7 @@ else
     "seminars"
     "admin_utils"
     "core_utils"
+    "lab_5_scrapper"
   )
 fi
 
@@ -33,6 +35,5 @@ python config/static_checks/check_init.py
 
 if [[ "$1" != "smoke" ]]; then
   python -m pytest -m "mark10 and lab_5_scrapper"
-  python -m pytest -m "mark10 and lab_6_pipeline"
 fi
 

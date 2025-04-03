@@ -18,7 +18,8 @@ else
     echo "Check failed."
     exit 1
   fi
-  ls -la tmp/articles
 
   echo "Check passed. Dataset collected."
+
+  ls -la tmp/articles
 fi

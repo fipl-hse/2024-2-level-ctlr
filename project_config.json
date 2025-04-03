@@ -1,8 +1,14 @@
 {
-    "labs": [],
+    "labs": [
+        {
+            "name": "lab_5_scrapper",
+            "coverage": 98
+        }
+    ],
     "addons": [
         {
-            "name": "core_utils"
+            "name": "core_utils",
+            "coverage": 93
         },
         {
             "name": "admin_utils"
