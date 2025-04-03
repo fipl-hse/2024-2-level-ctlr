@@ -41,7 +41,7 @@ Project Timeline
    1. Short summary: Your code can automatically parse a media website
       you are going to choose, save texts and its metadata in a proper
       format.
-   2. Deadline: **April, TBD**.
+   2. Deadline: **April, 25**.
    3. Format: each student works in their own PR.
    4. Dataset volume: 5-7 articles.
    5. Design document: :ref:`scrapper-label`.
