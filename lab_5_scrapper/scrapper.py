@@ -6,7 +6,7 @@ Crawler implementation.
 import pathlib
 from typing import Pattern, Union
 
-
+#to create PL
 class Config:
     """
     Class for unpacking and validating configurations.
