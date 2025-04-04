@@ -215,4 +215,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # prompt change
+    print("2*2=4")
     main()
