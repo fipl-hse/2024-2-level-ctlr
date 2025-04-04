@@ -214,5 +214,5 @@ def main() -> None:
     """
 
 
-if __name__ == "__main__":  # first change
+if __name__ == "__main__":  # second change
     main()
