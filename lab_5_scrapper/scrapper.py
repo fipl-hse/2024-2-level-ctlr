@@ -9,7 +9,7 @@ from typing import Pattern, Union
 
 class Config:
     """
-    Class for unpacking and validating configurations.
+    Class for unpacking and validating configurations
     """
 
     def __init__(self, path_to_config: pathlib.Path) -> None:
