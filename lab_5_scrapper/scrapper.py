@@ -7,10 +7,11 @@ import pathlib
 import json
 from exceptions import *
 import requests
+import shutil
 import re
 from typing import Pattern, Union
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 
 
 class Config:
@@ -149,104 +150,112 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    response = requests.get(url=url,
+                            headers=config.get_headers(),
+                            timeout=config.get_timeout(),
+                            verify=config.get_verify_certificate())
+    response.encoding = config.get_encoding()
+    return response
 
 
-class Crawler:
-    """
-    Crawler implementation.
-    """
-
-    #: Url pattern
-    url_pattern: Union[Pattern, str]
-
-    def __init__(self, config: Config) -> None:
-        """
-        Initialize an instance of the Crawler class.
-
-        Args:
-            config (Config): Configuration
-        """
-
-    def _extract_url(self, article_bs: BeautifulSoup) -> str:
-        """
-        Find and retrieve url from HTML.
-
-        Args:
-            article_bs (bs4.BeautifulSoup): BeautifulSoup instance
-
-        Returns:
-            str: Url from HTML
-        """
-
-    def find_articles(self) -> None:
-        """
-        Find articles.
-        """
-
-    def get_search_urls(self) -> list:
-        """
-        Get seed_urls param.
-
-        Returns:
-            list: seed_urls param
-        """
-
-
-# 10
-# 4, 6, 8, 10
-
-
-class HTMLParser:
-    """
-    HTMLParser implementation.
-    """
-
-    def __init__(self, full_url: str, article_id: int, config: Config) -> None:
-        """
-        Initialize an instance of the HTMLParser class.
-
-        Args:
-            full_url (str): Site url
-            article_id (int): Article id
-            config (Config): Configuration
-        """
-
-    def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
-        """
-        Find text of article.
-
-        Args:
-            article_soup (bs4.BeautifulSoup): BeautifulSoup instance
-        """
-
-    def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
-        """
-        Find meta information of article.
-
-        Args:
-            article_soup (bs4.BeautifulSoup): BeautifulSoup instance
-        """
-
-    def unify_date_format(self, date_str: str) -> datetime.datetime:
-        """
-        Unify date format.
-
-        Args:
-            date_str (str): Date in text format
-
-        Returns:
-            datetime.datetime: Datetime object
-        """
-
-    def parse(self) -> Union[Article, bool, list]:
-        """
-        Parse each article.
-
-        Returns:
-            Union[Article, bool, list]: Article instance
-        """
-
-
+#
+#
+# class Crawler:
+#     """
+#     Crawler implementation.
+#     """
+#
+#     #: Url pattern
+#     url_pattern: Union[Pattern, str]
+#
+#     def __init__(self, config: Config) -> None:
+#         """
+#         Initialize an instance of the Crawler class.
+#
+#         Args:
+#             config (Config): Configuration
+#         """
+#
+#     def _extract_url(self, article_bs: BeautifulSoup) -> str:
+#         """
+#         Find and retrieve url from HTML.
+#
+#         Args:
+#             article_bs (bs4.BeautifulSoup): BeautifulSoup instance
+#
+#         Returns:
+#             str: Url from HTML
+#         """
+#
+#     def find_articles(self) -> None:
+#         """
+#         Find articles.
+#         """
+#
+#     def get_search_urls(self) -> list:
+#         """
+#         Get seed_urls param.
+#
+#         Returns:
+#             list: seed_urls param
+#         """
+#
+#
+# # 10
+# # 4, 6, 8, 10
+#
+#
+# class HTMLParser:
+#     """
+#     HTMLParser implementation.
+#     """
+#
+#     def __init__(self, full_url: str, article_id: int, config: Config) -> None:
+#         """
+#         Initialize an instance of the HTMLParser class.
+#
+#         Args:
+#             full_url (str): Site url
+#             article_id (int): Article id
+#             config (Config): Configuration
+#         """
+#
+#     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
+#         """
+#         Find text of article.
+#
+#         Args:
+#             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
+#         """
+#
+#     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
+#         """
+#         Find meta information of article.
+#
+#         Args:
+#             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
+#         """
+#
+#     def unify_date_format(self, date_str: str) -> datetime.datetime:
+#         """
+#         Unify date format.
+#
+#         Args:
+#             date_str (str): Date in text format
+#
+#         Returns:
+#             datetime.datetime: Datetime object
+#         """
+#
+#     def parse(self) -> Union[Article, bool, list]:
+#         """
+#         Parse each article.
+#
+#         Returns:
+#             Union[Article, bool, list]: Article instance
+#         """
+#
+#
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
     Create ASSETS_PATH folder if no created and remove existing folder.
@@ -254,6 +263,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    if base_path.exists():
+        shutil.rmtree(base_path)
+    base_path.mkdir(parents=True)
 
 
 def main() -> None:
@@ -261,6 +273,8 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
+    print(configuration.get_num_articles())
 
 
 if __name__ == "__main__":
