@@ -8,7 +8,7 @@ import unittest
 import pytest
 
 from admin_utils.test_params import TEST_PATH
-from lab_5_scrapper.tests.utils import scrapper_setup
+from lab_5_scraper.tests.utils import scraper_setup
 
 
 class VolumeCheckTest(unittest.TestCase):
@@ -20,14 +20,14 @@ class VolumeCheckTest(unittest.TestCase):
         """
         Define start instructions for VolumeCheckTest class.
         """
-        scrapper_setup()
+        scraper_setup()
 
     @pytest.mark.mark4
     @pytest.mark.mark6
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_4_dataset_volume_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_folder_is_not_empty(self) -> None:
         """
         Ensure there are collected articles.
@@ -38,7 +38,7 @@ class VolumeCheckTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_4_dataset_volume_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_folder_has_equal_number_of_files(self) -> None:
         """
         Ensure there are equal number of raw and meta files.
