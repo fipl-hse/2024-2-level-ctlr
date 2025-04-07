@@ -16,7 +16,7 @@ def parser() -> argparse.ArgumentParser:
     """
     parser_ = argparse.ArgumentParser(description=" ")
     parser_.add_argument(
-        "--config_path", type=str, required=True, help="Full path to the scrapper config file"
+        "--config_path", type=str, required=True, help="Full path to the scraper config file"
     )
     return parser_
 
