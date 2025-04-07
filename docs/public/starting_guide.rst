@@ -177,7 +177,7 @@ To commit the changes, follow these steps:
       :alt: pycharm open terminal
 
 2. Run ``git add <path-to-file-with-changes>``. For example,
-   ``git add lab_5_scrapper/scrapper.py``.
+   ``git add lab_5_scraper/scraper.py``.
 
 3. Run ``git commit -m "message"``.
 
