@@ -20,8 +20,6 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
 
-
-
     def _extract_config_content(self) -> ConfigDTO:
         """
         Get config values.
