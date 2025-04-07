@@ -4,7 +4,7 @@ Title tests validation.
 
 import unittest
 
-from lab_5_scrapper.tests.s2_5_raw_metadata_test import check_title_in_html
+from lab_5_scraper.tests.s2_5_raw_metadata_test import check_title_in_html
 
 
 class TestCheckTitleIsCorrect(unittest.TestCase):
