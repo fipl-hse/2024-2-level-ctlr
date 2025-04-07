@@ -1,18 +1,18 @@
-lab\_5\_scrapper package
+lab\_5\_scraper package
 ========================
 
 Submodules
 ----------
 
 
-.. automodule:: lab_5_scrapper.scrapper
+.. automodule:: lab_5_scraper.scraper
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
 
 
-.. automodule:: lab_5_scrapper.scrapper_dynamic
+.. automodule:: lab_5_scraper.scraper_dynamic
    :members:
    :undoc-members:
    :show-inheritance:
@@ -21,7 +21,7 @@ Submodules
 Module contents
 ---------------
 
-.. automodule:: lab_5_scrapper
+.. automodule:: lab_5_scraper
    :members:
    :undoc-members:
    :show-inheritance:
