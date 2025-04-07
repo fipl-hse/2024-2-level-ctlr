@@ -13,8 +13,8 @@ import pytest
 
 from admin_utils.test_params import TEST_CRAWLER_CONFIG_PATH, TEST_PATH
 from core_utils.constants import CRAWLER_CONFIG_PATH, TIMEOUT_LOWER_LIMIT, TIMEOUT_UPPER_LIMIT
-from lab_5_scrapper import scrapper
-from lab_5_scrapper.scrapper import (
+from lab_5_scraper import scraper
+from lab_5_scraper.scraper import (
     IncorrectEncodingError,
     IncorrectHeadersError,
     IncorrectNumberOfArticlesError,
@@ -23,7 +23,7 @@ from lab_5_scrapper.scrapper import (
     IncorrectVerifyError,
     NumberOfArticlesOutOfRangeError,
 )
-from lab_5_scrapper.tests.config_generator import generate_config
+from lab_5_scraper.tests.config_generator import generate_config
 
 print("Stage 1A: Validating Crawler Config")
 print("Starting tests with received config")
@@ -103,7 +103,7 @@ class CrawlerConfigCheck(ExtendedTestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_incorrect_base_urls_config_param(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -119,10 +119,10 @@ class CrawlerConfigCheck(ExtendedTestCase):
                 headless_mode=self.headless_mode,
             )
 
-            error_message = """Checking that scrapper can handle incorrect seed_urls inputs.
+            error_message = """Checking that scraper can handle incorrect seed_urls inputs.
     Seed URLs must be a list of strings, not a single string"""
             self.assertRaisesWithMessage(
-                error_message, IncorrectSeedURLError, scrapper.Config, TEST_CRAWLER_CONFIG_PATH
+                error_message, IncorrectSeedURLError, scraper.Config, TEST_CRAWLER_CONFIG_PATH
             )
 
     @pytest.mark.mark4
@@ -130,7 +130,7 @@ class CrawlerConfigCheck(ExtendedTestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_incorrect_num_urls_config_param(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -146,12 +146,12 @@ class CrawlerConfigCheck(ExtendedTestCase):
                 headless_mode=self.headless_mode,
             )
 
-            error_message = """Checking that scrapper can handle incorrect num articles inputs.
+            error_message = """Checking that scraper can handle incorrect num articles inputs.
     Num articles must be a positive integer."""
             self.assertRaisesWithMessage(
                 error_message,
                 IncorrectNumberOfArticlesError,
-                scrapper.Config,
+                scraper.Config,
                 TEST_CRAWLER_CONFIG_PATH,
             )
 
@@ -160,7 +160,7 @@ class CrawlerConfigCheck(ExtendedTestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_incorrect_num_urls_too_large_config_param(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -175,12 +175,12 @@ class CrawlerConfigCheck(ExtendedTestCase):
             headless_mode=self.headless_mode,
         )
 
-        error_message = """Checking that scrapper can handle incorrect num articles inputs.
+        error_message = """Checking that scraper can handle incorrect num articles inputs.
 Num articles must not be too large"""
         self.assertRaisesWithMessage(
             error_message,
             NumberOfArticlesOutOfRangeError,
-            scrapper.Config,
+            scraper.Config,
             TEST_CRAWLER_CONFIG_PATH,
         )
 
@@ -189,7 +189,7 @@ Num articles must not be too large"""
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_incorrect_timeout_too_large_config_param(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -205,10 +205,10 @@ Num articles must not be too large"""
                 headless_mode=self.headless_mode,
             )
 
-            error_message = """Checking that scrapper can handle incorrect timeout inputs.
+            error_message = """Checking that scraper can handle incorrect timeout inputs.
         Num articles must be an integer between 0 and 60. 0 is a valid value"""
             self.assertRaisesWithMessage(
-                error_message, IncorrectTimeoutError, scrapper.Config, TEST_CRAWLER_CONFIG_PATH
+                error_message, IncorrectTimeoutError, scraper.Config, TEST_CRAWLER_CONFIG_PATH
             )
 
     @pytest.mark.mark4
@@ -216,7 +216,7 @@ Num articles must not be too large"""
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_incorrect_headers_config_param(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -232,10 +232,10 @@ Num articles must not be too large"""
                 headless_mode=self.headless_mode,
             )
 
-        error_message = """Checking that scrapper can handle incorrect headers.
+        error_message = """Checking that scraper can handle incorrect headers.
 Headers must be a dictionary with string keys and string values"""
         self.assertRaisesWithMessage(
-            error_message, IncorrectHeadersError, scrapper.Config, TEST_CRAWLER_CONFIG_PATH
+            error_message, IncorrectHeadersError, scraper.Config, TEST_CRAWLER_CONFIG_PATH
         )
 
     @pytest.mark.mark4
@@ -243,7 +243,7 @@ Headers must be a dictionary with string keys and string values"""
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_incorrect_encoding_config_param(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -259,10 +259,10 @@ Headers must be a dictionary with string keys and string values"""
                 headless_mode=self.headless_mode,
             )
 
-        error_message = """Checking that scrapper can handle incorrect encoding.
+        error_message = """Checking that scraper can handle incorrect encoding.
     Encoding must be a string"""
         self.assertRaisesWithMessage(
-            error_message, IncorrectEncodingError, scrapper.Config, TEST_CRAWLER_CONFIG_PATH
+            error_message, IncorrectEncodingError, scraper.Config, TEST_CRAWLER_CONFIG_PATH
         )
 
     @pytest.mark.mark4
@@ -270,7 +270,7 @@ Headers must be a dictionary with string keys and string values"""
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_incorrect_verify_cert_config_param(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -286,10 +286,10 @@ Headers must be a dictionary with string keys and string values"""
                 headless_mode=self.headless_mode,
             )
 
-        error_message = """Checking that scrapper can handle incorrect verify certificate argument.
+        error_message = """Checking that scraper can handle incorrect verify certificate argument.
     Verify certificate must be either True or False"""
         self.assertRaisesWithMessage(
-            error_message, IncorrectVerifyError, scrapper.Config, TEST_CRAWLER_CONFIG_PATH
+            error_message, IncorrectVerifyError, scraper.Config, TEST_CRAWLER_CONFIG_PATH
         )
 
     @pytest.mark.mark4
@@ -297,7 +297,7 @@ Headers must be a dictionary with string keys and string values"""
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_incorrect_headless_config_param(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -313,10 +313,10 @@ Headers must be a dictionary with string keys and string values"""
                 headless_mode=incorrect_headless,
             )
 
-        error_message = """Checking that scrapper can handle headless mode argument.
+        error_message = """Checking that scraper can handle headless mode argument.
     Headless mode must be either True or False"""
         self.assertRaisesWithMessage(
-            error_message, IncorrectVerifyError, scrapper.Config, TEST_CRAWLER_CONFIG_PATH
+            error_message, IncorrectVerifyError, scraper.Config, TEST_CRAWLER_CONFIG_PATH
         )
 
     @pytest.mark.mark4
@@ -324,7 +324,7 @@ Headers must be a dictionary with string keys and string values"""
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_config_initialization(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -347,9 +347,9 @@ Headers must be a dictionary with string keys and string values"""
             "_timeout",
             "_should_verify_certificate",
         ]
-        config = scrapper.Config(TEST_CRAWLER_CONFIG_PATH)
+        config = scraper.Config(TEST_CRAWLER_CONFIG_PATH)
         all_attrs = [hasattr(config, attr_name) for attr_name in attr_names]
-        error_message = """Checking that scrapper saves relevant data to attributes."""
+        error_message = """Checking that scraper saves relevant data to attributes."""
         self.assertTrue(all(all_attrs), msg=error_message)
 
     @pytest.mark.mark4
@@ -357,7 +357,7 @@ Headers must be a dictionary with string keys and string values"""
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_1_crawler_config_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_config_getters(self) -> None:
         """
         Config class returns error message and exit code 1 with incorrect config params.
@@ -371,7 +371,7 @@ Headers must be a dictionary with string keys and string values"""
             should_verify_certificate=self.should_verify_certificate,
             headless_mode=self.headless_mode,
         )
-        config = scrapper.Config(TEST_CRAWLER_CONFIG_PATH)
+        config = scraper.Config(TEST_CRAWLER_CONFIG_PATH)
         getters = [
             config.get_seed_urls,
             config.get_num_articles,
