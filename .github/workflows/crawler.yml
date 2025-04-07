@@ -154,7 +154,7 @@ jobs:
         run: |
           source venv/bin/activate
           export PYTHONPATH=$(pwd)
-          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scrapper --pytest-label stage_2_1_crawler_config_check
+          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scraper --pytest-label stage_2_1_crawler_config_check
 
   checking-crawler:
     name: Crawler checks
@@ -177,7 +177,7 @@ jobs:
         run: |
           source venv/bin/activate
           export PYTHONPATH=$(pwd)
-          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scrapper --pytest-label stage_2_2_crawler_check
+          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scraper --pytest-label stage_2_2_crawler_check
 
   checking-parser:
     name: Parser checks
@@ -200,7 +200,7 @@ jobs:
         run: |
           source venv/bin/activate
           export PYTHONPATH=$(pwd)
-          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scrapper --pytest-label stage_2_3_HTML_parser_check
+          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scraper --pytest-label stage_2_3_HTML_parser_check
 
   collecting-articles-from-internet:
     name: Download articles
@@ -224,7 +224,7 @@ jobs:
           source venv/bin/activate
           export PYTHONPATH=$(pwd)
           bash admin_utils/stage_2_crawler_tests/_stage_collect_articles.sh
-          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scrapper --pytest-label stage_2_4_dataset_volume_check
+          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scraper --pytest-label stage_2_4_dataset_volume_check
       - name: Archive raw dataset
         uses: actions/upload-artifact@v4
         with:
@@ -255,8 +255,8 @@ jobs:
         run: |
           source venv/bin/activate
           export PYTHONPATH=$(pwd):$PYTHONPATH
-          python admin_utils/unpack_archived_dataset.py lab_5_scrapper
-          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scrapper --pytest-label stage_2_5_dataset_validation
+          python admin_utils/unpack_archived_dataset.py lab_5_scraper
+          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_5_scraper --pytest-label stage_2_5_dataset_validation
 
   milestone-1-crawler-is-working:
     name: Crawler is accepted!
