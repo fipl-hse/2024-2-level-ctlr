@@ -20,7 +20,7 @@ def generate_config(
     path: Path = TEST_CRAWLER_CONFIG_PATH,
 ) -> None:
     """
-    Generate scrapper_config.py for testing.
+    Generate scraper_config.py for testing.
 
     Args:
         seed_urls (list): Seed urls
