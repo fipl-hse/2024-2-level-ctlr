@@ -44,7 +44,7 @@ Project Timeline
    2. Deadline: **April, 25**.
    3. Format: each student works in their own PR.
    4. Dataset volume: 5-7 articles.
-   5. Design document: :ref:`scrapper-label`.
+   5. Design document: :ref:`scraper-label`.
 
 2. **Pipeline**:
 
@@ -62,7 +62,13 @@ Lectures history
 +------------+---------------------+--------------------------------------------------------------+
 | Date       | Lecture topic       | Important links                                              |
 +============+================================================+===================================+
-|            |                     |                                                              |
+| 04.04.2024 | Lecture:            | Lab no. 5 description                                        |
+|            | Introduction to     |                                                              |
+|            | technical track.    |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 04.04.2024 | Seminar: Local      | N/A                                                          |
+|            | setup. Choose       |                                                              |
+|            | website.            |                                                              |
 +------------+---------------------+--------------------------------------------------------------+
 
 You can find a more complete summary from lectures in :ref:`ctlr-lectures-label`.
@@ -74,25 +80,25 @@ Technical solution
 | Module                | Description               | Component    | Need to |
 |                       |                           |              | get     |
 +=======================+===========================+==============+=========+
-| `pathlib              | working with file paths   | scrapper     | 4       |
+| `pathlib              | working with file paths   | scraper      | 4       |
 | <https://pypi.org     |                           |              |         |
 | /project/pathlib/>`__ |                           |              |         |
 +-----------------------+---------------------------+--------------+---------+
-| `requests <https://   | downloading web pages     | scrapper     | 4       |
+| `requests <https://   | downloading web pages     | scraper      | 4       |
 | pypi.org/project/reque|                           |              |         |
 | sts/2.25.1/>`__       |                           |              |         |
 +-----------------------+---------------------------+--------------+---------+
-| `BeautifulSoup4       | finding information on    | scrapper     | 4       |
+| `BeautifulSoup4       | finding information on    | scraper      | 4       |
 | <https://pypi.org     | web pages                 |              |         |
 | /project/beautifulso  |                           |              |         |
 | up4/4.11.1/>`__       |                           |              |         |
 +-----------------------+---------------------------+--------------+---------+
-| `lxml <https://pypi.  | **optional** parsing HTML | scrapper     | 6       |
+| `lxml <https://pypi.  | **optional** parsing HTML | scraper      | 6       |
 | org/project/lxml/>`__ |                           |              |         |
 +-----------------------+---------------------------+--------------+---------+
-| ``datetime``          | working with dates        | scrapper     | 6       |
+| ``datetime``          | working with dates        | scraper      | 6       |
 +-----------------------+---------------------------+--------------+---------+
-| ``json``              | working with json text    | scrapper,    | 4       |
+| ``json``              | working with json text    | scraper,     | 4       |
 |                       | format                    | pipeline     |         |
 +-----------------------+---------------------------+--------------+---------+
 | `spacy_udpipe <https: | module for morphological  | pipeline     | 6       |
@@ -110,7 +116,7 @@ Technical solution
 
 Software solution is built on top of three components:
 
-1. `scrapper.py <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/lab_5_scrapper/scrapper.py>`__
+1. `scraper.py <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/lab_5_scraper/scraper.py>`__
    - a module for finding articles from the given media, extracting text and dumping it to
    the file system. Students need to implement it.
 2. `pipeline.py <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/lab_6_pipeline/pipeline.py>`__

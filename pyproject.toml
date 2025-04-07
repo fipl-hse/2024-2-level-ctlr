@@ -17,7 +17,7 @@ markers = [
     "stage_3_6_advanced_morphological_processing: tests for advances processing pipeline",
     "stage_4_pos_frequency_pipeline_checks: tests for POSFrequencyPipeline",
     "stage_5_pattern_search_pipeline_cheks: tests for PatternSearchPipeline",
-    "lab_5_scrapper: all checks for the scrapper",
+    "lab_5_scraper: all checks for the scraper",
     "lab_6_pipeline: all checks for the pipeline",
     "core_utils: all checks for the core utils"
 ]
@@ -30,7 +30,7 @@ omit = [
     '*/tests/*',
     '*/start.py',
     '*/ud_validator/*',
-    'lab_5_scrapper/scrapper_dynamic.py',
+    'lab_5_scraper/scraper_dynamic.py',
 ]
 
 [tool.black]
@@ -98,7 +98,7 @@ src_paths = [
     "admin_utils",
     "core_utils",
     "config",
-    "lab_5_scrapper",
+    "lab_5_scraper",
     "lab_6_pipeline",
     "final_project",
     "lab_7_llm",
@@ -214,8 +214,8 @@ module = [
     '*.start_stub',
     '*.service',
     '*.service_stub',
-    '*.scrapper',
-    '*.scrapper_stub',
+    '*.scraper',
+    '*.scraper_stub',
     '*.pipeline',
     '*.pipeline_stub',
 ]
@@ -226,7 +226,7 @@ disable_error_code = [
 
 [[tool.mypy.overrides]]
 module = [
-    'lab_5_scrapper.*',
+    'lab_5_scraper.*',
     'lab_6_pipeline.*',
     'config.*',
 ]
