@@ -402,7 +402,7 @@ due
 dumping
 during
 dynamic
-dynamic-scrapping-label
+dynamic-scraping-label
 dynamically
 each
 easily
@@ -737,6 +737,7 @@ know
 known
 knows
 kwargs
+labparameters
 lab
 label
 labels
@@ -1231,10 +1232,13 @@ scientist
 scope
 score
 scrap
+scrape
 scraping
-scrapper
-scrapper-label
 scrapping
+scraper
+scrapper
+scraper-label
+scraping
 script
 scroll
 scrolling

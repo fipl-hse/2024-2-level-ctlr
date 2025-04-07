@@ -49,7 +49,7 @@ def prepare_pytest_args(
         "--capture=no",
     ]
 
-    if lab_path == "lab_5_scrapper":
+    if lab_path == "lab_5_scraper":
         pytest_args.append("--ignore=lab_6_pipeline")
 
     if lab_path == "lab_7_llm":
