@@ -7,7 +7,7 @@ import pathlib
 from typing import Pattern, Union
 from core_utils.config_dto import ConfigDTO
 import json
-from core_utils.constants import CRAWLER_CONFIG_PATH
+import requests
 
 class IncorrectSeedURLError(Exception):
     pass
@@ -155,7 +155,16 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-
+    #seed_url = config.get_seed_urls()
+    timeout = config.get_timeout()
+    headers = config.get_headers()
+    #total_articles = config.get_num_articles()
+    #encoding = config.get_encoding()
+    verify = config.get_verify_certificate()
+    #mode = config.get_headless_mode()
+    response = requests.get(url, headers=headers, timeout=timeout, verify=verify)
+    response.raise_for_status()
+    return response
 
 class Crawler:
     """
@@ -172,6 +181,8 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
+        self.urls = []
+        self.config = config
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -260,6 +271,16 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    if base_path.exists():
+        if any(base_path.iterdir()):
+            for item in base_path.iterdir():
+                if item.is_dir():
+                    for sub_item in item.iterdir():
+                        sub_item.unlink()
+                    item.rmdir()
+                else:
+                    item.unlink()
+    base_path.mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
