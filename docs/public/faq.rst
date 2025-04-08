@@ -23,11 +23,11 @@ your own browser after visiting your target website, and wait for a
 random amount of seconds in between requests. Experimenting with those
 settings should do the trick.
 
-I can successfully connect to my source via requests by running ``scrapper.py``, but connection cannot be established when running tests.
+I can successfully connect to my source via requests by running ``scraper.py``, but connection cannot be established when running tests.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In case in scrapper.py you feed requests.get() any extra headers or
-cookies, or if you program your scrapper to wait for a certain time
+In case in scraper.py you feed requests.get() any extra headers or
+cookies, or if you program your scraper to wait for a certain time
 period in between the requests, you are also expected to modify requests
 in test files accordingly. In other words, test files perform the most
 basic type of requests with no extra settings, so if you need those
@@ -35,7 +35,7 @@ extra settings, you have to add them manually. Check which tests fail,
 find what module they belong to, and make your changes there, it is
 allowed.
 
-During execution of scrapper, error 404 NOT FOUND arises, although seed URLs include valid links only.
+During execution of scraper, error 404 NOT FOUND arises, although seed URLs include valid links only.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This usually happens when the link that is fed to ``requests.get()`` is
