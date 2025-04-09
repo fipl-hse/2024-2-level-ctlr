@@ -56,7 +56,14 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        self.config = self._extract_config_content()
+        config = self._extract_config_content()
+        self._seed_urls = config.seed_urls
+        self._num_articles = config.total_articles
+        self._headers = config.headers
+        self._encoding = config.encoding
+        self._timeout = config.timeout
+        self._should_verify_certificate = config.should_verify_certificate
+        self._headless_mode = config.headless_mode
         self._validate_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
@@ -74,26 +81,26 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self.config.seed_urls, list) or \
-                not all(isinstance(url, str) for url in self.config.seed_urls) or \
+        if not isinstance(self._seed_urls, list) or \
+                not all(isinstance(url, str) for url in self._seed_urls) or \
                 not all(re.compile(r'https?://(www.)?').match(string)
-                        for string in self.config.seed_urls):
+                        for string in self._seed_urls):
             raise IncorrectSeedURLError('seed_urls incorrect')
-        if len(self.config.seed_urls) not in range(151):
+        if not isinstance(self._num_articles, int) or \
+                isinstance(self._num_articles, bool) or self._num_articles < 0:
+            raise IncorrectNumberOfArticlesError('Invalid number of articles to pass')
+        if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError(
                 'Number of articles out of range: should be between 1 and 150')
-        if not isinstance(self.config.total_articles, int) or \
-                isinstance(self.config.total_articles, bool) or self.config.total_articles not in range(151):
-            raise IncorrectNumberOfArticlesError('Invalid number of articles to pass')
-        if not isinstance(self.config.headers, dict):
+        if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers is not an instance of dict')
-        if not isinstance(self.config.encoding, str):
+        if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('Encoding is not an instance of str')
-        if self.config.timeout not in range(61):
+        if self._timeout not in range(61):
             raise IncorrectTimeoutError('Timeout out of range')
-        if not isinstance(self.config.should_verify_certificate, bool):
+        if not isinstance(self._should_verify_certificate, bool):
             raise IncorrectVerifyError('should_verify_certificate is not an instance of bool')
-        if not isinstance(self.config.headless_mode, bool):
+        if not isinstance(self._headless_mode, bool):
             raise IncorrectVerifyError('headless_mode value should be an instance of bool')
 
     def get_seed_urls(self) -> list[str]:
@@ -103,7 +110,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
-        return self.config.seed_urls
+        return self._seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -112,7 +119,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self.config.total_articles
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -121,7 +128,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
-        return self.config.headers
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -130,7 +137,7 @@ class Config:
         Returns:
             str: Encoding
         """
-        return self.config.encoding
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
@@ -139,7 +146,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
-        return self.config.timeout
+        return self._timeout
 
     def get_verify_certificate(self) -> bool:
         """
@@ -148,7 +155,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self.config.should_verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -157,7 +164,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-        return self.config.headless_mode
+        return self._headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
@@ -221,7 +228,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-        return self.config.config.seed_urls
+        return self.config.get_seed_urls()
 
 
 # 10
