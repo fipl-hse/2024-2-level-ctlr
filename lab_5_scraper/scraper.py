@@ -5,6 +5,9 @@ Crawler implementation.
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 from typing import Pattern, Union
+from bs4 import BeautifulSoup
+
+import config.static_checks.requirements_check
 from core_utils.config_dto import ConfigDTO
 import json
 import requests
@@ -23,6 +26,7 @@ class IncorrectTimeoutError(Exception):
     pass
 class IncorrectVerifyError(Exception):
     pass
+
 
 class Config:
     """
@@ -56,7 +60,7 @@ class Config:
         """
         config = self._extract_config_content()
         for url in config.seed_urls:
-            if "https://zvezdaaltaya.ru/category/novosti/" not in url:
+            if "https://zvezdaaltaya.ru" not in url:
                 raise IncorrectSeedURLError
         if config.total_articles < 1 or config.total_articles > 150:
             raise NumberOfArticlesOutOfRangeError
@@ -155,13 +159,9 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    #seed_url = config.get_seed_urls()
     timeout = config.get_timeout()
     headers = config.get_headers()
-    #total_articles = config.get_num_articles()
-    #encoding = config.get_encoding()
     verify = config.get_verify_certificate()
-    #mode = config.get_headless_mode()
     response = requests.get(url, headers=headers, timeout=timeout, verify=verify)
     response.raise_for_status()
     return response
@@ -195,10 +195,27 @@ class Crawler:
             str: Url from HTML
         """
 
+
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        seed_urls = self.get_search_urls()
+        for url in seed_urls:
+            try:
+                fix = make_request(url, self.config)
+                soup = BeautifulSoup(fix.text, 'html.parser')
+                urls = self._extract_url(soup)
+                for article_url in urls:
+                    if article_url.startswith('/'):
+                        full_url = url.rstrip('/') + article_url
+                    else:
+                        full_url = article_url
+                    if full_url.startswith("http://zvezdaaltaya.ru") or full_url.startswith("https://zvezdaaltaya.ru"):
+                        self.urls.append(full_url)
+
+            except requests.exceptions.RequestException:
+                continue
 
     def get_search_urls(self) -> list:
         """
