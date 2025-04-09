@@ -78,11 +78,12 @@ class Config:
                 not all(isinstance(url, str) for url in self.config.seed_urls) or \
                 not all(re.compile(r'https?://(www.)?').match(string)
                         for string in self.config.seed_urls):
-            raise IncorrectSeedURLError
+            raise IncorrectSeedURLError('seed_urls incorrect')
         if len(self.config.seed_urls) not in range(151):
             raise NumberOfArticlesOutOfRangeError(
                 'Number of articles out of range: should be between 1 and 150')
-        if not isinstance(self.config.total_articles, int) or self.config.total_articles < 0:
+        if not isinstance(self.config.total_articles, int) or \
+                isinstance(self.config.total_articles, bool) or self.config.total_articles not in range(151):
             raise IncorrectNumberOfArticlesError('Invalid number of articles to pass')
         if not isinstance(self.config.headers, dict):
             raise IncorrectHeadersError('Headers is not an instance of dict')
@@ -92,6 +93,8 @@ class Config:
             raise IncorrectTimeoutError('Timeout out of range')
         if not isinstance(self.config.should_verify_certificate, bool):
             raise IncorrectVerifyError('should_verify_certificate is not an instance of bool')
+        if not isinstance(self.config.headless_mode, bool):
+            raise IncorrectVerifyError('headless_mode value should be an instance of bool')
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -190,6 +193,7 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
+        self.config = config
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -206,6 +210,9 @@ class Crawler:
         """
         Find articles.
         """
+        bs = BeautifulSoup.BeautifulSoup()
+        for url in self.get_search_urls():
+            self._extract_url(bs(url=url))
 
     def get_search_urls(self) -> list:
         """
@@ -214,6 +221,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.config.config.seed_urls
 
 
 # 10
@@ -289,6 +297,8 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    config = Config(CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config)
 
 
 if __name__ == "__main__":
