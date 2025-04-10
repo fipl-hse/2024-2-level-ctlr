@@ -6,6 +6,7 @@ Crawler implementation.
 import pathlib
 from typing import Pattern, Union
 from bs4 import BeautifulSoup
+import re
 
 import config.static_checks.requirements_check
 from core_utils.config_dto import ConfigDTO
@@ -194,7 +195,11 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        link = article_bs.find('a', class_='tdb-drop-down-search-inner')
+        if link:
+            return link.get('href')
 
+        return ""
 
     def find_articles(self) -> None:
         """
@@ -204,15 +209,10 @@ class Crawler:
         for url in seed_urls:
             try:
                 fix = make_request(url, self.config)
-                soup = BeautifulSoup(fix.text, 'html.parser')
-                urls = self._extract_url(soup)
-                for article_url in urls:
-                    if article_url.startswith('/'):
-                        full_url = url.rstrip('/') + article_url
-                    else:
-                        full_url = article_url
-                    if full_url.startswith("http://zvezdaaltaya.ru") or full_url.startswith("https://zvezdaaltaya.ru"):
-                        self.urls.append(full_url)
+                article_bs = BeautifulSoup(fix.text, 'html.parser')
+                article_url = self._extract_url(article_bs)
+                if article_url and article_url not in self.urls:
+                    self.urls.append(article_url)
 
             except requests.exceptions.RequestException:
                 continue
@@ -224,7 +224,8 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-
+        seed_urls = self.config.get_seed_urls()
+        return seed_urls
 
 # 10
 # 4, 6, 8, 10
