@@ -1,5 +1,5 @@
 """
-Utils for lab_5_scrapper tests.
+Utils for lab_5_scraper tests.
 """
 
 # pylint: disable=no-member,assignment-from-no-return
@@ -11,12 +11,12 @@ from core_utils.article import article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 from core_utils.tests.utils import copy_student_data
-from lab_5_scrapper.scrapper import Config, Crawler, HTMLParser
+from lab_5_scraper.scraper import Config, Crawler, HTMLParser
 
 
-def scrapper_setup() -> None:
+def scraper_setup() -> None:
     """
-    Set up TEST_PATH for scrapper tests.
+    Set up TEST_PATH for scraper tests.
     """
     if any(ASSETS_PATH.iterdir()):
         copy_student_data()

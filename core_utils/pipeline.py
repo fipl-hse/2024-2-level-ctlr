@@ -6,7 +6,7 @@ Interface definitions for text processing pipelines.
 from dataclasses import dataclass
 from typing import Protocol
 
-from core_utils.article.article import Article, ArtifactType
+from core_utils.article.article import Article
 
 
 class PipelineProtocol(Protocol):
@@ -32,10 +32,35 @@ class StanzaDocument(Protocol):
     """
 
 
-class CoNLLUDocument(UDPipeDocument, StanzaDocument, Protocol):
+@dataclass
+class ConLLUWord:
     """
-    Utility class to mimic analyzer document classes.
+    Interface definition for word class of unified analyzer document.
     """
+
+    id: str
+    upos: str
+    head: str
+    deprel: str
+    text: str
+
+
+@dataclass
+class ConLLUSentence:
+    """
+    Interface definition for sentence class of unified analyzer document.
+    """
+
+    words: list[ConLLUWord]
+
+
+@dataclass
+class CoNLLUDocument:
+    """
+    Interface definition for sentence class of unified analyzer document.
+    """
+
+    sentences: list[ConLLUSentence]
 
 
 class AbstractCoNLLUAnalyzer(Protocol):
@@ -81,7 +106,7 @@ class LibraryWrapper(Protocol):
             AbstractCoNLLUAnalyzer: Instance of analyzer.
         """
 
-    def analyze(self, texts: list[str]) -> list[CoNLLUDocument | str]:
+    def analyze(self, texts: list[str]) -> list[UDPipeDocument | StanzaDocument | str]:
         """
         Analyze given texts.
 
@@ -89,7 +114,7 @@ class LibraryWrapper(Protocol):
             texts (list[str]): Texts to analyze.
 
         Returns:
-            list[CoNLLUDocument | str]: Collection of processed documents.
+            list[UDPipeDocument | StanzaDocument | str]: Collection of processed documents.
         """
 
     def to_conllu(self, article: Article) -> None:
@@ -100,7 +125,7 @@ class LibraryWrapper(Protocol):
             article (Article): Article to save
         """
 
-    def from_conllu(self, article: Article) -> CoNLLUDocument:
+    def from_conllu(self, article: Article) -> UDPipeDocument | StanzaDocument:
         """
         Load ConLLU content from article stored on disk.
 
@@ -108,15 +133,18 @@ class LibraryWrapper(Protocol):
             article (Article): Article to load
 
         Returns:
-            CoNLLUDocument: Document ready for parsing
+            UDPipeDocument | StanzaDocument: Document ready for parsing
         """
 
-    def get_artifact_type(self) -> ArtifactType:
+    def get_document(self, doc: UDPipeDocument | StanzaDocument) -> CoNLLUDocument:
         """
-        Get kind of analyzer.
+        Present ConLLU document's sentence tokens as a unified structure.
+
+        Args:
+            doc (UDPipeDocument | StanzaDocument): ConLLU document from analyzer.
 
         Returns:
-            ArtifactType: Kind of analyzer
+            CoNLLUDocument: Unified document of token features within document sentences
         """
 
 
