@@ -62,7 +62,7 @@ Expected result:
 Configuring scraper
 --------------------
 
-Scrapper behavior is fully defined by a configuration file that is
+Scraper behavior is fully defined by a configuration file that is
 called ``scraper_config.json`` and it is placed at the same level as
 ``scraper.py``. It is JSON file, simply speaking it is a set of
 key-value pairs.
@@ -136,17 +136,17 @@ below:
 1. Desired mark **4**:
 
    1. ``pylint`` level: ``5/10``.
-   2. Scrapper validates config and fails appropriately if the latter is
+   2. Scraper validates config and fails appropriately if the latter is
       incorrect.
-   3. Scrapper downloads articles from the selected newspaper.
-   4. Scrapper produces only ``_raw.txt`` files in the ``tmp/articles``
+   3. Scraper downloads articles from the selected newspaper.
+   4. Scraper produces only ``_raw.txt`` files in the ``tmp/articles``
       directory (*no metadata files*).
 
 2. Desired mark **6**:
 
    1. ``pylint`` level: ``7/10``.
    2. All requirements for the mark **4**.
-   3. Scrapper produces ``_meta.json`` files for each article, however,
+   3. Scraper produces ``_meta.json`` files for each article, however,
       it is allowed for each meta file to contain reduced number of
       keys: ``id``, ``title``, ``author``, ``url``.
 
@@ -154,7 +154,7 @@ below:
 
    1. ``pylint`` level: ``10/10``.
    2. All requirements for the mark **6**.
-   3. Scrapper produces ``_meta.json`` files for each article, meta file
+   3. Scraper produces ``_meta.json`` files for each article, meta file
       should be full: ``id``, ``title``, ``author``, ``url``, ``date``,
       ``topics``. In contrast to the task for mark **6**, it is
       mandatory to collect a date for each of the articles in the
@@ -536,7 +536,7 @@ Stage 8. Determine the optimal number of seed URLs
 As it was stated in **Stage 2.1**,
 :py:class:`lab_5_scraper.scraper.Crawler` is an entity that visits
 ``seed_urls`` with the intention to collect URLs with articles that
-should be parsed later". Often you can reach the situation when there
+should be parsed later. Often you can reach the situation when there
 are not enough article links on the given URL. For example, you may want
 to collect 100 articles whereas each newspaper page contains links to
 only 10 articles. This brings the need in at least 10 seed URLs to be
