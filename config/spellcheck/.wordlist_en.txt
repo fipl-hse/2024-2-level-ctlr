@@ -1231,12 +1231,8 @@ school
 scientist
 scope
 score
-scrap
 scrape
-scraping
-scrapping
 scraper
-scrapper
 scraper-label
 scraping
 script
@@ -1259,6 +1255,7 @@ self-check
 semester
 seminar
 sends
+senior
 sent
 sentence
 sentenceprotocol
