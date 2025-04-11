@@ -28,6 +28,7 @@ class Config:
             ConfigDTO: Config values
         """
 
+
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
