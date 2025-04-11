@@ -216,3 +216,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    print("Those errors above won't get you to see this line printed")
