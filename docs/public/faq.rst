@@ -6,7 +6,7 @@ Frequently asked questions
 .. contents:: Content:
    :depth: 2
 
-Lab 5. Scrapper
+Lab 5. Scraper
 ---------------
 
 I can open my website using browser, but I cannot connect to it via python and get 200 response code.
