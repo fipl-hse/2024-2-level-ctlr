@@ -252,7 +252,7 @@ changes and validate. To do this, follow these steps:
 7. Enter a name for the Pull Request.
 
    1. **NB**: The Pull Request name for **Lab 5** must match the
-      pattern: ``Scrapper, Name Surname - 2XFPLX``.
+      pattern: ``Scraper, Name Surname - 2XFPLX``.
 
    2. **NB**: The Pull Request name for **Lab 6** must match the
       pattern: ``Pipeline, Name Surname - 2XFPLX``.

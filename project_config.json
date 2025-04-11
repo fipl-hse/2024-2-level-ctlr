@@ -29,7 +29,7 @@
             "EkaterinaKhomutova",
             "EIzharikov"
         ],
-        "pr_name_regex": "(Scrapper|Pipeline), \\w+ \\w+ - 2\\dFPL\\d",
-        "pr_name_example": "Scrapper, Andrei Kashchikhin - 21FPL2 \nPipeline, Andrei Kashchikhin - 21FPL2"
+        "pr_name_regex": "(Scraper|Pipeline), \\w+ \\w+ - 2\\dFPL\\d",
+        "pr_name_example": "Scraper, Andrei Kashchikhin - 21FPL2 \nPipeline, Andrei Kashchikhin - 21FPL2"
     }
 }
