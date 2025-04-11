@@ -5,6 +5,7 @@ Crawler implementation.
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 from typing import Pattern, Union
+from core_utils.constants import CRAWLER_CONFIG_PATH
 
 
 class Config:
@@ -19,6 +20,7 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.path_to_config = path_to_config
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -214,5 +216,5 @@ def main() -> None:
     """
 
 
-if __name__ == "__main__": # first change
+if __name__ == "__main__":
     main()
