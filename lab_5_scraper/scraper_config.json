@@ -1,9 +1,9 @@
 {
-    "seed_urls": [],
+    "seed_urls": ["https://ugra-news.ru/rubrics/society/", "https://ugra-news.ru/rubrics/politics/", "https://ugra-news.ru/rubrics/economics/", "https://ugra-news.ru/rubrics/health/", "https://ugra-news.ru/rubrics/culture/", "https://ugra-news.ru/rubrics/sport/", "https://ugra-news.ru/rubrics/incidents/", "https://ugra-news.ru/rubrics/in-the-country/", "https://ugra-news.ru/rubrics/6923/", "https://ugra-news.ru/rubrics/analytics/", "https://ugra-news.ru/rubrics/potrebitel/"],
     "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
-    "timeout": 0,
+    "total_articles_to_find_and_parse": 100,
+    "encoding": "utf-8",
+    "timeout": 10,
     "should_verify_certificate": true,
     "headless_mode": true
 }

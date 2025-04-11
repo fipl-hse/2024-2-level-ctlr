@@ -201,6 +201,7 @@ class Crawler:
             config (Config): Configuration
         """
         self.config = config
+        self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
