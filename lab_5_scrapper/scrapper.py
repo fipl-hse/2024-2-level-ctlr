@@ -5,6 +5,12 @@ Crawler implementation.
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 from typing import Pattern, Union
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import CRAWLER_CONFIG_PATH
+import json
+import re
+import datetime
+from core_utils.article.article import Article
 
 
 class Config:
@@ -19,6 +25,16 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.path_to_config = path_to_config
+        config = self._extract_config_content()
+        self._seed_urls = config.seed_urls
+        self._num_articles = config.total_articles
+        self._headers = config.headers
+        self._encoding = config.encoding
+        self._timeout = config.timeout
+        self._should_verify_certificate = config.should_verify_certificate
+        self._headless_mode = config.headless_mode
+        self._validate_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -27,6 +43,17 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
+        with open(self.path_to_config, encoding='utf-8') as file:
+            config = json.load(file)
+        return ConfigDTO(
+            seed_urls=config["seed_urls"],
+            total_articles_to_find_and_parse=config["total_articles"],
+            headers=config["headers"],
+            encoding=config["encoding"],
+            timeout=config["timeout"],
+            should_verify_certificate=config["should_verify_certificate"],
+            headless_mode=config["headless_mode"]
+        )
 
     def _validate_config_content(self) -> None:
         """
@@ -212,8 +239,8 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
 
 
 if __name__ == "__main__":
     main()
-#first_change
