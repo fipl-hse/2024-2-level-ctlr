@@ -75,7 +75,7 @@ def run_coverage_subprocess(
         "run",
         "--include",
         f"{lab_path.name}/main.py,"
-        f"{lab_path.name}/scrapper.py,"
+        f"{lab_path.name}/scraper.py,"
         f"{lab_path.name}/pipeline.py,"
         f"{lab_path.name}/pos_pipeline.py",
         "-m",

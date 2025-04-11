@@ -26,6 +26,8 @@ Instructors:
    technical track practice lecturer
 -  `Kashchikhin Andrei Nikolaevich <https://github.com/WhiteJaeger>`__ -
    technical track expert
+-  `Zharikov Egor Igorevich <https://t.me/godb0i>`__ - technical track senior
+   assistant
 -  `Nurtdinova Sofia Alekseevna <https://t.me/sunrielly>`__ - technical track
    assistant
 -  `Podpryatova Anna Sergeevna <https://t.me/anpruch>`__ - technical
@@ -36,7 +38,7 @@ Instructors:
 Project Timeline
 ----------------
 
-1. **Scrapper**:
+1. **Scraper**:
 
    1. Short summary: Your code can automatically parse a media website
       you are going to choose, save texts and its metadata in a proper
@@ -44,7 +46,7 @@ Project Timeline
    2. Deadline: **April, 25**.
    3. Format: each student works in their own PR.
    4. Dataset volume: 5-7 articles.
-   5. Design document: :ref:`scrapper-label`.
+   5. Design document: :ref:`scraper-label`.
 
 2. **Pipeline**:
 
@@ -80,25 +82,25 @@ Technical solution
 | Module                | Description               | Component    | Need to |
 |                       |                           |              | get     |
 +=======================+===========================+==============+=========+
-| `pathlib              | working with file paths   | scrapper     | 4       |
+| `pathlib              | working with file paths   | scraper      | 4       |
 | <https://pypi.org     |                           |              |         |
 | /project/pathlib/>`__ |                           |              |         |
 +-----------------------+---------------------------+--------------+---------+
-| `requests <https://   | downloading web pages     | scrapper     | 4       |
+| `requests <https://   | downloading web pages     | scraper      | 4       |
 | pypi.org/project/reque|                           |              |         |
 | sts/2.25.1/>`__       |                           |              |         |
 +-----------------------+---------------------------+--------------+---------+
-| `BeautifulSoup4       | finding information on    | scrapper     | 4       |
+| `BeautifulSoup4       | finding information on    | scraper      | 4       |
 | <https://pypi.org     | web pages                 |              |         |
 | /project/beautifulso  |                           |              |         |
 | up4/4.11.1/>`__       |                           |              |         |
 +-----------------------+---------------------------+--------------+---------+
-| `lxml <https://pypi.  | **optional** parsing HTML | scrapper     | 6       |
+| `lxml <https://pypi.  | **optional** parsing HTML | scraper      | 6       |
 | org/project/lxml/>`__ |                           |              |         |
 +-----------------------+---------------------------+--------------+---------+
-| ``datetime``          | working with dates        | scrapper     | 6       |
+| ``datetime``          | working with dates        | scraper      | 6       |
 +-----------------------+---------------------------+--------------+---------+
-| ``json``              | working with json text    | scrapper,    | 4       |
+| ``json``              | working with json text    | scraper,     | 4       |
 |                       | format                    | pipeline     |         |
 +-----------------------+---------------------------+--------------+---------+
 | `spacy_udpipe <https: | module for morphological  | pipeline     | 6       |
@@ -116,13 +118,13 @@ Technical solution
 
 Software solution is built on top of three components:
 
-1. `scrapper.py <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/lab_5_scrapper/scrapper.py>`__
+1. `scraper.py <https://github.com/fipl-hse/2024-2-level-ctlr/blob/main/lab_5_scraper/scraper.py>`__
    - a module for finding articles from the given media, extracting text and dumping it to
    the file system. Students need to implement it.
 2. `pipeline.py <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/lab_6_pipeline/pipeline.py>`__
    - a module for processing text: point-of-speech tagging and basic
    morphological analysis. Students need to implement it.
-3. `article.py <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/core_utils/article/article.py>`__
+3. `article.py <https://github.com/fipl-hse/2024-2-level-ctlr/blob/main/core_utils/article/article.py>`__
    - a module for article abstraction to encapsulate low-level manipulations with the article.
 
 Handing over your work
@@ -153,9 +155,9 @@ Handing over your work
 are satisfied:**
 
 1. There is a Pull Request (PR) with a correctly formatted name:
-   ``Scrapper, <NAME> <SURNAME> - <UNIVERSITY GROUP NAME>``.
+   ``Scraper, <NAME> <SURNAME> - <UNIVERSITY GROUP NAME>``.
 
-   1. Example: ``Scrapper, Irina Novikova - 20FPL2``.
+   1. Example: ``Scraper, Irina Novikova - 20FPL2``.
 
 2. Has a filled file ``settings.json`` with an expected mark.
    Acceptable values: 4, 6, 8, 10.
@@ -172,8 +174,8 @@ Resources
 3. `Documentation website <https://fipl-hse.github.io/>`__
 4. `Python programming course from previous semester
    <https://github.com/fipl-hse/2024-2-level-labs>`__
-5. `Scrapping tutorials (Russian) <https://youtu.be/7hn1_t2ZtJQ>`__
-6. `Scrapping tutorials (English)
+5. `Scraping tutorials (Russian) <https://youtu.be/7hn1_t2ZtJQ>`__
+6. `Scraping tutorials (English)
    <https://www.youtube.com/playlist?list=PL1jK3K11NINiOn4DdIDVdyQpcU3kaNxl0>`__
 7. :ref:`starting-guide-en-label`
 8. :ref:`ctlr-tests-label`
