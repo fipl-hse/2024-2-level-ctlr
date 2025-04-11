@@ -1,4 +1,4 @@
-.. _dynamic-scraping-label:
+.. _dynamic-scrapping-label:
 
 How to scrape dynamic web sources
 =================================

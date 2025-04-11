@@ -74,32 +74,13 @@ class SFTParams:
 
 
 @dataclass
-class CtlrParameters:
-    """
-    DTO for storing computer tools course parameters.
-    """
-
-    project_team: int | None = None
-
-
-@dataclass
-class CourseParameters:
-    """
-    DTO for storing specific parameters for courses.
-    """
-
-    ctlr: Optional[CtlrParameters] = None
-    hello_llm: Optional[ParametersModel] = None
-
-
-@dataclass
 class LabSettingsModel:
     """
     DTO for storing labs settings.
     """
 
     target_score: int
-    parameters: Optional[CourseParameters] = None
+    parameters: Optional[ParametersModel] = None
 
 
 class LabSettings:
@@ -133,7 +114,7 @@ class LabSettings:
         return self._dto.target_score
 
     @property
-    def parameters(self) -> CourseParameters | None:
+    def parameters(self) -> ParametersModel | None:
         """
         Property for additional parameters.
 
@@ -141,13 +122,3 @@ class LabSettings:
             ParametersModel | None: Parameters DTO.
         """
         return self._dto.parameters
-
-    @property
-    def team_project(self) -> int | None:
-        """
-        Property for project team id (Computer Tools Final Project).
-
-        Returns:
-            int | None: Project team identifier.
-        """
-        return self._dto.parameters.ctlr.project_team
