@@ -13,33 +13,55 @@ import requests
 import bs4 as BeautifulSoup
 import datetime
 from core_utils.article.article import Article
+import shutil
 
 
 class IncorrectSeedURLError(Exception):
+    """
+    Raised when seed URL is not a valid URL
+    """
     pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
+    """
+    Raised when number of articles is out of range from 1 to 150
+    """
     pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
+    """
+    Raised when total number of articles to parse is not integer or is less than 0
+    """
     pass
 
 
 class IncorrectHeadersError(Exception):
+    """
+    Raised when headers are not a dictionary
+    """
     pass
 
 
 class IncorrectEncodingError(Exception):
+    """
+    Raised when encoding is not a string
+    """
     pass
 
 
 class IncorrectTimeoutError(Exception):
+    """
+    Raised when timeout value is not a positive integer less than 60
+    """
     pass
 
 
 class IncorrectVerifyError(Exception):
+    """
+    Raised when verify certificate value is not True or False
+    """
     pass
 
 
@@ -82,10 +104,10 @@ class Config:
         Ensure configuration parameters are not corrupt.
         """
         if not isinstance(self._seed_urls, list) or \
-                not all(isinstance(url, str) for url in self._seed_urls) or \
-                not all(re.compile(r'https?://(www.)?').match(string)
-                        for string in self._seed_urls):
-            raise IncorrectSeedURLError('seed_urls incorrect')
+                not all(isinstance(url, str) for url in self._seed_urls):
+            raise IncorrectSeedURLError('Parameter _seed_urls of Config is malformed')
+        if not all(url.startswith('https://ugra-news.ru') for url in self._seed_urls):
+            raise IncorrectSeedURLError('Not all URLs belong to the original website')
         if not isinstance(self._num_articles, int) or \
                 isinstance(self._num_articles, bool) or self._num_articles < 0:
             raise IncorrectNumberOfArticlesError('Invalid number of articles to pass')
@@ -295,7 +317,7 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
     try:
-        pathlib.Path('ASSETS_PATH').rmdir()
+        shutil.rmtree('lab_5_scraper/ASSETS_PATH')
     except FileNotFoundError:
         pass
     pathlib.Path('ASSETS_PATH').mkdir()
