@@ -15,7 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw, to_meta
+from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import (
     ASSETS_PATH,
@@ -390,8 +390,9 @@ def main() -> None:
     print(f"Crawler has found {len(crawler.urls)} urls")
     parser = HTMLParser("https://www.baikal-daily.ru/news/20/497902/", 1, configuration)
     parsed_article = parser.parse()
-    to_raw(parsed_article)
-    to_meta(parsed_article)
+    if isinstance(parsed_article, Article):
+        to_raw(parsed_article)
+        to_meta(parsed_article)
 
 
 if __name__ == "__main__":
