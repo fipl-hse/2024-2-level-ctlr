@@ -386,6 +386,8 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
+    print(f"It is needed to find {configuration.get_num_articles()} articles")
+    print(f"Crawler has found {len(crawler.urls)} urls")
     parser = HTMLParser("https://www.baikal-daily.ru/news/20/497902/", 1, configuration)
     parsed_article = parser.parse()
     to_raw(parsed_article)
