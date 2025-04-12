@@ -15,7 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw
+from core_utils.article.io import to_raw, to_meta
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import (
     ASSETS_PATH,
@@ -328,7 +328,16 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        pass
+        self.article.article_id = self.article_id
+        self.article.url = self.full_url
+        self.article.author = ["NOT FOUND"]
+        self.article.title = article_soup.find("h1", attrs={"itemprop": "headline"}).text
+
+        time_tag = article_soup.find("span", class_="news-date-time").find("time")
+        self.article.date = self.unify_date_format(time_tag.text.strip())
+
+        topic_tag = article_soup.find("div", class_="news-tags").find_all("a")
+        self.article.topics = [topic.text.strip() for topic in topic_tag]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -340,7 +349,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        pass
+        return datetime.datetime.strptime(date_str, "%d.%m.%Y %H:%M")
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -377,8 +386,10 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    parser = HTMLParser(crawler.urls[0], 1, configuration)
-    to_raw(parser.parse())
+    parser = HTMLParser("https://www.baikal-daily.ru/news/20/497902/", 1, configuration)
+    parsed_article = parser.parse()
+    to_raw(parsed_article)
+    to_meta(parsed_article)
 
 
 if __name__ == "__main__":
