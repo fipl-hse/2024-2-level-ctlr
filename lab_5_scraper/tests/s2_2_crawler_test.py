@@ -9,7 +9,7 @@ import pytest
 
 from admin_utils.test_params import TEST_PATH
 from core_utils.constants import CRAWLER_CONFIG_PATH
-from lab_5_scrapper.scrapper import Config, Crawler, make_request, prepare_environment
+from lab_5_scraper.scraper import Config, Crawler, make_request, prepare_environment
 
 
 class CrawlerTest(unittest.TestCase):
@@ -28,7 +28,7 @@ class CrawlerTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_2_crawler_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_newly_created_crawler_instance_empty(self) -> None:
         """
         Ensure that field 'urls' is not filled initially.
@@ -42,7 +42,7 @@ class CrawlerTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_2_crawler_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_crawler_instance_is_filled_from_find_articles(self) -> None:
         """
         Ensure find_articles() fills 'urls' field.
@@ -60,7 +60,7 @@ class CrawlerTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_2_crawler_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_crawler_instance_stores_full_urls(self) -> None:
         """
         Ensure URLs from 'urls' field are valid.
@@ -78,7 +78,7 @@ class CrawlerTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_2_crawler_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_crawler_finds_required_number_of_articles(self) -> None:
         """
         Ensure Crawler is capable to collect required number of articles.
@@ -97,7 +97,7 @@ class CrawlerTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_2_crawler_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_crawler_get_search_urls(self) -> None:
         """
         Ensure get_search_urls retrieves seed urls.
@@ -112,7 +112,7 @@ class CrawlerTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_2_crawler_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_crawler_handles_unavailable_websites(self) -> None:
         """
         Ensure does not fail given unavailable webpage.
@@ -141,7 +141,7 @@ class PrepareEnvironmentTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_2_crawler_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_prepare_environment_function_creates_directory(self) -> None:
         """
         Ensure get_search_urls retrieves seed urls.
