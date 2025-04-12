@@ -17,7 +17,13 @@ from bs4 import BeautifulSoup
 from core_utils.article.article import Article
 from core_utils.article.io import to_raw
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+from core_utils.constants import (
+    ASSETS_PATH,
+    CRAWLER_CONFIG_PATH,
+    NUM_ARTICLES_UPPER_LIMIT,
+    TIMEOUT_LOWER_LIMIT,
+    TIMEOUT_UPPER_LIMIT,
+)
 
 
 class IncorrectSeedURLError(Exception):
@@ -104,7 +110,7 @@ class Config:
         # Number of articles validation
         if not (isinstance(config.total_articles, int) and config.total_articles >= 0):
             raise IncorrectNumberOfArticlesError
-        if config.total_articles < 1 or config.total_articles > 150:
+        if config.total_articles < 1 or config.total_articles > NUM_ARTICLES_UPPER_LIMIT:
             raise NumberOfArticlesOutOfRangeError
 
         # Headers validation
@@ -116,7 +122,8 @@ class Config:
             raise IncorrectEncodingError
 
         # Timeout validation
-        if not (isinstance(config.timeout, int) and 0 < config.timeout < 60):
+        if not (isinstance(config.timeout, int)
+                and TIMEOUT_LOWER_LIMIT < config.timeout < TIMEOUT_UPPER_LIMIT):
             raise IncorrectTimeoutError
 
         # Verify certificate validation
