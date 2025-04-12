@@ -2,18 +2,21 @@
 Crawler implementation.
 """
 
+import datetime
+import json
+
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
-from typing import Pattern, Union
-from core_utils.config_dto import ConfigDTO
-from core_utils.constants import CRAWLER_CONFIG_PATH
-import json
-import re
-import requests
-import bs4 as BeautifulSoup
-import datetime
-from core_utils.article.article import Article
 import shutil
+from typing import Pattern, Union
+
+from bs4 import BeautifulSoup
+import requests
+
+from core_utils.article.article import Article
+from core_utils.article.io import to_raw
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 
 
 class IncorrectSeedURLError(Exception):
@@ -201,7 +204,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         requests.models.Response: A response from a request
     """
     if not isinstance(url, str):
-        raise ValueError
+        raise ValueError('url is not str')
     request = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(),
                            verify=config.get_verify_certificate())
     return request
@@ -235,14 +238,34 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        all_a_links = article_bs.find_all('a', {'class': 'news-card photo'})
+        for a_elem in all_a_links:
+            href = a_elem['href']
+            full_link = 'https://ugra-news.ru' + href
+            if full_link not in self.urls:
+                return full_link
+        return 'STOP_SEED_URL_ITERATION'
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        bs = BeautifulSoup.BeautifulSoup()
-        for url in self.get_search_urls():
-            self._extract_url(bs(url=url))
+        prepare_environment(ASSETS_PATH)
+        for seed_url in self.get_search_urls():
+            try:
+                response = make_request(seed_url, self.config)
+                if response.status_code != 200:
+                    continue
+                for i in range(10):
+                    url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
+                    if url == 'STOP_SEED_URL_ITERATION':
+                        break
+                    if url not in self.urls:
+                        self.urls.append(url)
+                    if len(self.urls) >= self.config.get_num_articles():
+                        break
+            except ValueError:
+                continue
 
     def get_search_urls(self) -> list:
         """
@@ -272,6 +295,8 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.config = config
+        self.article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -280,6 +305,8 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        text = article_soup.find_all('div', {'class': 'news-detail__detail-text'})[0].text
+        self.article.text = text
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -307,6 +334,11 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self.article.url, self.config)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(soup)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -317,10 +349,10 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
     try:
-        shutil.rmtree('lab_5_scraper/ASSETS_PATH')
+        shutil.rmtree(base_path)
     except FileNotFoundError:
         pass
-    pathlib.Path('ASSETS_PATH').mkdir()
+    pathlib.Path(base_path).mkdir(parents=True)
 
 
 def main() -> None:
@@ -329,6 +361,11 @@ def main() -> None:
     """
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
+    crawler.find_articles()
+    for idx, url in enumerate(crawler.urls):
+        parser = HTMLParser(url, idx, config)
+        article = parser.parse()
+        to_raw(article)
 
 
 if __name__ == "__main__":
