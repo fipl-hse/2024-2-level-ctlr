@@ -75,7 +75,7 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open('lab_5_scraper/scraper_config.json', 'r') as file:
+        with open(self.path_to_config, 'r') as file:
             data = json.load(file)
             return ConfigDTO(
                 data['seed_urls'],
@@ -91,12 +91,13 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        with open('lab_5_scraper/scraper_config.json', 'r') as file:
+        with open(self.path_to_config, 'r') as file:
             data = json.load(file)
         if (not isinstance(data['seed_urls'], list)
                 or not all('https://sovsakh.ru/' in url for url in data['seed_urls'])):
             raise IncorrectSeedURLError
-        if (not isinstance(data['total_articles_to_find_and_parse'], int) or isinstance(data['total_articles_to_find_and_parse'], bool)
+        if (not isinstance(data['total_articles_to_find_and_parse'], int)
+                or isinstance(data['total_articles_to_find_and_parse'], bool)
                 or data['total_articles_to_find_and_parse'] < 0):
             raise IncorrectNumberOfArticlesError
         if data['total_articles_to_find_and_parse'] > 150:
@@ -108,6 +109,8 @@ class Config:
         if not isinstance(data['timeout'], int) or not 0 <= data['timeout'] < 60:
             raise IncorrectTimeoutError
         if not isinstance(data['should_verify_certificate'], bool):
+            raise IncorrectVerifyError
+        if not isinstance(data['headless_mode'], bool):
             raise IncorrectVerifyError
 
     def get_seed_urls(self) -> list[str]:
@@ -220,18 +223,20 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        for link in article_bs.find_all('a', href=True):
-            if link.text:
-                return link['href']
+        urls = article_bs.find_all('a', href=True)
+        for url in urls:
+            if url:
+                return url['href']
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        needed_num = self.config.get_num_articles()
         for url in self.get_search_urls():
-            if len(self.urls) != needed_num:
+            if len(self.urls) != self.config.get_num_articles():
                 response = make_request(url, self.config)
+                if not response.ok:
+                    continue
                 soup = BeautifulSoup(response.text, 'html.parser')
                 got_url = self._extract_url(soup)
                 if not got_url:
@@ -285,6 +290,8 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        self.article.title = article_soup.find('h1', {'class': 'entry-title'}).text
+        self.article.author = ['NOT FOUND']
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
