@@ -1,7 +1,14 @@
 {
-    "seed_urls": [],
+    "seed_urls":
+    [
+        "https://sovsakh.ru/category/politika/",
+        "https://sovsakh.ru/category/ekonomika/",
+        "https://sovsakh.ru/category/obshhestvo/",
+        "https://sovsakh.ru/category/proisshestviya/",
+        "https://sovsakh.ru/category/project/"
+    ],
     "headers": {},
-    "total_articles_to_find_and_parse": 0,
+    "total_articles_to_find_and_parse": 10,
     "encoding": "",
     "timeout": 0,
     "should_verify_certificate": true,

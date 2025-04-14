@@ -5,7 +5,7 @@ Crawler implementation.
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 from typing import Pattern, Union
-from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
 import json
@@ -13,7 +13,7 @@ import os
 import shutil
 import requests
 from bs4 import BeautifulSoup
-from core_utils.article.io import to_raw
+from core_utils.article.io import to_raw, to_meta
 import datetime
 
 
@@ -79,8 +79,8 @@ class Config:
             data = json.load(file)
             return ConfigDTO(
                 data['seed_urls'],
-                data['headers'],
                 data['total_articles_to_find_and_parse'],
+                data['headers'],
                 data['encoding'],
                 data['timeout'],
                 data['should_verify_certificate'],
@@ -223,17 +223,23 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        urls = article_bs.find_all('a', href=True)
+        block = article_bs.find('div', {'class': 'td_block_inner tdb-block-inner td-fix-index'})
+        urls = block.find_all('a', href=True)
         for url in urls:
             if url:
-                return url['href']
+                href = url['href']
+                if 'https://sovsakh.ru/' in href:
+                    if href not in self.urls:
+                        return href
+        return ''
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        for url in self.get_search_urls():
-            if len(self.urls) != self.config.get_num_articles():
+        urls = self.get_search_urls()
+        for url in urls:
+            while len(self.urls) < self.config.get_num_articles():
                 response = make_request(url, self.config)
                 if not response.ok:
                     continue
@@ -292,6 +298,9 @@ class HTMLParser:
         """
         self.article.title = article_soup.find('h1', {'class': 'entry-title'}).text
         self.article.author = ['NOT FOUND']
+        self.article.date = self.unify_date_format(article_soup.find('time', {'class': 'entry-date updated td-module-date'}).text)
+        topics = article_soup.find_all('li', {'class': 'entry-category'})
+        self.article.topics = [topic.text for topic in topics]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -303,6 +312,23 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        ru_to_eng_months = {
+            'января': 'Jan',
+            'февраля': 'Feb',
+            'марта': 'Mar',
+            'апреля': 'Apr',
+            'мая': 'May',
+            'июня': 'Jun',
+            'июля': 'Jul',
+            'августа': 'Aug',
+            'сентября': 'Sep',
+            'октября': 'Oct',
+            'ноября': 'Nov',
+            'декабря': 'Dec'
+        }
+        date = date_str.split(' ')
+        date[1] = ru_to_eng_months[date[1]]
+        return datetime.datetime.strptime(' '.join(date), '%d %b %Y %H:%M')
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -334,11 +360,14 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    prepare_environment(ASSETS_PATH)
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
     for ind, url in enumerate(crawler.urls):
         parser = HTMLParser(url, ind, config)
-        to_raw(parser.parse())
+        article = parser.parse()
+        to_raw(article)
+        to_meta(article)
 
 if __name__ == "__main__":
     main()
