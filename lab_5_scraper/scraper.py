@@ -227,6 +227,7 @@ class Crawler:
         """
         self.config = config
         self.urls = []
+        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -250,7 +251,6 @@ class Crawler:
         """
         Find articles.
         """
-        prepare_environment(ASSETS_PATH)
         for seed_url in self.get_search_urls():
             try:
                 response = make_request(seed_url, self.config)
@@ -275,6 +275,32 @@ class Crawler:
             list: seed_urls param
         """
         return self.config.get_seed_urls()
+
+
+class CrawlerRecursive(Crawler):
+    """
+    Crawler implementation.
+    """
+
+    #: Url pattern
+    url_pattern: Union[Pattern, str]
+
+    def __init__(self, config: Config) -> None:
+        """
+        Initialize an instance of the Crawler class.
+
+        Args:
+            config (Config): Configuration
+        """
+        super().__init__(config)
+        self.urls = []
+        self.start_url = 'https://ugra-news.ru/'
+
+    def find_articles(self) -> None:
+        """
+        Finds articles doing recursive crawling.
+        """
+        pass
 
 
 # 10
@@ -315,6 +341,15 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        news_details = article_soup.find('div', {'class': 'news-detail'})
+        title = news_details.find('h1', {'class': 'title'}).text
+        self.article.title = title
+        author = article_soup.find('div', {'class': 'author-news__info-authors'}).text
+        self.article.author = [author.replace('\n', '').strip()]
+        date = article_soup.find('span', {'class': 'author-news__info-text'}).text
+        self.article.date = self.unify_date_format(date)
+        topic = article_soup.find('a', {'class': 'tags min yellow'}).text.strip()
+        self.article.topics = [topic]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -326,6 +361,12 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        day, month, time = date_str.split()
+        hour, minute = time.split(':')
+        months_list = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                       'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+        month_index = months_list.index(month) + 1
+        return datetime.datetime(2025, month_index, int(day), int(hour), int(minute))
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -338,6 +379,7 @@ class HTMLParser:
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(soup)
+            self._fill_article_with_meta_information(soup)
         return self.article
 
 
@@ -362,8 +404,8 @@ def main() -> None:
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
     crawler.find_articles()
-    for idx, url in enumerate(crawler.urls):
-        parser = HTMLParser(url, idx, config)
+    for idx, url in enumerate(crawler.urls[:1]):
+        parser = HTMLParser(url, idx + 1, config)
         article = parser.parse()
         to_raw(article)
 
