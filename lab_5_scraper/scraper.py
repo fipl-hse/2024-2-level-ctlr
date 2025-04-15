@@ -2,19 +2,22 @@
 Crawler implementation.
 """
 
-# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-import pathlib
-from typing import Pattern, Union
-from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
-from core_utils.article.article import Article
-from core_utils.config_dto import ConfigDTO
+import datetime
 import json
 import os
+
+# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import pathlib
 import shutil
+from typing import Pattern, Union
+
 import requests
 from bs4 import BeautifulSoup
-from core_utils.article.io import to_raw, to_meta
-import datetime
+
+from core_utils.article.article import Article
+from core_utils.article.io import to_meta, to_raw
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
@@ -354,6 +357,26 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     if len(os.listdir(base_path)) > 0:
         shutil.rmtree(base_path)
         os.mkdir(base_path)
+
+
+class CrawlerRecursive(Crawler):
+    def __init__(self, config):
+        super().__init__(config)
+        self.start_url = "https://sovsakh.ru/category/obshhestvo/"
+        self.urls = []
+
+    def find_articles(self) -> None:
+        if len(self.urls) < self.config.get_num_articles():
+            response = make_request(self.start_url, self.config)
+            if not response.ok:
+                return
+            soup = BeautifulSoup(response.text, 'html.parser')
+            got_url = self._extract_url(soup)
+            if not got_url:
+                return
+            self.urls.append(got_url)
+            self.start_url = got_url
+            self.find_articles()
 
 
 def main() -> None:
