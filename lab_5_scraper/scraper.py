@@ -2,9 +2,61 @@
 Crawler implementation.
 """
 
+import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 from typing import Pattern, Union
+from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils.config_dto import ConfigDTO
+
+
+class IncorrectSeedURLError(Exception):
+    """
+    Raises when seed URL does not match standard pattern
+    """
+    pass
+
+
+class NumberOfArticlesOutOfRangeError(Exception):
+    """
+        Raises when total number of articles is out of range from 1 to 150
+        """
+    pass
+
+
+class IncorrectNumberOfArticlesError(Exception):
+    """
+        Raises when total number of articles to parse is not integer or less than 0
+        """
+    pass
+
+
+class IncorrectHeadersError(Exception):
+    """
+        Raises when headers are not in a form of dictionary
+        """
+    pass
+
+
+class IncorrectEncodingError(Exception):
+    """
+        Raises when encoding is not specified as a string
+        """
+    pass
+
+
+class IncorrectTimeoutError(Exception):
+    """
+        Raises when timeout value is not a positive integer less than 60
+        """
+    pass
+
+
+class IncorrectVerifyError(Exception):
+    """
+        Raises when verify certificate value is not either True or False
+        """
+    pass
 
 
 class Config:
@@ -19,6 +71,16 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.path_to_config = path_to_config
+        config = self._extract_config_content()
+        self._seed_urls = config.seed_urls
+        self._num_articles = config.total_articles
+        self._headers = config.headers
+        self._encoding = config.encoding
+        self._timeout = config.timeout
+        self._should_verify_certificate = config.should_verify_certificate
+        self._headless_mode = config.headless_mode
+        self._validate_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -27,11 +89,29 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
+        with open("lab_5_scraper/scraper_config.json", 'r', encoding='UTF-8') as file:
+            config_dto = json.load(file)
+        return ConfigDTO(**config_dto)
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
+        if not all(url.startswith('https://ks-yanao.ru') for url in self._seed_urls):
+            raise IncorrectSeedURLError('Seed URL does not match standard pattern')
+        if self._num_articles > 150:
+            raise NumberOfArticlesOutOfRangeError('Number of articles out of range: should be between 1 and 150')
+        if (not isinstance(self._num_articles, int) or
+                isinstance(self._num_articles, bool) or self._num_articles < 0):
+            raise IncorrectNumberOfArticlesError('Invalid number of articles: must be an integer and not 0')
+        if not isinstance(self._headers, dict):
+            raise IncorrectHeadersError('Headers are not in a form of dictionary')
+        if not isinstance(self._encoding, str):
+            raise IncorrectEncodingError('Encoding is not is not specified as a string')
+        if not isinstance(self._timeout, int) or not (0 < self._timeout < 60):
+            raise IncorrectTimeoutError('Timeout value is not a positive integer less than 60')
+        if not isinstance(self._should_verify_certificate, bool):
+            raise IncorrectVerifyError('Verify certificate value is not either True or False')
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -40,6 +120,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
+        return self._seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -48,6 +129,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -56,6 +138,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -64,6 +147,7 @@ class Config:
         Returns:
             str: Encoding
         """
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
@@ -72,6 +156,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
+        return self._timeout
 
     def get_verify_certificate(self) -> bool:
         """
@@ -80,6 +165,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -88,6 +174,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
+        return self._headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
@@ -212,7 +299,7 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    # first change
+    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
 
 
 if __name__ == "__main__":
