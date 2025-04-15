@@ -10,62 +10,55 @@ import pathlib
 import shutil
 from typing import Pattern, Union
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_raw
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
     """
     Raised when seed URL is not a valid URL
     """
-    pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """
     Raised when number of articles is out of range from 1 to 150
     """
-    pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """
     Raised when total number of articles to parse is not integer or is less than 0
     """
-    pass
 
 
 class IncorrectHeadersError(Exception):
     """
     Raised when headers are not a dictionary
     """
-    pass
 
 
 class IncorrectEncodingError(Exception):
     """
     Raised when encoding is not a string
     """
-    pass
 
 
 class IncorrectTimeoutError(Exception):
     """
     Raised when timeout value is not a positive integer less than 60
     """
-    pass
 
 
 class IncorrectVerifyError(Exception):
     """
     Raised when verify certificate value is not True or False
     """
-    pass
 
 
 class Config:
@@ -243,7 +236,7 @@ class Crawler:
         for a_elem in all_a_links:
             href = a_elem['href']
             full_link = 'https://ugra-news.ru' + href
-            if full_link not in self.urls:
+            if full_link not in self.urls and isinstance(full_link, str):
                 return full_link
         return 'STOP_SEED_URL_ITERATION'
 
@@ -256,7 +249,7 @@ class Crawler:
                 response = make_request(seed_url, self.config)
                 if response.status_code != 200:
                     continue
-                for i in range(10):
+                for _ in range(10):
                     url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
                     if url == 'STOP_SEED_URL_ITERATION':
                         break
@@ -341,11 +334,14 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        news_details = article_soup.find('div', {'class': 'news-detail'})
-        title = news_details.find('h1', {'class': 'title'}).text
+        # news_details = article_soup.find('div', {'class': 'news-detail'})
+        title = article_soup.find_all('h1', {'class': 'title'})[1].text
         self.article.title = title
-        author = article_soup.find('div', {'class': 'author-news__info-authors'}).text
-        self.article.author = [author.replace('\n', '').strip()]
+        try:
+            author = article_soup.find('div', {'class': 'author-news__info-authors'}).text
+            self.article.author = [author.replace('\n', '').strip()]
+        except AttributeError:
+            self.article.author = ['NOT FOUND']
         date = article_soup.find('span', {'class': 'author-news__info-text'}).text
         self.article.date = self.unify_date_format(date)
         topic = article_soup.find('a', {'class': 'tags min yellow'}).text.strip()
@@ -375,6 +371,8 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        if self.article.url is None:
+            return False
         response = make_request(self.article.url, self.config)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'lxml')
@@ -404,10 +402,11 @@ def main() -> None:
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
     crawler.find_articles()
-    for idx, url in enumerate(crawler.urls[:1]):
+    for idx, url in enumerate(crawler.urls):
         parser = HTMLParser(url, idx + 1, config)
         article = parser.parse()
-        to_raw(article)
+        if isinstance(article, Article):
+            to_raw(article)
 
 
 if __name__ == "__main__":
