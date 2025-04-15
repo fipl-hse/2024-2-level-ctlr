@@ -14,6 +14,11 @@ import os
 from bs4 import BeautifulSoup
 from core_utils.article.article import Article
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+import time
+import random
 
 class IncorrectSeedURLError(Exception):
     pass
@@ -209,16 +214,55 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        first_search = article_bs.find('a', href=True)
+        all_posts = article_bs.find(class_="col").find_all(class_="article-middle__media")
 
-        if first_search and 'href' in first_search.attrs:
-            url = first_search['href']
-            return url
+        for elem in all_posts:
+            link_tag = elem.find('a')
+
+            if link_tag and 'href' in link_tag.attrs:
+                link = "https://www.iguides.ru/" + link_tag.get("href")
+                if link not in self.urls:
+                    return link
+        return "EXTRACTION ERROR"
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        prepare_environment(ASSETS_PATH)
+
+        driver = webdriver.Chrome()
+        driver.get("https://www.iguides.ru/")
+
+        while True:
+            try:
+                button = [button for button in driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")][0]
+                button.click()
+                time.sleep(random.randint(3, 10))
+            except Exception as e:
+                print(e)
+                break
+
+        src = driver.page_source
+        driver.quit()
+
+        soup = BeautifulSoup(src, "lxml")
+
+        for i in self.get_search_urls():
+            try:
+                query = make_request(i, self.config)
+                if query.status_code != 200:
+                    continue
+                for _ in range(100):
+                    link = self._extract_url(soup)
+                    if link == "EXTRACTION ERROR":
+                        break
+                    if link not in self.urls:
+                        self.urls.append(link)
+                    if len(self.urls) >= self.config.get_num_articles():
+                        break
+            except ValueError("ERROR IN find_articles func"):
+                continue
 
 
 
@@ -229,6 +273,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.config.get_seed_urls()
 
 
 # 10
@@ -249,6 +294,9 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.config = config
+        self.Article = Article(full_url, article_id)
+
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -257,6 +305,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -284,6 +333,9 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self.Article.url, self.config)
+        if response.status_code != 200:
+            raise ValueError()
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -302,5 +354,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    "first change"
     main()
