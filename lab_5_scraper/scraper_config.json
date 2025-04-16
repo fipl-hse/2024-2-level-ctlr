@@ -4,9 +4,9 @@
         "https://moyaokruga.ru/mayakdelty/?topcategoryid=36&categoryid=39",
         "https://moyaokruga.ru/mayakdelty/?topcategoryid=12&categoryid=231"],
     "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
-    "timeout": 0,
+    "total_articles_to_find_and_parse": 10,
+    "encoding": "utf-8",
+    "timeout": 10,
     "should_verify_certificate": true,
     "headless_mode": true
 }
