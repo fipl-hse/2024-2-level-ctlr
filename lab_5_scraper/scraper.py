@@ -4,6 +4,9 @@ Crawler implementation.
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
+import re
+from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils.config_dto import ConfigDTO
 from typing import Pattern, Union
 
 
@@ -19,6 +22,8 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -27,11 +32,27 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
+        seed_urls = self.get_seed_urls()
+        total_articles = self.get_num_articles()
+        headers = self.get_headers()
+        encoding = self.get_encoding()
+        timeout = self.get_timeout()
+        should_verify_certificate = self.get_verify_certificate()
+        headless_mode = self.get_headless_mode()
+        return ConfigDTO(seed_urls=seed_urls, total_articles_to_find_and_parse=total_articles, headers=headers,
+                         encoding=encoding, timeout=timeout, should_verify_certificate=should_verify_certificate,
+                         headless_mode=headless_mode)
+
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
+        urls = self.get_seed_urls()
+        pattern = r"^https?://(www\.)?$"
+        for url in urls:
+            if not re.match(pattern=pattern, string=url):
+                raise
 
     def get_seed_urls(self) -> list[str]:
         """
