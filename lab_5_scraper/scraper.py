@@ -5,6 +5,8 @@ Crawler implementation.
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 from typing import Pattern, Union
+from core_utils.config_dto import ConfigDTO
+import json
 
 
 class Config:
@@ -19,6 +21,7 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.path = pathlib.Path(path_to_config)
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -27,7 +30,9 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-
+        with open('scraper_config.json', 'r') as config_file:
+            config_data = json.load(config_file)
+        return ConfigDTO(**config_data)
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
