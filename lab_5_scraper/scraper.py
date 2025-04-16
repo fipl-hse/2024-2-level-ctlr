@@ -9,6 +9,7 @@ from typing import Pattern, Union
 from core_utils.constants import CRAWLER_CONFIG_PATH
 from core_utils.config_dto import ConfigDTO
 import requests
+from bs4 import BeautifulSoup
 
 
 class IncorrectSeedURLError(Exception):
@@ -211,6 +212,8 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
+        self.config = config
+        self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -222,6 +225,11 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        all_links = article_bs.find_all('a', href=True)
+        for link in all_links:
+            href = link['href']
+            if 'news-view' in href and link not in self.urls:
+                return link
 
     def find_articles(self) -> None:
         """
@@ -235,6 +243,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.config.get_seed_urls()
 
 
 # 10
