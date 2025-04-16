@@ -116,8 +116,8 @@ class Config:
             raise IncorrectNumberOfArticlesError("Total number of articles to parse is not an integer")
         if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError("Total number of articles is out of range from 1 to 150")
-        if not isinstance(self._headers, dict) or not all(isinstance(key, str) for key in self._headers.keys())\
-                or not all(isinstance(value, str) for value in self._headers.values()):
+        if (not isinstance(self._headers, dict) or not all(isinstance(key, str) for key in self._headers.keys())
+                or not all(isinstance(value, str) for value in self._headers.values())):
             raise IncorrectHeadersError("Headers must be presented as a dictionary with strings")
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError("Encoding must be a string")
