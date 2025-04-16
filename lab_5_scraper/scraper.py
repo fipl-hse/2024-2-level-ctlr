@@ -355,6 +355,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    base_path.mkdir(parents=True, exist_ok=True)
+    for file in base_path.iterdir():
+        file.unlink(missing_ok=True)
 
 
 def main() -> None:
