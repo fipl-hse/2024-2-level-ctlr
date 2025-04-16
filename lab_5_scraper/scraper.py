@@ -5,7 +5,10 @@ Crawler implementation.
 import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
+import shutil
 from typing import Pattern, Union
+import requests
+from core_utils.constants import ASSETS_PATH
 from core_utils.constants import CRAWLER_CONFIG_PATH
 from core_utils.config_dto import ConfigDTO
 
@@ -188,6 +191,16 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    if not isinstance(url, str):
+        raise ValueError('URL is not a str')
+    response = requests.get(
+        url,
+        headers=config.get_headers(),
+        timeout=config.get_timeout(),
+        verify=config.get_verify_certificate()
+    )
+    response.encoding = config.get_encoding()
+    return response
 
 
 class Crawler:
@@ -293,6 +306,11 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    try:
+        shutil.rmtree(base_path)
+    except FileNotFoundError:
+        pass
+    base_path.mkdir(parents=True)
 
 
 def main() -> None:
@@ -300,6 +318,7 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config=configuration)
 
 
 if __name__ == "__main__":
