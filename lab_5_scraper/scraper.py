@@ -112,11 +112,10 @@ class Config:
         url_pattern = r'^(https?://(www\.)?[^/]+.*)$'
         if not all(re.match(url_pattern, url) for url in self._seed_urls):
             raise IncorrectSeedURLError("Seed URL must be a valid URL format")
-        if self._num_articles not in range(151):
-            raise NumberOfArticlesOutOfRangeError("Number of articles is out of range")
-        if (not (isinstance(self._num_articles, int) and self._num_articles >= 0) or
-                isinstance(self._num_articles, bool)):
-            raise IncorrectNumberOfArticlesError("Number of articles is not a positive integer")
+        if not isinstance(self._num_articles, int) or self._num_articles <= 0:
+            raise IncorrectNumberOfArticlesError("Total number of articles to parse is not an integer")
+        if self._num_articles > 150:
+            raise NumberOfArticlesOutOfRangeError("Total number of articles is out of range from 1 to 150")
         if not isinstance(self._headers, dict) or not all(isinstance(key, str) for key in self._headers.keys())\
                 or not all(isinstance(value, str) for value in self._headers.values()):
             raise IncorrectHeadersError("Headers must be presented as a dictionary with strings")
@@ -209,6 +208,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response.raise_for_status()
     return response
 
+
 class Crawler:
     """
     Crawler implementation.
@@ -245,25 +245,25 @@ class Crawler:
                 if url_href not in self.urls and url_href not in self.get_search_urls():
                     return url_href
 
-        return ''
+        return ""
+
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        prepare_environment(ASSETS_PATH)
         seed_urls = self.config.get_seed_urls()
         for url in seed_urls:
             try:
-                fix = make_request(url, self.config)
-                if fix.status_code > 400:
+                response = make_request(url, self.config)
+                if response.status_code >= 400:
                     continue
-                for i in range(10):
-                    article_bs = BeautifulSoup(fix.text, 'lxml')
-                    while len(self.urls) <= self.config.get_num_articles():
-                        article_url = self._extract_url(article_bs)
-                        if article_url is "":
-                            break
-                        self.urls.append(article_url)
+
+                article_bs = BeautifulSoup(response.text, 'lxml')
+                while len(self.urls) < self.config.get_num_articles():
+                    article_url = self._extract_url(article_bs)
+                    if article_url == "":
+                        break
+                    self.urls.append(article_url)
 
             except requests.exceptions.RequestException:
                 continue
@@ -309,8 +309,20 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        text = article_soup.find_all('div', {'class': 'news-detail__detail-text'})[0].text
-        self.article.text = text
+        try:
+            text = article_soup.find_all('article', class_="group/turn w-full text-token-text-primary")
+            article_text = []
+            for article in text:
+                article_text.append(article.get_text(strip=True))
+            full_text = ' '.join(article_text)
+            self.article.text = full_text
+        except AttributeError:
+            text = article_soup.find_all('article', class_="group/turn w-full text-token-text-primary")
+            article_text = []
+            for article in text:
+                article_text.append(article.get_text(strip=True))
+            full_text = ' '.join(article_text)
+            self.article.text = full_text
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -319,11 +331,9 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        response = make_request(self.article.url, self.config)
-        if response.status_code < 400:
-            soup = BeautifulSoup(response.text, 'lxml')
-            self._fill_article_with_text(soup)
-        return None
+        self.article.title = article_soup.find("h1", class_="entry-title").get_text()
+        author = article_soup.find_all("div", class_="pointer-events-none h-px w-px")
+        date = article_soup.find_all("div", class_="td-module-meta-info")
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -343,6 +353,12 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self.full_url, self.config)
+        if response.status_code < 400:
+            article_bs = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(article_bs)
+            self._fill_article_with_meta_information(article_bs)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -357,9 +373,6 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     except FileNotFoundError:
         pass
     pathlib.Path(base_path).mkdir(parents=True)
-#"https://zvezdaaltaya.ru/", "https://zvezdaaltaya.ru/category/novosti/",
-#        "https://zvezdaaltaya.ru/category/novosti/na-dosuge/", "https://zvezdaaltaya.ru/category/novosti/yurist/",
-#    "https://zvezdaaltaya.ru/category/novosti/zdravoohranenie/", "https://zvezdaaltaya.ru/category/novosti/politika/"
 
 def main() -> None:
     """
