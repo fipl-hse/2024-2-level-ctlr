@@ -13,6 +13,34 @@ import datetime
 from core_utils.article.article import Article
 
 
+class IncorrectSeedURLError(Exception):
+    pass
+
+
+class NumberOfArticlesOutOfRangeError(Exception):
+    pass
+
+
+class IncorrectNumberOfArticlesError(Exception):
+    pass
+
+
+class IncorrectHeadersError(Exception):
+    pass
+
+
+class IncorrectEncodingError(Exception):
+    pass
+
+
+class IncorrectTimeoutError(Exception):
+    pass
+
+
+class IncorrectVerifyError(Exception):
+    pass
+
+
 class Config:
     """
     Class for unpacking and validating configurations.
@@ -59,6 +87,26 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
+        if not (isinstance(self._seed_urls, list)
+                or all(isinstance(url, str) for url in self._seed_urls)
+                or all(url_start.startswith('https://govoritnn.ru') for url_start in self._seed_urls)):
+            raise IncorrectSeedURLError
+        if (not isinstance(self._num_articles, int)
+                or self._num_articles < 0
+                or isinstance(self._num_articles, bool)):
+            raise IncorrectNumberOfArticlesError
+        if self._num_articles > 150:
+            raise NumberOfArticlesOutOfRangeError
+        if not isinstance(self._headers, dict):
+            raise IncorrectHeadersError
+        if not isinstance(self._encoding, str):
+            raise IncorrectEncodingError
+        if self._timeout > 60 or self._timeout < 0:
+            raise IncorrectTimeoutError
+        if not isinstance(self._should_verify_certificate, bool):
+            raise IncorrectVerifyError
+        if not isinstance(self._headless_mode, bool):
+            raise IncorrectVerifyError
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -67,6 +115,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
+        return self._seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -75,6 +124,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -83,6 +133,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -91,6 +142,7 @@ class Config:
         Returns:
             str: Encoding
         """
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
@@ -99,6 +151,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
+        return self._timeout
 
     def get_verify_certificate(self) -> bool:
         """
