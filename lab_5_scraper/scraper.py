@@ -3,14 +3,66 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-import pathlib
+import json, pathlib, re
 from typing import Pattern, Union
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import (CRAWLER_CONFIG_PATH, NUM_ARTICLES_UPPER_LIMIT,
+                                  TIMEOUT_UPPER_LIMIT, TIMEOUT_LOWER_LIMIT)
 
+class IncorrectSeedURLError(Exception):
+    """
+    Raised when the seed URL is not written correctly in the configuration file.
+    """
+    def __init__(self, msg="Incorrect seed URL format in the config"):
+        super().__init__(msg)
+
+class NumberOfArticlesOutOfRangeError(Exception):
+    """
+    Raised when the number of articles is too large in the configuration file.
+    """
+    def __init__(self, msg="Number of articles in the config is out of range"):
+        super().__init__(msg)
+
+class IncorrectNumberOfArticlesError(Exception):
+    """
+    Raised when the number of articles is too small or not an integer in the configuration file.
+    """
+    def __init__(self, msg="Number of articles in the config is not an int or less than 0"):
+        super().__init__(msg)
+
+class IncorrectHeadersError(Exception):
+    """
+    Raised when the headers are not in a form of dictionary in the configuration file.
+    """
+    def __init__(self, msg="Headers need to be specified as a dictionary in the config"):
+        super().__init__(msg)
+
+class IncorrectEncodingError(Exception):
+    """
+    Raised when the encoding is not specified as a string in the configuration file.
+    """
+    def __init__(self, msg="Encoding should be a string in the config"):
+        super().__init__(msg)
+
+class IncorrectTimeoutError(Exception):
+    """
+    Raised when the timeout is too large or not a positive integer in the configuration file.
+    """
+    def __init__(self, msg="Timeout is incorrect or out of range in the config"):
+        super().__init__(msg)
+
+class IncorrectVerifyError(Exception):
+    """
+    Raised when the verify certificate value is neither True nor False in the configuration file.
+    """
+    def __init__(self, msg="Verify Certificate value should be True of False in the config"):
+        super().__init__(msg)
 
 class Config:
     """
     Class for unpacking and validating configurations.
     """
+    path_to_config: pathlib.Path
 
     def __init__(self, path_to_config: pathlib.Path) -> None:
         """
@@ -19,6 +71,9 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.path_to_config = path_to_config
+        self._validate_config_content()
+        # self._extract_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -27,11 +82,43 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
+        with open(self.path_to_config, "r", encoding="utf-8") as file:
+            config_dict = json.load(file)
+        return ConfigDTO(
+            config_dict["seed_urls"],
+            config_dict["total_articles_to_find_and_parse"],
+            config_dict["headers"],
+            config_dict["encoding"],
+            config_dict["timeout"],
+            config_dict["should_verify_certificate"],
+            config_dict["headless_mode"]
+        )
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
+        with open(self.path_to_config, "r", encoding="utf-8") as file:
+            config_dict = json.load(file)
+        if not (isinstance(config_dict["seed_urls"], list)):
+            raise ValueError("Seed URLs should be a list of strings")
+        for url in config_dict["seed_urls"]:
+            if not re.match("https?://(www.)?", url):
+                raise IncorrectSeedURLError()
+        if not (isinstance(config_dict["total_articles_to_find_and_parse"], int) and
+                config_dict["total_articles_to_find_and_parse"] > 0):
+            raise IncorrectNumberOfArticlesError()
+        if config_dict["total_articles_to_find_and_parse"] > NUM_ARTICLES_UPPER_LIMIT:
+            raise NumberOfArticlesOutOfRangeError()
+        if not isinstance(config_dict["headers"], dict):
+            raise IncorrectHeadersError()
+        if not isinstance(config_dict["encoding"], str):
+            raise IncorrectEncodingError()
+        if not (isinstance(config_dict["timeout"], int) and
+                TIMEOUT_LOWER_LIMIT < config_dict["timeout"] < TIMEOUT_UPPER_LIMIT):
+            raise IncorrectTimeoutError()
+        if not isinstance(config_dict["should_verify_certificate"], bool):
+            raise IncorrectVerifyError()
 
     def get_seed_urls(self) -> list[str]:
         """
