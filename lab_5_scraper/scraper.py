@@ -17,6 +17,10 @@ from core_utils.article.article import Article
 from core_utils.article.io import to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+from time import sleep
+from random import randint
+
+website = 'https://ugra-news.ru'
 
 
 class IncorrectSeedURLError(Exception):
@@ -99,13 +103,13 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self._seed_urls, list) or \
-                not all(isinstance(url, str) for url in self._seed_urls):
+        if (not isinstance(self._seed_urls, list) or
+                not all(isinstance(url, str) for url in self._seed_urls)):
             raise IncorrectSeedURLError('Parameter _seed_urls of Config is malformed')
-        if not all(url.startswith('https://ugra-news.ru') for url in self._seed_urls):
+        if not all(url.startswith(website) for url in self._seed_urls):
             raise IncorrectSeedURLError('Not all URLs belong to the original website')
-        if not isinstance(self._num_articles, int) or \
-                isinstance(self._num_articles, bool) or self._num_articles < 0:
+        if (not isinstance(self._num_articles, int) or
+                isinstance(self._num_articles, bool) or self._num_articles < 0):
             raise IncorrectNumberOfArticlesError('Invalid number of articles to pass')
         if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError(
@@ -114,7 +118,7 @@ class Config:
             raise IncorrectHeadersError('Headers is not an instance of dict')
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('Encoding is not an instance of str')
-        if self._timeout not in range(61):
+        if self._timeout not in range(1, 61):
             raise IncorrectTimeoutError('Timeout out of range')
         if not isinstance(self._should_verify_certificate, bool):
             raise IncorrectVerifyError('should_verify_certificate is not an instance of bool')
@@ -196,10 +200,9 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    if not isinstance(url, str):
-        raise ValueError('url is not str')
     request = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(),
                            verify=config.get_verify_certificate())
+    request.encoding = config.get_encoding()
     return request
 
 
@@ -235,7 +238,7 @@ class Crawler:
         all_a_links = article_bs.find_all('a', {'class': 'news-card photo'})
         for a_elem in all_a_links:
             href = a_elem['href']
-            full_link = 'https://ugra-news.ru' + href
+            full_link = website + href
             if full_link not in self.urls and isinstance(full_link, str):
                 return full_link
         return 'STOP_SEED_URL_ITERATION'
@@ -245,20 +248,17 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.get_search_urls():
-            try:
-                response = make_request(seed_url, self.config)
-                if response.status_code != 200:
-                    continue
-                for _ in range(10):
-                    url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
-                    if url == 'STOP_SEED_URL_ITERATION':
-                        break
-                    if url not in self.urls:
-                        self.urls.append(url)
-                    if len(self.urls) >= self.config.get_num_articles():
-                        break
-            except ValueError:
+            response = make_request(seed_url, self.config)
+            if not response.ok:
                 continue
+            for _ in range(10):
+                url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
+                if url == 'STOP_SEED_URL_ITERATION':
+                    break
+                if url not in self.urls:
+                    self.urls.append(url)
+                if len(self.urls) >= self.config.get_num_articles():
+                    break
 
     def get_search_urls(self) -> list:
         """
@@ -287,7 +287,7 @@ class CrawlerRecursive(Crawler):
         """
         super().__init__(config)
         self.urls = []
-        self.start_url = 'https://ugra-news.ru/'
+        self.start_url = website
 
     def find_articles(self) -> None:
         """
@@ -337,10 +337,10 @@ class HTMLParser:
         # news_details = article_soup.find('div', {'class': 'news-detail'})
         title = article_soup.find_all('h1', {'class': 'title'})[1].text
         self.article.title = title
-        try:
-            author = article_soup.find('div', {'class': 'author-news__info-authors'}).text
-            self.article.author = [author.replace('\n', '').strip()]
-        except AttributeError:
+        author = article_soup.find('div', {'class': 'author-news__info-authors'})
+        if author:
+            self.article.author = [author.text.replace('\n', '').strip()]
+        else:
             self.article.author = ['NOT FOUND']
         date = article_soup.find('span', {'class': 'author-news__info-text'}).text
         self.article.date = self.unify_date_format(date)
@@ -374,7 +374,7 @@ class HTMLParser:
         if self.article.url is None:
             return False
         response = make_request(self.article.url, self.config)
-        if response.status_code == 200:
+        if response.ok:
             soup = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(soup)
             self._fill_article_with_meta_information(soup)
@@ -388,10 +388,8 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    try:
+    if pathlib.Path(base_path).is_dir():
         shutil.rmtree(base_path)
-    except FileNotFoundError:
-        pass
     pathlib.Path(base_path).mkdir(parents=True)
 
 
@@ -403,6 +401,7 @@ def main() -> None:
     crawler = Crawler(config)
     crawler.find_articles()
     for idx, url in enumerate(crawler.urls):
+        sleep(randint(1, 10))
         parser = HTMLParser(url, idx + 1, config)
         article = parser.parse()
         if isinstance(article, Article):
