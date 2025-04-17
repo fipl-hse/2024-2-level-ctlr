@@ -6,7 +6,7 @@ Crawler implementation.
 import pathlib
 from typing import Pattern, Union
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 import json
 import re
 import datetime
@@ -160,6 +160,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -168,6 +169,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
+        return self._headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
@@ -198,6 +200,9 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
+        self.config = Config
+        self.urls = []
+        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -286,6 +291,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    if ...:
+        ...
+    pathlib.Path(base_path).mkdir(parents=True)
 
 
 def main() -> None:
