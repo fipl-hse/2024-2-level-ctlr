@@ -2,14 +2,17 @@
 Crawler implementation.
 """
 import json
+
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
 from typing import Pattern, Union
-from core_utils.constants import CRAWLER_CONFIG_PATH
-from core_utils.config_dto import ConfigDTO
+
 import requests
 from bs4 import BeautifulSoup
+
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
@@ -230,6 +233,7 @@ class Crawler:
             href = link['href']
             if 'news-view' in href and link not in self.urls:
                 return link
+        return "stop"
 
     def find_articles(self) -> None:
         """
