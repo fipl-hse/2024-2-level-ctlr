@@ -1,5 +1,5 @@
 {
-    "seed_urls": [],
+    "seed_urls": ["https://tuvapravda.ru"],
     "headers": {},
     "total_articles_to_find_and_parse": 0,
     "encoding": "",
