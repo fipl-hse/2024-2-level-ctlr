@@ -331,9 +331,15 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        self.article.title = article_soup.find("h1", class_="entry-title").get_text()
-        author = article_soup.find_all("div", class_="pointer-events-none h-px w-px")
-        date = article_soup.find_all("div", class_="td-module-meta-info")
+        self.article.title = article_soup.find("h1", class_="entry-title").get_text() if article_soup else "NOT FOUND"
+        authors_tags = article_soup.find_all("div", class_="pointer-events-none h-px w-px")
+        if authors_tags:
+            self.article.authors = [author.get_text(strip=True) for author in authors_tags]
+        else:
+            self.article.authors = ["NOT FOUND"]
+        self.article.date = article_soup.find_all("div", class_="td-module-meta-info")
+        self.article.article_id = article_soup.find_all("article", class_="")
+
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -345,6 +351,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        return datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S+09:00')
 
     def parse(self) -> Union[Article, bool, list]:
         """
