@@ -286,14 +286,80 @@ class CrawlerRecursive(Crawler):
             config (Config): Configuration
         """
         super().__init__(config)
-        self.urls = []
+        self.urls: list = []
+        self.visited_urls: list = []
         self.start_url = WEBSITE
+        self._cache_path = pathlib.Path(ASSETS_PATH).parent / "recursive_crawler_cache.json"
+        self._templates = [
+            WEBSITE + '/article',
+            WEBSITE + '/videogallery',
+            WEBSITE + '/photogallery'
+        ]
+        if not pathlib.Path(self._cache_path).exists():
+            with open(self._cache_path, 'w') as file:
+                json.dump({"urls_collected": [],
+                           "urls_visited": []}, file)
+        else:
+            with open(self._cache_path) as file:
+                cache = json.load(file)
+                self.urls = cache["urls_collected"]
+                self.visited_urls = cache["urls_visited"]
+
+    def _extract_urls(self, article_bs: BeautifulSoup) -> None:
+        slider_class = "slider__swiper-slide swiper-slide slider__swiper-slide-js swiper-slide-next"
+        slider_news = article_bs.find_all('a', {'class': slider_class})
+        if slider_news:
+            slider_news_urls = [slider_url for slider_a in slider_news
+                                if (slider_url := WEBSITE + slider_a['href']) not in self.urls]
+            self.urls.extend(slider_news_urls)
+        sidebar_news = article_bs.find_all('a', {'class': "line-news"})
+        if sidebar_news:
+            sidebar_news_urls = [sidebar_url for sidebar_a in sidebar_news
+                                 if (sidebar_url := WEBSITE + sidebar_a['href']) not in self.urls]
+            self.urls.extend(sidebar_news_urls)
+        header_news = article_bs.find_all('a', {'class': "header__top-banner-item"})
+        if header_news:
+            header_news_urls = [header_url for header_a in header_news
+                                if (header_url := header_a['href']) not in self.urls]
+            self.urls.extend(header_news_urls)
+        main_page_news = article_bs.find_all('a', {'class': "news-card photo"})
+        if main_page_news:
+            main_page_urls = [main_page_url for main_page_a in main_page_news
+                              if (main_page_url := WEBSITE + main_page_a['href']) not in self.urls]
+            self.urls.extend(main_page_urls)
+        articles_texts = article_bs.find_all('div', {'class': "news-detail__detail-text"})
+        if articles_texts:
+            for article in articles_texts:
+                article_a_elements = article.find_all('a')
+                article_links = [article_a['href'] for article_a in article_a_elements
+                                 if not article_a['href'].startswith('#') and
+                                 all(article_a['href'].startswith(template)
+                                     for template in self._templates)]
+                if article_links:
+                    self.urls.extend(article_links)
 
     def find_articles(self) -> None:
         """
         Finds articles doing recursive crawling.
         """
-        pass
+        print(self.visited_urls)
+        if len(self.urls) >= self.config.get_num_articles():
+            return
+        if len(self.visited_urls) == 0:
+            current_url = self.start_url
+        else:
+            current_url = list(set(self.urls) - set(self.visited_urls))[0]
+        self.visited_urls.append(current_url)
+        print('current:', current_url)
+        response = make_request(current_url, self.config)
+        if not response.ok:
+            self.find_articles()
+        soup = BeautifulSoup(response.text, 'lxml')
+        self._extract_urls(soup)
+        with open(self._cache_path, 'w') as file:
+            json.dump({"urls_collected": self.urls,
+                       "urls_visited": self.visited_urls}, file)
+        self.find_articles()
 
 
 # 10
@@ -398,14 +464,18 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
-    crawler = Crawler(config)
-    crawler.find_articles()
-    for idx, url in enumerate(crawler.urls):
-        sleep(randint(1, 10))
-        parser = HTMLParser(url, idx + 1, config)
-        article = parser.parse()
-        if isinstance(article, Article):
-            to_raw(article)
+    # crawler = Crawler(config)
+    # crawler.find_articles()
+    # for idx, url in enumerate(crawler.urls):
+    #     sleep(randint(1, 10))
+    #     parser = HTMLParser(url, idx + 1, config)
+    #     article = parser.parse()
+    #     if isinstance(article, Article):
+    #         to_raw(article)
+    recursive_crawler = CrawlerRecursive(config)
+    recursive_crawler.find_articles()
+    print(len(recursive_crawler.urls))
+    print(len(recursive_crawler.visited_urls))
 
 
 if __name__ == "__main__":
