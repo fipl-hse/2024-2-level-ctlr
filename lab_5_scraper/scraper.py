@@ -246,7 +246,7 @@ class Crawler:
                 response = make_request(url, self.config)
                 if not response.ok:
                     continue
-                soup = BeautifulSoup(response.text, 'html.parser')
+                soup = BeautifulSoup(response.text, 'lxml')
                 got_url = self._extract_url(soup)
                 if not got_url:
                     continue
@@ -290,6 +290,7 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         texts = article_soup.find_all('p')
+        texts = [block.text for block in texts]
         self.article.text = '\n'.join(texts)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
@@ -340,8 +341,9 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
-        soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'html.parser')
+        soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(soup)
+        self._fill_article_with_meta_information(soup)
         return self.article
 
 
@@ -370,7 +372,7 @@ class CrawlerRecursive(Crawler):
             response = make_request(self.start_url, self.config)
             if not response.ok:
                 return
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, 'lxml')
             got_url = self._extract_url(soup)
             if not got_url:
                 return
@@ -383,14 +385,16 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    prepare_environment(ASSETS_PATH)
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
+    prepare_environment(ASSETS_PATH)
+    crawler.find_articles()
     for ind, url in enumerate(crawler.urls):
         parser = HTMLParser(url, ind, config)
         article = parser.parse()
         to_raw(article)
         to_meta(article)
+
 
 if __name__ == "__main__":
     main()
