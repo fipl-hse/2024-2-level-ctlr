@@ -1,8 +1,13 @@
 {
-    "seed_urls": [],
-    "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
+    "seed_urls": ["https://kgd.ru/news/biz", "https://kgd.ru/news/biz?start=20", "https://kgd.ru/news/biz?start=40", "https://kgd.ru/news/biz?start=60", "https://kgd.ru/news/biz?start=80"],
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Cookie": "cookieNote=1; 3ed9721eadf8710c8d33d123566fc550=ec98c29d67c6f0a22aa36bebe78340af"
+    },
+    "total_articles_to_find_and_parse": 100,
+    "encoding": "utf-8",
     "timeout": 0,
     "should_verify_certificate": true,
     "headless_mode": true

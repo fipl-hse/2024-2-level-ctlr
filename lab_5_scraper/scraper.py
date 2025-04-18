@@ -5,12 +5,14 @@ Crawler implementation.
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 from typing import Pattern, Union
+from core_utils.config_dto import ConfigDTO
 
 
 class Config:
     """
     Class for unpacking and validating configurations.
     """
+    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
 
     def __init__(self, path_to_config: pathlib.Path) -> None:
         """
