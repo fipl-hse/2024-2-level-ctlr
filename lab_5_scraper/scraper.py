@@ -228,11 +228,12 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        all_links = article_bs.find_all('a', href=True)
-        for link in all_links:
-            href = link['href']
-            if 'news-view' in href and link not in self.urls:
-                return link
+        all_links = article_bs.find_all(class_='description')
+        if all_links:
+            for link in all_links:
+                href = link['href']
+                if href not in self.urls:
+                    return href
         return "stop"
 
     def find_articles(self) -> None:
@@ -243,9 +244,11 @@ class Crawler:
             response = requests.get(seed_url, headers=self.config.get_headers())
             if not response.ok:
                 continue
-            soup = BeautifulSoup(response.text, 'lxml')
+            url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
             for _ in range(13):
-                self.urls.append(self._extract_url(soup))
+                if url == 'stop':
+                    continue
+                self.urls.append(url)
 
 
     def get_search_urls(self) -> list:
@@ -320,11 +323,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    try:
-        pathlib.Path(base_path).mkdir(exist_ok=False, parents=True)
-    except FileExistsError:
+    if pathlib.Path(base_path).is_dir():
         shutil.rmtree(base_path)
-        pathlib.Path(base_path).mkdir(parents=True)
+    pathlib.Path(base_path).mkdir(parents=True)
 
 
 def main() -> None:
