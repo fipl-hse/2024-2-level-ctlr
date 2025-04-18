@@ -20,6 +20,8 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
 
+
+
     def _extract_config_content(self) -> ConfigDTO:
         """
         Get config values.
@@ -171,6 +173,8 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
 
+        "change"
+
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
         Find meta information of article.
@@ -215,4 +219,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    "rt34refdvfd"
     main()
