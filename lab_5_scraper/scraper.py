@@ -3,19 +3,21 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+from pathlib import Path
 import pathlib
 from typing import Pattern, Union
 from bs4 import BeautifulSoup
 import datetime
 from core_utils.article.article import Article
+from core_utils.article.io import to_meta, to_raw
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH, PROJECT_ROOT
 
-import config.static_checks.requirements_check
 from core_utils.config_dto import ConfigDTO
 import json
 import requests
 import re
 import shutil
+
 
 class IncorrectSeedURLError(Exception):
     """
@@ -299,8 +301,7 @@ class HTMLParser:
         self.full_url = full_url
         self.article_id = article_id
         self.config = config
-        article = Article(full_url, article_id)
-        self.article = article
+        self.article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -309,20 +310,14 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        try:
-            text = article_soup.find_all('article', class_="group/turn w-full text-token-text-primary")
-            article_text = []
-            for article in text:
-                article_text.append(article.get_text(strip=True))
-            full_text = ' '.join(article_text)
-            self.article.text = full_text
-        except AttributeError:
-            text = article_soup.find_all('article', class_="group/turn w-full text-token-text-primary")
-            article_text = []
-            for article in text:
-                article_text.append(article.get_text(strip=True))
-            full_text = ' '.join(article_text)
-            self.article.text = full_text
+        all_body = article_soup.find_all("p")
+
+        article_text = []
+        for block in all_body:
+            article_text.append(block.get_text(strip=True))
+
+        full_text = ' '.join(article_text)
+        self.article.text = full_text
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -332,14 +327,19 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find("h1", class_="entry-title").get_text() if article_soup else "NOT FOUND"
-        authors_tags = article_soup.find_all("div", class_="pointer-events-none h-px w-px")
-        if authors_tags:
-            self.article.authors = [author.get_text(strip=True) for author in authors_tags]
+        author_bs = article_soup.find('meta', attrs={'name': 'author'})
+        if author_bs:
+            self.article.author = author_bs['content']
         else:
-            self.article.authors = ["NOT FOUND"]
-        self.article.date = article_soup.find_all("div", class_="td-module-meta-info")
-        self.article.article_id = article_soup.find_all("article", class_="")
+            self.article.author = "NOT FOUND"
+        date_bs = article_soup.find("div", class_="td-module-meta-info")
+        if date_bs:
+            self.article.date = date_bs['datetime']
+        else:
+            self.article.date = "NOT FOUND"
 
+        categories = article_soup.find_all('li', class_='entry-category')
+        self.article.topics = [category.get_text(strip=True) for category in categories] if categories else []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -375,17 +375,26 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    try:
-        shutil.rmtree(base_path)
-    except FileNotFoundError:
-        pass
-    pathlib.Path(base_path).mkdir(parents=True)
+    path = Path(base_path)
+    if path.exists():
+        if path.is_dir():
+            shutil.rmtree(path)
+    path.mkdir(parents=True, exist_ok=True)
+
 
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-
+    config = Config(CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config)
+    prepare_environment(ASSETS_PATH)
+    crawler.find_articles()
+    for identifier, url in enumerate(crawler.urls):
+        parser = HTMLParser(url, identifier + 1, config)
+        article = parser.parse()
+        to_raw(article)
+        to_meta(article)
 
 if __name__ == "__main__":
     main()
