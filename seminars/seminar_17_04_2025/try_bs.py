@@ -5,10 +5,10 @@ Listing for practice with beautifulsoup4 library
 # pylint: disable=missing-timeout
 
 from urllib.parse import urlparse, urlunparse
-
+import requests
+from bs4 import BeautifulSoup
 try:
-    import requests
-    from bs4 import BeautifulSoup
+    url: "https://livennov.ru/news/society/mezhdunarodnaya-biennale-ekologicheskogo-iskusstva-startovala-v-nizhnem-novgorode/"
 except ImportError:
     print("No libraries installed. Failed to import.")
 
@@ -17,7 +17,7 @@ def main() -> None:
     """
     Entrypoint for a seminar's listing
     """
-    correct_url = "https://www.nn.ru/text/gorod/2023/04/03/72186935/"
+    correct_url = "https://livennov.ru/news/society/mezhdunarodnaya-biennale-ekologicheskogo-iskusstva-startovala-v-nizhnem-novgorode/"
     response = requests.get(correct_url)
     response.encoding = "utf-8"
 
