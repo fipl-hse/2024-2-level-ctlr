@@ -60,11 +60,11 @@ Follow install instructions from :ref:`starting-guide-en-label`.
 Running programs with custom modules
 ------------------------------------
 
-Now, try to run your scraper:
+Now, try to run your scrapper:
 
 1. Go to your project’s folder
    ``cd C:\Users\user\Documents\2023-2-level-ctlr-admin``.
-2. Run scraper ``python lab_5_scraper/scraper.py``.
+2. Run scrapper ``python lab_5_scrapper/scrapper.py``.
 
 You get error:
 
@@ -110,7 +110,7 @@ in terminal:
 2. For macOS: ``export PYTHONPATH=$pwd:$PYTHONPATH``, ``pwd`` allows to
    get current working directory.
 
-Run scraper again ``python lab_5_scraper/scraper.py``.
+Run scrapper again ``python lab_5_scrapper/scrapper.py``.
 
 Does it work? If yes, congratulations, you have a chance to get the
 highest possible mark. If not, write in chat for help.
