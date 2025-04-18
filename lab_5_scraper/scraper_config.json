@@ -1,9 +1,9 @@
 {
-    "seed_urls": [],
+    "seed_urls": ["https://krassever.ru/news"],
     "headers": {},
-    "total_articles_to_find_and_parse": 0,
+    "total_articles_to_find_and_parse": 20,
     "encoding": "",
-    "timeout": 0,
+    "timeout": 10,
     "should_verify_certificate": true,
     "headless_mode": true
 }
