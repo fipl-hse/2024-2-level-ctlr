@@ -346,7 +346,7 @@ class HTMLParser:
         """
         response = make_request(self.full_url, self.config)
         if response.ok:
-            soup = BeautifulSoup(response.text, "html.parser")
+            soup = BeautifulSoup(response.text, "lxml")
             self._fill_article_with_text(soup)
             self._fill_article_with_meta_information(soup)
         return self.article
