@@ -536,7 +536,7 @@ Stage 8. Determine the optimal number of seed URLs
 As it was stated in **Stage 2.1**,
 :py:class:`lab_5_scraper.scraper.Crawler` is an entity that visits
 ``seed_urls`` with the intention to collect URLs with articles that
-should be parsed later". Often you can reach the situation when there
+should be parsed later. Often you can reach the situation when there
 are not enough article links on the given URL. For example, you may want
 to collect 100 articles whereas each newspaper page contains links to
 only 10 articles. This brings the need in at least 10 seed URLs to be
