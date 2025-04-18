@@ -8,6 +8,8 @@ import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
+from random import randint
+from time import sleep
 from typing import Pattern, Union
 
 import requests
@@ -17,10 +19,8 @@ from core_utils.article.article import Article
 from core_utils.article.io import to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-from time import sleep
-from random import randint
 
-website = 'https://ugra-news.ru'
+WEBSITE = 'https://ugra-news.ru'
 
 
 class IncorrectSeedURLError(Exception):
@@ -106,7 +106,7 @@ class Config:
         if (not isinstance(self._seed_urls, list) or
                 not all(isinstance(url, str) for url in self._seed_urls)):
             raise IncorrectSeedURLError('Parameter _seed_urls of Config is malformed')
-        if not all(url.startswith(website) for url in self._seed_urls):
+        if not all(url.startswith(WEBSITE) for url in self._seed_urls):
             raise IncorrectSeedURLError('Not all URLs belong to the original website')
         if (not isinstance(self._num_articles, int) or
                 isinstance(self._num_articles, bool) or self._num_articles < 0):
@@ -238,7 +238,7 @@ class Crawler:
         all_a_links = article_bs.find_all('a', {'class': 'news-card photo'})
         for a_elem in all_a_links:
             href = a_elem['href']
-            full_link = website + href
+            full_link = WEBSITE + href
             if full_link not in self.urls and isinstance(full_link, str):
                 return full_link
         return 'STOP_SEED_URL_ITERATION'
@@ -287,7 +287,7 @@ class CrawlerRecursive(Crawler):
         """
         super().__init__(config)
         self.urls = []
-        self.start_url = website
+        self.start_url = WEBSITE
 
     def find_articles(self) -> None:
         """
