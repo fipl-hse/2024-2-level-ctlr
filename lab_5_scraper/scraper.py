@@ -296,11 +296,11 @@ class CrawlerRecursive(Crawler):
             WEBSITE + '/photogallery'
         ]
         if not pathlib.Path(self._cache_path).exists():
-            with open(self._cache_path, 'w') as file:
+            with open(self._cache_path, 'w', encoding='utf-8') as file:
                 json.dump({"urls_collected": [],
                            "urls_visited": []}, file)
         else:
-            with open(self._cache_path) as file:
+            with open(self._cache_path, encoding='utf-8') as file:
                 cache = json.load(file)
                 self.urls = cache["urls_collected"]
                 self.visited_urls = cache["urls_visited"]
@@ -309,32 +309,31 @@ class CrawlerRecursive(Crawler):
         slider_class = "slider__swiper-slide swiper-slide slider__swiper-slide-js swiper-slide-next"
         slider_news = article_bs.find_all('a', {'class': slider_class})
         if slider_news:
-            slider_news_urls = [slider_url for slider_a in slider_news
-                                if (slider_url := WEBSITE + slider_a['href']) not in self.urls]
+            slider_news_urls = [WEBSITE + slider_a['href'] for slider_a in slider_news
+                                if WEBSITE + slider_a['href'] not in self.urls]
             self.urls.extend(slider_news_urls)
         sidebar_news = article_bs.find_all('a', {'class': "line-news"})
         if sidebar_news:
-            sidebar_news_urls = [sidebar_url for sidebar_a in sidebar_news
-                                 if (sidebar_url := WEBSITE + sidebar_a['href']) not in self.urls]
+            sidebar_news_urls = [WEBSITE + sidebar_a['href'] for sidebar_a in sidebar_news
+                                 if WEBSITE + sidebar_a['href'] not in self.urls]
             self.urls.extend(sidebar_news_urls)
         header_news = article_bs.find_all('a', {'class': "header__top-banner-item"})
         if header_news:
-            header_news_urls = [header_url for header_a in header_news
-                                if (header_url := header_a['href']) not in self.urls]
+            header_news_urls = [header_a['href'] for header_a in header_news
+                                if header_a['href'] not in self.urls]
             self.urls.extend(header_news_urls)
         main_page_news = article_bs.find_all('a', {'class': "news-card photo"})
         if main_page_news:
-            main_page_urls = [main_page_url for main_page_a in main_page_news
-                              if (main_page_url := WEBSITE + main_page_a['href']) not in self.urls]
+            main_page_urls = [WEBSITE + main_page_a['href'] for main_page_a in main_page_news
+                              if WEBSITE + main_page_a['href'] not in self.urls]
             self.urls.extend(main_page_urls)
         articles_texts = article_bs.find_all('div', {'class': "news-detail__detail-text"})
         if articles_texts:
             for article in articles_texts:
                 article_a_elements = article.find_all('a')
                 article_links = [article_a['href'] for article_a in article_a_elements
-                                 if not article_a['href'].startswith('#') and
-                                 all(article_a['href'].startswith(template)
-                                     for template in self._templates)]
+                                 if all(article_a['href'].startswith(template)
+                                        for template in self._templates)]
                 if article_links:
                     self.urls.extend(article_links)
 
@@ -356,7 +355,7 @@ class CrawlerRecursive(Crawler):
             self.find_articles()
         soup = BeautifulSoup(response.text, 'lxml')
         self._extract_urls(soup)
-        with open(self._cache_path, 'w') as file:
+        with open(self._cache_path, 'w', encoding='utf-8') as file:
             json.dump({"urls_collected": self.urls,
                        "urls_visited": self.visited_urls}, file)
         self.find_articles()
