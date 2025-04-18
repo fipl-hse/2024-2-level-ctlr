@@ -21,43 +21,43 @@ from core_utils.constants import (ASSETS_PATH, CRAWLER_CONFIG_PATH)
 
 class IncorrectSeedURLError(Exception):
     """
-    Seed URL does not match standard pattern
+    Seed URL does not match standard pattern "https?://(www.)?"
     """
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """
-    Total number of articles is out of range
+    Total number of articles is out of range from 1 to 150
     """
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """
-    Total number of articles to parse is not integer
+    Total number of articles to parse is not integer or less than 0
     """
 
 
 class IncorrectHeadersError(Exception):
     """
-    Headers are not in a dictionary form
+    Headers are not in a form of dictionary
     """
 
 
 class IncorrectEncodingError(Exception):
     """
-    Encoding is not a string
+    Encoding must be specified as a string
     """
 
 
 class IncorrectTimeoutError(Exception):
     """
-    Timeout value is incorrect
+    Timeout value must be a positive integer less than 60
     """
 
 
 class IncorrectVerifyError(Exception):
     """
-    Certificate verification value is incorrect
+    Verify certificate value must either be True or False
     """
 
 
@@ -104,34 +104,34 @@ class Config:
             config_data = json.load(file)
 
         if not isinstance(config_data['seed_urls'], list):
-            raise IncorrectSeedURLError
+            raise IncorrectSeedURLError('Seed URL must be a list :(')
 
         for seed_url in config_data['seed_urls']:
             if not re.match(r'https?://(www\.)?', seed_url):
-                raise IncorrectSeedURLError
+                raise IncorrectSeedURLError('Seed URL does not match standard pattern :(')
 
         if (not isinstance(config_data['total_articles_to_find_and_parse'], int) or
                 config_data['total_articles_to_find_and_parse'] <= 0):
-            raise IncorrectNumberOfArticlesError
+            raise IncorrectNumberOfArticlesError('Number of articles must be an integer and be positive :(')
 
         if config_data['total_articles_to_find_and_parse'] > 150:
-            raise NumberOfArticlesOutOfRangeError
+            raise NumberOfArticlesOutOfRangeError('Number of articles cannot be more than 150 :(')
 
         if not isinstance(config_data['headers'], dict):
-            raise IncorrectHeadersError
+            raise IncorrectHeadersError('Headers must be a dictionary :(')
 
         if not isinstance(config_data['encoding'], str):
-            raise IncorrectEncodingError
+            raise IncorrectEncodingError('Encoding must be a string :(')
 
         if (not isinstance(config_data['timeout'], int) or config_data['timeout'] <= 0 or
                 config_data['timeout'] > 60):
-            raise IncorrectTimeoutError
+            raise IncorrectTimeoutError('Timeout must be an integer, more than 0 and less than 60 :(')
 
         if not isinstance(config_data['should_verify_certificate'], bool):
-            raise IncorrectVerifyError
+            raise IncorrectVerifyError('Certificate verification must be boolean :(')
 
         if not isinstance(config_data['headless_mode'], bool):
-            raise IncorrectVerifyError
+            raise IncorrectVerifyError('Headless mode must be boolean :(')
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -258,10 +258,10 @@ class Crawler:
         """
         for seed_url in self.get_search_urls():
             response = make_request(seed_url, self.config)
-            if response.status_code != 200:
+            if not response.ok:
                 continue
 
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, 'lxml')
             article_links = soup.find_all('a', href=True)
 
             for link in article_links:
@@ -342,7 +342,7 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         response = make_request(self.full_url, self.config)
-        if response.status_code == 200:
+        if response.ok:
             soup = BeautifulSoup(response.text, "html.parser")
             self._fill_article_with_text(soup)
         return self.article
