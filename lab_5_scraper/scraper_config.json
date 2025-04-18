@@ -1,9 +1,14 @@
 {
-    "seed_urls": [],
-    "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
-    "timeout": 0,
+    "seed_urls": ["https://www.iguides.ru/"],
+    "headers": {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+        "Accept-language": "ru",
+        "Cookie": "tmr_detect=0%7C1744558171595; _ym_d=1744558169; _ym_uid=1743750475120078925; _ym_visorc=b; tmr_lvid=86b3fe32e34eafc401aaf47a4949a4dc; tmr_lvidTS=1744290768529; IGUIDES_RU_9548f=a%3A4%3A%7Bs%3A8%3A%22use_auth%22%3Bb%3A1%3Bs%3A19%3A%22my_script_on_server%22%3Bs%3A73%3A%22%2Flocal%2Ftemplates%2Figuides-2022%2Fcomponents%2Fbitrix%2Fnews%2Fajax-tape%2Fdetail.php%22%3Bs%3A14%3A%22component_name%22%3Bs%3A32%3A%22realcommenter_2.0%3Atape.show.tree%22%3Bs%3A4%3A%22HASH%22%3Bs%3A5%3A%229548f%22%3B%7D; IGUIDES_RU_GUEST_ID=391426759; IGUIDES_RU_LAST_VISIT=13.04.2025%2018%3A29%3A29; IGUIDES_RU_LAST_ADV=5; _q_segs=[]; domain_sid=bbNtyjqOetzqq0-lleT5B%3A1744557893954; _ym_isad=2; PHPSESSID=g882kaJVUGTbrYasEnw88r1STpAYula8; BX_USER_ID=d14814d0b0b004325a6e525cf309cf24"
+    },
+    "total_articles_to_find_and_parse": 100,
+    "encoding": "utf-8",
+    "timeout": 15,
     "should_verify_certificate": true,
     "headless_mode": true
 }
