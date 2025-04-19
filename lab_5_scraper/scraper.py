@@ -15,9 +15,9 @@ from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
+from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH, NUM_ARTICLES_UPPER_LIMIT, \
     TIMEOUT_LOWER_LIMIT, TIMEOUT_UPPER_LIMIT
-from core_utils.config_dto import ConfigDTO
 
 
 class IncorrectSeedURLError(Exception):
@@ -373,7 +373,8 @@ def main() -> None:
     print(f"Articles required: {ini.get_num_articles()}")
     print(f"Found: {len(crl.urls)} urls")
     prs = HTMLParser \
-        ("https://daily-nn.ru/konkurentsiya_za_rabochie_mesta_rastet_v_nizhegorodskoy_oblasti.html", 1, ini)
+        ("https://daily-nn.ru/konkurentsiya_za_rabochie_mesta_rastet_v_nizhegorodskoy_oblasti.html",
+         1, ini)
     art_p = prs.parse()
     if isinstance(art_p, Article):
         to_raw(art_p)
