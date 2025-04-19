@@ -6,12 +6,15 @@ Crawler implementation.
 import pathlib
 from typing import Pattern, Union
 import json
+import shutil
 import requests
 from bs4 import BeautifulSoup
 from core_utils.article.article import Article
 import datetime
 from core_utils.config_dto import ConfigDTO
 from urllib.parse import urljoin
+from core_utils.article.io import to_meta, to_raw
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
@@ -318,6 +321,13 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        article_div = article_soup.find("div", class_="site-content-inner")
+        text = []
+        for element in article_div:
+            if element.get_text().strip():
+                text.append(element.get_text(strip=True, separator="\n"))
+        self.article.text = "\n".join(text)
+
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -345,6 +355,11 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self.full_url, self.config)
+        if response.status_code == 200:
+            article_bs = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(article_bs)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -354,12 +369,24 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    if base_path.exists():
+        shutil.rmtree(base_path)
+    base_path.mkdir(parents=True)
 
 
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    prepare_environment(ASSETS_PATH)
+    config = Config(CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config)
+    crawler.find_articles()
+    for ind, url in enumerate(crawler.urls):
+        parser = HTMLParser(url, ind, config)
+        article = parser.parse()
+        to_raw(article)
+        to_meta(article)
 
 
 if __name__ == "__main__":
