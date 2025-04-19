@@ -70,7 +70,7 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
-        prepare_environment(ASSETS_PATH)
+        # prepare_environment(ASSETS_PATH)
         self.config_dto = self._extract_config_content()
         self._seed_urls = self.config_dto.seed_urls
         self._num_articles = self.config_dto.total_articles
