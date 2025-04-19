@@ -13,7 +13,7 @@ import requests
 import datetime
 from bs4 import BeautifulSoup
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw
+from core_utils.article.io import to_meta, to_raw
 from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 
 class IncorrectSeedURLError(Exception):
@@ -330,6 +330,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        title = article_soup.find('div', class_='article__title')
+        if title:
+            self.article.title = title.text
+
+        self.article.author = ['NOT FOUND']
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -354,6 +359,7 @@ class HTMLParser:
             return False
         article_bs = BeautifulSoup(response.text, 'lxml')
         self._fill_article_with_text(article_bs)
+        self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
@@ -383,6 +389,7 @@ def main() -> None:
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
