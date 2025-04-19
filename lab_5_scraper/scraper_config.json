@@ -1,15 +1,5 @@
 {
-    "seed_urls": ["https://daily-nn.ru/society/",
-        "https://daily-nn.ru/business/",
-        "https://daily-nn.ru/economics/",
-        "https://daily-nn.ru/realty/",
-        "https://daily-nn.ru/policy/",
-        "https://daily-nn.ru/press-releases/",
-        "https://daily-nn.ru/incidents/",
-        "https://daily-nn.ru/sport/",
-        "https://daily-nn.ru/world/",
-        "https://daily-nn.ru/family/",
-        "https://daily-nn.ru/rest/"
+    "seed_urls": ["https://daily-nn.ru"
     ],
     "headers": {},
     "total_articles_to_find_and_parse": 100,

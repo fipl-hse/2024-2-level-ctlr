@@ -237,8 +237,6 @@ class Crawler:
             ltag = ttag.find("a", href=True)
             if ltag:
                 href = ltag["href"]
-                if not href.startswith("/news"):
-                    continue
                 url = "https://daily-nn.ru/" + str(href)
                 if url and url not in self.urls:
                     return url
