@@ -1,10 +1,10 @@
 {
     "seed_urls": ["https://ria.ru/incidents/",
-    "https://ria.ru/culture/"],
+    "https://ria.ru/defense_safety/"],
     "headers": {},
     "total_articles_to_find_and_parse": 5,
     "encoding": "utf-8",
-    "timeout": 5,
+    "timeout": 40,
     "should_verify_certificate": true,
     "headless_mode": true
 }
