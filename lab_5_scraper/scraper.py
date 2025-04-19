@@ -341,7 +341,6 @@ class CrawlerRecursive(Crawler):
         """
         Finds articles doing recursive crawling.
         """
-        print(self.visited_urls)
         if len(self.urls) >= self.config.get_num_articles():
             return
         if len(self.visited_urls) == 0:
@@ -349,7 +348,6 @@ class CrawlerRecursive(Crawler):
         else:
             current_url = list(set(self.urls) - set(self.visited_urls))[0]
         self.visited_urls.append(current_url)
-        print('current:', current_url)
         response = make_request(current_url, self.config)
         if not response.ok:
             self.find_articles()
@@ -463,18 +461,16 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
-    # crawler = Crawler(config)
-    # crawler.find_articles()
-    # for idx, url in enumerate(crawler.urls):
-    #     sleep(randint(1, 10))
-    #     parser = HTMLParser(url, idx + 1, config)
-    #     article = parser.parse()
-    #     if isinstance(article, Article):
-    #         to_raw(article)
+    crawler = Crawler(config)
+    crawler.find_articles()
+    for idx, url in enumerate(crawler.urls):
+        sleep(randint(1, 10))
+        parser = HTMLParser(url, idx + 1, config)
+        article = parser.parse()
+        if isinstance(article, Article):
+            to_raw(article)
     recursive_crawler = CrawlerRecursive(config)
     recursive_crawler.find_articles()
-    print(len(recursive_crawler.urls))
-    print(len(recursive_crawler.visited_urls))
 
 
 if __name__ == "__main__":
