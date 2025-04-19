@@ -2,15 +2,22 @@
 Crawler implementation.
 """
 
+import datetime
+import json
+import os
+
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
+import shutil
 from typing import Pattern, Union
+
+import requests
+from bs4 import BeautifulSoup
+
+from core_utils.article.article import Article
+from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-import json
-import re
-import datetime
-from core_utils.article.article import Article
 
 
 class IncorrectSeedURLError(Exception):
@@ -75,7 +82,7 @@ class Config:
             config = json.load(file)
         return ConfigDTO(
             seed_urls=config["seed_urls"],
-            total_articles_to_find_and_parse=config["total_articles"],
+            total_articles_to_find_and_parse=config["total_articles_to_find_and_parse"],
             headers=config["headers"],
             encoding=config["encoding"],
             timeout=config["timeout"],
@@ -88,25 +95,26 @@ class Config:
         Ensure configuration parameters are not corrupt.
         """
         if not (isinstance(self._seed_urls, list)
-                or all(isinstance(url, str) for url in self._seed_urls)
-                or all(url_start.startswith('https://govoritnn.ru') for url_start in self._seed_urls)):
-            raise IncorrectSeedURLError
+                or all(isinstance(url, str) for url in self._seed_urls)):
+            raise IncorrectSeedURLError('Not all seed URLs are strings or they are not in the list')
+        if not all(url_start.startswith('https://govoritnn.ru') for url_start in self._seed_urls):
+            raise IncorrectSeedURLError('Not all seed URLs match standard pattern "https?://(www.)?"')
         if (not isinstance(self._num_articles, int)
                 or self._num_articles < 0
                 or isinstance(self._num_articles, bool)):
-            raise IncorrectNumberOfArticlesError
+            raise IncorrectNumberOfArticlesError('Total number of articles to parse is not integer or less than 0')
         if self._num_articles > 150:
-            raise NumberOfArticlesOutOfRangeError
+            raise NumberOfArticlesOutOfRangeError('Total number of articles is out of range from 1 to 150')
         if not isinstance(self._headers, dict):
-            raise IncorrectHeadersError
+            raise IncorrectHeadersError('Headers are not in a form of dictionary;')
         if not isinstance(self._encoding, str):
-            raise IncorrectEncodingError
-        if self._timeout > 60 or self._timeout < 0:
-            raise IncorrectTimeoutError
+            raise IncorrectEncodingError('Encoding must be specified as a string')
+        if int(self._timeout) > 60 or int(self._timeout) < 0:
+            raise IncorrectTimeoutError('Timeout value must be a positive integer less than 60')
         if not isinstance(self._should_verify_certificate, bool):
-            raise IncorrectVerifyError
+            raise IncorrectVerifyError('Verify certificate value must either be True or False')
         if not isinstance(self._headless_mode, bool):
-            raise IncorrectVerifyError
+            raise IncorrectVerifyError('Headless mode value must either be True or False')
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -183,6 +191,13 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    response = requests.get(url,
+                            headers=config.get_headers(),
+                            timeout=config.get_timeout(),
+                            verify=config.get_verify_certificate(),
+                            )
+    response.encoding = config.get_encoding()
+    return response
 
 
 class Crawler:
@@ -200,9 +215,8 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
-        self.config = Config
+        self.config = config
         self.urls = []
-        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -214,11 +228,31 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        all_stuff = article_bs.find_all('a', {'class_': 'lsd-arch-link'})
+        for el in all_stuff:
+            href = el.get('href', '')
+            if not href:
+                continue
+            one_whole_link = 'https://govoritnn.ru/' + href
+            if isinstance(one_whole_link, str) and one_whole_link not in self.urls:
+                return one_whole_link
+        return 'stop'
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        for page_url in self.get_search_urls():
+            if len(self.urls) >= self.config.get_num_articles():
+                break
+            response_for_10_articles = make_request(page_url, self.config)
+            if response_for_10_articles and response_for_10_articles.ok:
+                urls_for_10_articles = self._extract_url(BeautifulSoup(response_for_10_articles.text, 'lxml'))
+                if (urls_for_10_articles and urls_for_10_articles is not None
+                        and all(isinstance(elem, str) for elem in urls_for_10_articles)):
+                    for article_url in urls_for_10_articles:
+                        if article_url not in self.urls:
+                            self.urls.append(article_url)
 
     def get_search_urls(self) -> list:
         """
@@ -227,6 +261,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.config.get_seed_urls()
 
 
 # 10
@@ -247,6 +282,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.full_url = full_url
+        self.article_id = article_id
+        self.config = config
+        self.article = Article(url=full_url, article_id=article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -291,9 +330,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if ...:
-        ...
-    pathlib.Path(base_path).mkdir(parents=True)
+    if os.path.exists(base_path):
+        shutil.rmtree(base_path)
+    pathlib.Path(base_path).mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
@@ -301,6 +340,15 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
+    crawler = Crawler(config=configuration)
+    crawler.find_articles()
+    for i, full_url in enumerate(crawler.urls):
+        parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
+        article = parser.parse()
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
