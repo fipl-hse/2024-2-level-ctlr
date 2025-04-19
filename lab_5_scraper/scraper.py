@@ -399,6 +399,7 @@ def main() -> None:
     """
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
+    prepare_environment(ASSETS_PATH)
     crawler.find_articles()
     for ind, url in enumerate(crawler.urls):
         parser = HTMLParser(url, ind, config)
