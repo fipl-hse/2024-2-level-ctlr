@@ -10,7 +10,7 @@
     "headers": {},
     "total_articles_to_find_and_parse": 10,
     "encoding": "",
-    "timeout": 5,
+    "timeout": 6,
     "should_verify_certificate": true,
     "headless_mode": true
 }

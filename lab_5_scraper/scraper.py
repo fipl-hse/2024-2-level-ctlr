@@ -4,11 +4,12 @@ Crawler implementation.
 
 import datetime
 import json
-import os
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
+from random import randint
+from time import sleep
 from typing import Pattern, Union
 
 import requests
@@ -18,8 +19,6 @@ from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-from time import sleep
-from random import randint
 
 
 class IncorrectSeedURLError(Exception):
@@ -246,15 +245,18 @@ class Crawler:
         """
         urls = self.get_search_urls()
         for url in urls:
-            while len(self.urls) < self.config.get_num_articles():
-                response = make_request(url, self.config)
-                if not response.ok:
-                    continue
-                soup = BeautifulSoup(response.text, 'lxml')
-                got_url = self._extract_url(soup)
-                if not got_url:
+            if len(self.urls) > self.config.get_num_articles():
+                return None
+            response = make_request(url, self.config)
+            if not response.ok:
+                continue
+            soup = BeautifulSoup(response.text, 'lxml')
+            got_url = self._extract_url(soup)
+            while got_url:
+                if not got_url or got_url in self.urls:
                     continue
                 self.urls.append(got_url)
+                got_url = self._extract_url(soup)
 
     def get_search_urls(self) -> list:
         """
@@ -305,7 +307,12 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find('h1', {'class': 'entry-title'}).text
-        self.article.author = ['NOT FOUND']
+        texts = article_soup.find_all('p')
+        author = [block.text for block in texts][-2]
+        if len(author) < 20:
+            self.article.author = author
+        else:
+            self.article.author = ['NOT FOUND']
         self.article.date = self.unify_date_format(article_soup.find('time', {'class': 'entry-date updated td-module-date'}).text)
         topics = article_soup.find_all('li', {'class': 'entry-category'})
         self.article.topics = [topic.text for topic in topics]
@@ -358,11 +365,12 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if os.makedirs(base_path, exist_ok=True):
+    if base_path.mkdir(exist_ok=True):
         return None
-    if len(os.listdir(base_path)) > 0:
+    base_path.iterdir()
+    if any(base_path.iterdir()):
         shutil.rmtree(base_path)
-        os.mkdir(base_path)
+        base_path.mkdir()
 
 
 class CrawlerRecursive(Crawler):
@@ -391,7 +399,6 @@ def main() -> None:
     """
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
-    prepare_environment(ASSETS_PATH)
     crawler.find_articles()
     for ind, url in enumerate(crawler.urls):
         parser = HTMLParser(url, ind, config)
