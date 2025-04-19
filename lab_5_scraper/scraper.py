@@ -233,7 +233,7 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        for ttag in article_bs.find_all("h3", class_="news-title"):
+        for ttag in article_bs.find_all("p", class_="text_new_block"):
             ltag = ttag.find("a", href=True)
             if ltag:
                 href = ltag["href"]
@@ -303,7 +303,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        adiv = article_soup.find("div", class_="news-text")
+        adiv = article_soup.find("div", class_="content cn")
         text = []
         for a in adiv:
             if a.get_text().strip():
