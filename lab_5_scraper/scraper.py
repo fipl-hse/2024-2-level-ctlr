@@ -123,7 +123,7 @@ class Config:
             raise IncorrectHeadersError("Headers must be presented as a dictionary with strings")
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError("Encoding must be a string")
-        if not isinstance(self._timeout, int) or self._timeout not in range(61):
+        if not isinstance(self._timeout, int) or self._timeout not in range(1, 61):
             raise IncorrectTimeoutError("Timeout is out of range - 60")
         if not isinstance(self._headless_mode, bool) or not isinstance(self._should_verify_certificate, bool):
             raise IncorrectVerifyError("Headless mode and should_verify_certificate must be a bool")
@@ -239,13 +239,17 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        urls = article_bs.find_all('a', href=lambda href: href and href.startswith('https://zvezdaaltaya.ru/'))
-        unique_hrefs = list(set(url['href'] for url in urls))
-
-        for url_href in unique_hrefs:
+        extracted_hrefs = {link['href'] for link in article_bs.find_all('a', href=True)}
+        url_pattern = r'^(https?://(www\.)?zvezdaaltaya\.ru/.*)$'
+        for url_href in extracted_hrefs:
             if isinstance(url_href, str):
-                if url_href not in self.urls and url_href not in self.get_search_urls():
-                    return url_href
+                if url_href.startswith('/'):
+                    full_url = f"https://zvezdaaltaya.ru{url_href}"
+                else:
+                    full_url = url_href
+
+                if re.match(url_pattern, full_url):
+                    return full_url
 
         return ""
 
@@ -326,20 +330,19 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        self.article.title = article_soup.find("h1", class_="entry-title").get_text() if article_soup else "NOT FOUND"
-        author_bs = article_soup.find('meta', attrs={'name': 'author'})
-        if author_bs:
-            self.article.author = author_bs['content']
-        else:
-            self.article.author = "NOT FOUND"
-        date_bs = article_soup.find("div", class_="td-module-meta-info")
-        if date_bs:
-            self.article.date = date_bs['datetime']
-        else:
-            self.article.date = "NOT FOUND"
+        try:
+            title_element = article_soup.find("h1", class_="entry-title")
+            self.article.title = title_element.get_text(strip=True) if title_element else "NOT FOUND"
 
-        categories = article_soup.find_all('li', class_='entry-category')
-        self.article.topics = [category.get_text(strip=True) for category in categories] if categories else []
+            author_bs = article_soup.find('meta', attrs={'name': 'author'})
+            self.article.author = [author_bs['content'] if author_bs else "NOT FOUND"]
+
+            self.article.date = self.unify_date_format(article_soup.find("div", class_="td-module-meta-info").text)
+
+            categories = article_soup.find_all('li', class_='entry-category')
+            self.article.topics = [category.get_text(strip=True) for category in categories] if categories else []
+        except AttributeError:
+            print('Something has gone wrong with url:', self.full_url)
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -351,7 +354,38 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        return datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S+09:00')
+        if len(date_str) == 9 and date_str[4:7].isalpha():
+            year = int(date_str[:4])
+            month_str = date_str[4:7].lower()
+            day = int(date_str[7:9])
+            month_mapping = {
+                'янв': 1, 'фев': 2, 'мар': 3, 'апр': 4, 'май': 5,
+                'июн': 6, 'июл': 7, 'авг': 8, 'сен': 9, 'окт': 10,
+                'ноя': 11, 'дек': 12
+            }
+            month = month_mapping.get(month_str)
+            if month is None:
+                raise ValueError(f"Invalid month abbreviation: {month_str}")
+            return datetime.datetime(year, month, day)
+
+        elif len(date_str) == 10 and date_str[4] == '/' and date_str[7] == '/':
+            year, month, day = map(int, date_str.split('/'))
+            return datetime.datetime(year, month, day)
+
+        elif len(date_str) == 25 and date_str[8] == 'T':
+            year = int(date_str[:4])
+            month = int(date_str[4:6])
+            day = int(date_str[6:8])
+            hour = int(date_str[9:11])
+            minute = int(date_str[12:14])
+            return datetime.datetime(year, month, day, hour, minute)
+
+        elif len(date_str) >= 7 and date_str[2] == '/':
+            day, year = date_str.split('/')
+            day = int(day)
+            year = int(year)
+            month = 6
+            return datetime.datetime(year, month, day)
 
     def parse(self) -> Union[Article, bool, list]:
         """
