@@ -365,9 +365,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    base_path = pathlib.Path(base_path)
     if base_path.mkdir(exist_ok=True):
         return None
-    base_path.iterdir()
     if any(base_path.iterdir()):
         shutil.rmtree(base_path)
         base_path.mkdir()
