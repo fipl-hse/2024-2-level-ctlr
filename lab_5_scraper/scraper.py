@@ -2,10 +2,9 @@
 Crawler implementation.
 """
 
+# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import datetime
 import json
-
-# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import re
 import shutil
@@ -22,7 +21,7 @@ from core_utils.constants import (
     CRAWLER_CONFIG_PATH,
     NUM_ARTICLES_UPPER_LIMIT,
     TIMEOUT_LOWER_LIMIT,
-    TIMEOUT_UPPER_LIMIT
+    TIMEOUT_UPPER_LIMIT,
 )
 
 
