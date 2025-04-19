@@ -74,6 +74,7 @@ class Config:
 
         self.path_to_config = path_to_config
         config = self._extract_config_content()
+        prepare_environment(ASSETS_PATH)
         self._seed_urls = config.seed_urls
         self._num_articles = config.total_articles
         self._headers = config.headers
@@ -328,7 +329,6 @@ class HTMLParser:
                 text.append(element.get_text(strip=True, separator="\n"))
         self.article.text = "\n".join(text)
 
-
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
         Find meta information of article.
@@ -378,15 +378,16 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    prepare_environment(ASSETS_PATH)
-    config = Config(CRAWLER_CONFIG_PATH)
-    crawler = Crawler(config)
+    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config=configuration)
     crawler.find_articles()
-    for ind, url in enumerate(crawler.urls):
-        parser = HTMLParser(url, ind, config)
+    for i, full_url in enumerate(crawler.urls, start=1):
+        parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
         article = parser.parse()
-        to_raw(article)
-        to_meta(article)
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
+
 
 
 if __name__ == "__main__":
