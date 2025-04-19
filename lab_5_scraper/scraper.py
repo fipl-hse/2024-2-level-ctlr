@@ -96,7 +96,7 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open("lab_5_scraper/scraper_config.json", 'r', encoding='UTF-8') as file:
+        with open(self.path_to_config, 'r', encoding='UTF-8') as file:
             config_dto = json.load(file)
         return ConfigDTO(**config_dto)
 
@@ -109,17 +109,18 @@ class Config:
             raise IncorrectSeedURLError('Wrong parameters of _seed_urls in Config')
         if not all(url.startswith('https://literaturno.com') for url in self._seed_urls):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern')
+        if not isinstance(self._num_articles, int) or self._num_articles <= 0:
+            raise IncorrectNumberOfArticlesError('Total number of articles is not integer or less than 0')
         if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError('Total number of articles is out of range')
-        if not isinstance(self._num_articles, int) or self._num_articles < 0:
-            raise IncorrectNumberOfArticlesError('Total number of articles is not integer or less than 0')
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers are not in a form of dictionary')
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('Encoding is not in a form of string')
-        if not isinstance(self._timeout, int) and not 0 <= self._timeout <= 60:
+        if not isinstance(self._timeout, int) or not 0 <= self._timeout <= 60:
             raise IncorrectTimeoutError('Wrong timeout value')
-        if not isinstance(self._should_verify_certificate, bool):
+        if (not isinstance(self._should_verify_certificate, bool) or
+                not isinstance(self._headless_mode, bool)):
             raise IncorrectVerifyError('should_verify_certificate must be bool')
 
     def get_seed_urls(self) -> list[str]:
