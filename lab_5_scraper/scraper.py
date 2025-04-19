@@ -18,33 +18,42 @@ from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+from time import sleep
+from random import randint
 
 
 class IncorrectSeedURLError(Exception):
+    """Seed urls are not presented as a list or are not strings"""
     pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
+    """Number of articles is not an integer or less than zero"""
     pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
+    """Number of articles is bigger than 150"""
     pass
 
 
 class IncorrectHeadersError(Exception):
+    """Headers are not presented as a dictionary"""
     pass
 
 
 class IncorrectEncodingError(Exception):
+    """Encoding value is not a string"""
     pass
 
 
 class IncorrectTimeoutError(Exception):
+    """Timeout value is not an integer or less than 1 or bigger than 60"""
     pass
 
 
 class IncorrectVerifyError(Exception):
+    """Verify values are not a boolean"""
     pass
 
 
@@ -62,6 +71,7 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
+        prepare_environment(ASSETS_PATH)
         self.config_dto = self._extract_config_content()
         self._seed_urls = self.config_dto.seed_urls
         self._num_articles = self.config_dto.total_articles
@@ -80,40 +90,31 @@ class Config:
         """
         with open(self.path_to_config, 'r') as file:
             data = json.load(file)
-            return ConfigDTO(
-                data['seed_urls'],
-                data['total_articles_to_find_and_parse'],
-                data['headers'],
-                data['encoding'],
-                data['timeout'],
-                data['should_verify_certificate'],
-                data['headless_mode']
-            )
+            return ConfigDTO(**data)
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
-        with open(self.path_to_config, 'r') as file:
-            data = json.load(file)
-        if (not isinstance(data['seed_urls'], list)
-                or not all('https://sovsakh.ru/' in url for url in data['seed_urls'])):
+        data = self._extract_config_content()
+        if (not isinstance(data.seed_urls, list)
+                or not all('https://sovsakh.ru/' in url for url in data.seed_urls)):
             raise IncorrectSeedURLError
-        if (not isinstance(data['total_articles_to_find_and_parse'], int)
-                or isinstance(data['total_articles_to_find_and_parse'], bool)
-                or data['total_articles_to_find_and_parse'] < 0):
+        if (not isinstance(data.total_articles, int)
+                or isinstance(data.total_articles, bool)
+                or data.total_articles < 0):
             raise IncorrectNumberOfArticlesError
-        if data['total_articles_to_find_and_parse'] > 150:
+        if data.total_articles > 150:
             raise NumberOfArticlesOutOfRangeError
-        if not isinstance(data['headers'], dict):
+        if not isinstance(data.headers, dict):
             raise IncorrectHeadersError
-        if not isinstance(data['encoding'], str):
+        if not isinstance(data.encoding, str):
             raise IncorrectEncodingError
-        if not isinstance(data['timeout'], int) or not 0 <= data['timeout'] < 60:
+        if not isinstance(data.timeout, int) or not 0 < data.timeout <= 60:
             raise IncorrectTimeoutError
-        if not isinstance(data['should_verify_certificate'], bool):
+        if not isinstance(data.should_verify_certificate, bool):
             raise IncorrectVerifyError
-        if not isinstance(data['headless_mode'], bool):
+        if not isinstance(data.headless_mode, bool):
             raise IncorrectVerifyError
 
     def get_seed_urls(self) -> list[str]:
@@ -191,11 +192,14 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    return requests.get(
+    # sleep(randint(1, 10))
+    response = requests.get(
         url,
         headers=config.get_headers(),
-        timeout=config.get_timeout()
+        timeout=config.get_timeout(),
     )
+    response.encoding = config.get_encoding()
+    return response
 
 
 class Crawler:
@@ -229,11 +233,11 @@ class Crawler:
         block = article_bs.find('div', {'class': 'td_block_inner tdb-block-inner td-fix-index'})
         urls = block.find_all('a', href=True)
         for url in urls:
-            if url:
-                href = url['href']
-                if 'https://sovsakh.ru/' in href:
-                    if href not in self.urls:
-                        return href
+            if not url:
+                continue
+            href = url['href']
+            if href not in self.urls:
+                return href
         return ''
 
     def find_articles(self) -> None:
