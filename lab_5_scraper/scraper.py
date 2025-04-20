@@ -9,6 +9,7 @@ import shutil
 import requests
 from bs4 import BeautifulSoup
 from typing import Pattern, Union
+from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -228,11 +229,25 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        articles = article_bs.find_all('a', {'class': 'news_item'})
+        for el in articles:
+            href = el["href"]
+            link = "https://polkrug.ru" + href
+            if isinstance(link, str) and link not in self.urls:
+                return link
+        return ''
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        for seed_url in self.get_search_urls():
+            response = make_request(seed_url, self.config)
+            if response.ok:
+                while len(self.urls) < self.config.get_num_articles():
+                    extracted_url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
+                    if extracted_url not in self.urls:
+                        self.urls.append(extracted_url)
 
     def get_search_urls(self) -> list:
         """
@@ -241,7 +256,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-
+        return self.config.get_seed_urls()
 
 # 10
 # 4, 6, 8, 10
@@ -261,6 +276,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.full_url = full_url
+        self.article_id = article_id
+        self.config = config
+        self.article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -269,6 +288,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        article = article_soup.find_all('div', {'class': 'articleBody'})
+        text = []
+        for element in article:
+            text.append(element.get_text(strip=True))
+        self.article.text = "\n".join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -296,6 +320,12 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self.full_url, self.config)
+        if response.ok:
+            article_bs = BeautifulSoup(response.text, "lxml")
+            self._fill_article_with_text(article_bs)
+        return self.article
+
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
