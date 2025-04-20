@@ -402,7 +402,7 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler.find_articles()
     for ind, url in enumerate(crawler.urls):
-        parser = HTMLParser(url, ind, config)
+        parser = HTMLParser(url, ind + 1, config)
         article = parser.parse()
         to_raw(article)
         to_meta(article)
