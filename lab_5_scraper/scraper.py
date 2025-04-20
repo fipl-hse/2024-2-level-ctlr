@@ -295,8 +295,9 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        texts = article_soup.find_all('p')
-        texts = [block.text for block in texts]
+        block = article_soup.find('div', {'class': 'td-ss-main-content'})
+        texts = block.find_all('p')
+        texts = [el.text for el in texts]
         self.article.text = '\n'.join(texts)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
@@ -307,8 +308,9 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find('h1', {'class': 'entry-title'}).text
-        texts = article_soup.find_all('p')
-        author = [block.text for block in texts][-2]
+        block = article_soup.find('div', {'class': 'td-ss-main-content'})
+        texts = block.find_all('p')
+        author = [el.text for el in texts][-2]
         if len(author) < 20:
             self.article.author = author
         else:
