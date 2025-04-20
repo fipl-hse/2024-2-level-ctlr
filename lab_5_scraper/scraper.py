@@ -312,7 +312,7 @@ class HTMLParser:
         texts = block.find_all('p')
         author = [el.text for el in texts][-2]
         if len(author) < 20:
-            self.article.author = author
+            self.article.author = [author]
         else:
             self.article.author = ['NOT FOUND']
         self.article.date = self.unify_date_format(article_soup.find('time', {'class': 'entry-date updated td-module-date'}).text)
