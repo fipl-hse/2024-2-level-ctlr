@@ -6,7 +6,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 ASSETS_PATH = PROJECT_ROOT / "tmp" / "articles"
-CRAWLER_CONFIG_PATH = PROJECT_ROOT / "lab_5_scrapper" / "scrapper_config.json"
+CRAWLER_CONFIG_PATH = PROJECT_ROOT / "lab_5_scraper" / "scraper_config.json"
 PROJECT_CONFIG_PATH = PROJECT_ROOT / "project_config.json"
 
 CONFIG_DIR = PROJECT_ROOT / "config"
