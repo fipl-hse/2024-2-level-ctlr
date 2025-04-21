@@ -2,70 +2,65 @@
 Crawler implementation.
 """
 
-# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-from pathlib import Path
-import pathlib
-from typing import Pattern, Union
-from bs4 import BeautifulSoup
 import datetime
-from core_utils.article.article import Article
-from core_utils.article.io import to_meta, to_raw
-from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH, PROJECT_ROOT
-
-from core_utils.config_dto import ConfigDTO
 import json
-import requests
+import pathlib
 import re
 import shutil
+
+# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+from pathlib import Path
+from typing import Pattern, Union
+
+import requests
+from bs4 import BeautifulSoup
+
+from core_utils.article.article import Article
+from core_utils.article.io import to_meta, to_raw
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
     """
     Check seed URL does match or not standard pattern https?://(www.)?.
     """
-    pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """
     Check total number of articles is out of range from 1 to 150 or not.
     """
-    pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """
     Check total number of articles to parse is not integer or less than 0.
     """
-    pass
 
 
 class IncorrectHeadersError(Exception):
     """
     Check headers are in a form of dictionary or not.
     """
-    pass
 
 
 class IncorrectEncodingError(Exception):
     """
     Check that encoding must be specified as a string.
     """
-    pass
 
 
 class IncorrectTimeoutError(Exception):
     """
     Check that  timeout value must be a positive integer less than 60.
     """
-    pass
 
 
 class IncorrectVerifyError(Exception):
     """
     Check verify certificate value must either be ``True`` or ``False``.
     """
-    pass
 
 
 class Config:
@@ -109,24 +104,34 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self._seed_urls, list) or not all(isinstance(url, str) for url in self._seed_urls):
+        if not isinstance(self._seed_urls, list) or not all(isinstance(url, str)
+                                                            for url in self._seed_urls):
             raise IncorrectSeedURLError("Seed URL must be a string and be in the list")
-        url_pattern = r'^(https?://(www\.)?[^/]+.*)$'
+        url_pattern = r'^(https?://(www\.)?zvezdaaltaya\.ru(/.*)?$)'
         if not all(re.match(url_pattern, url) for url in self._seed_urls):
             raise IncorrectSeedURLError("Seed URL must be a valid URL format")
-        if not isinstance(self._num_articles, int) or self._num_articles <= 0:
-            raise IncorrectNumberOfArticlesError("Total number of articles to parse is not an integer")
+        if (not isinstance(self._num_articles, int)
+                or self._num_articles <= 0):
+            raise (IncorrectNumberOfArticlesError
+                   ("Total number of articles to parse is not an integer"))
         if self._num_articles > 150:
-            raise NumberOfArticlesOutOfRangeError("Total number of articles is out of range from 1 to 150")
-        if (not isinstance(self._headers, dict) or not all(isinstance(key, str) for key in self._headers.keys())
-                or not all(isinstance(value, str) for value in self._headers.values())):
-            raise IncorrectHeadersError("Headers must be presented as a dictionary with strings")
+            raise (NumberOfArticlesOutOfRangeError
+                   ("Total number of articles is out of range from 1 to 150"))
+        if (not isinstance(self._headers, dict) or
+                not all(isinstance(key, str) for key in self._headers.keys())
+                or not all(isinstance(value, str) for value
+                           in self._headers.values())):
+            raise (IncorrectHeadersError
+                   ("Headers must be presented as a dictionary with strings"))
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError("Encoding must be a string")
-        if not isinstance(self._timeout, int) or self._timeout not in range(1, 61):
+        if (not isinstance(self._timeout, int) or
+                self._timeout not in range(1, 61)):
             raise IncorrectTimeoutError("Timeout is out of range - 60")
-        if not isinstance(self._headless_mode, bool) or not isinstance(self._should_verify_certificate, bool):
-            raise IncorrectVerifyError("Headless mode and should_verify_certificate must be a bool")
+        if (not isinstance(self._headless_mode, bool) or
+                not isinstance(self._should_verify_certificate, bool)):
+            raise (IncorrectVerifyError
+                   ("Headless mode and should_verify_certificate must be a bool"))
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -240,7 +245,7 @@ class Crawler:
             str: Url from HTML
         """
         extracted_hrefs = {link['href'] for link in article_bs.find_all('a', href=True)}
-        url_pattern = r'^(https?://(www\.)?zvezdaaltaya\.ru/.*)$'
+        url_pattern = r'^(https?://(www\.)?zvezdaaltaya\.ru/\d{4}/\d{2}/.*)$'
         for url_href in extracted_hrefs:
             if isinstance(url_href, str):
                 if url_href.startswith('/'):
@@ -261,7 +266,7 @@ class Crawler:
         for url in seed_urls:
             try:
                 response = make_request(url, self.config)
-                if response.status_code >= 400:
+                if not response.ok:
                     continue
 
                 article_bs = BeautifulSoup(response.text, 'lxml')
@@ -269,7 +274,10 @@ class Crawler:
                     article_url = self._extract_url(article_bs)
                     if article_url == "":
                         break
-                    self.urls.append(article_url)
+                    if article_url not in self.urls:
+                        self.urls.append(article_url)
+                    #if len(self.urls) > 100:
+                    #    break
 
             except requests.exceptions.RequestException:
                 continue
@@ -332,17 +340,38 @@ class HTMLParser:
         """
         try:
             title_element = article_soup.find("h1", class_="entry-title")
-            self.article.title = title_element.get_text(strip=True) if title_element else "NOT FOUND"
+            self.article.title = (title_element.get_text
+                                  (strip=True)) if title_element else "NOT FOUND"
 
-            author_bs = article_soup.find('meta', attrs={'name': 'author'})
-            self.article.author = [author_bs['content'] if author_bs else "NOT FOUND"]
+            spans_author = article_soup.find_all('span', style="color: #808080; font-size: 10pt;")
+            text_author = article_soup.find_all('strong', attrs={"original-font-size": "15px"})
+            left_author = article_soup.find_all('p', attrs={"style":"text-align: right;"})
+            if spans_author:
+                self.article.author = [spans_author[0].get_text(strip=True)]
+            if text_author:
+                self.article.author = [text_author[0].get_text(strip=True)]
+            if left_author:
+                self.article.author = [left_author[0].get_text(strip=True)]
+            if not spans_author and not text_author and not left_author:
+                self.article.author = ["NOT FOUND"]
 
-            self.article.date = self.unify_date_format(article_soup.find("div", class_="td-module-meta-info").text)
+            published_time_meta = article_soup.find('meta', property='article:published_time')
+            #if published_time_meta is not None:
+            time = published_time_meta.get('content')
+            if time:
+                self.article.date = self.unify_date_format(str(time))
+            else:
+                self.article.date = datetime.datetime.min
 
-            categories = article_soup.find_all('li', class_='entry-category')
-            self.article.topics = [category.get_text(strip=True) for category in categories] if categories else []
+            self.article.topics = []
+            categories = article_soup.find_all('ul', class_="td-tags td-post-small-box clearfix")
+            for category in categories:
+                for a in category.find_all('a'):
+                    self.article.topics.append(a.get_text(strip=True))
+
         except AttributeError:
             print('Something has gone wrong with url:', self.full_url)
+            self.article.date = datetime.datetime.min
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -354,38 +383,13 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        if len(date_str) == 9 and date_str[4:7].isalpha():
-            year = int(date_str[:4])
-            month_str = date_str[4:7].lower()
-            day = int(date_str[7:9])
-            month_mapping = {
-                'янв': 1, 'фев': 2, 'мар': 3, 'апр': 4, 'май': 5,
-                'июн': 6, 'июл': 7, 'авг': 8, 'сен': 9, 'окт': 10,
-                'ноя': 11, 'дек': 12
-            }
-            month = month_mapping.get(month_str)
-            if month is None:
-                raise ValueError(f"Invalid month abbreviation: {month_str}")
-            return datetime.datetime(year, month, day)
 
-        elif len(date_str) == 10 and date_str[4] == '/' and date_str[7] == '/':
-            year, month, day = map(int, date_str.split('/'))
-            return datetime.datetime(year, month, day)
-
-        elif len(date_str) == 25 and date_str[8] == 'T':
-            year = int(date_str[:4])
-            month = int(date_str[4:6])
-            day = int(date_str[6:8])
-            hour = int(date_str[9:11])
-            minute = int(date_str[12:14])
-            return datetime.datetime(year, month, day, hour, minute)
-
-        elif len(date_str) >= 7 and date_str[2] == '/':
-            day, year = date_str.split('/')
-            day = int(day)
-            year = int(year)
-            month = 6
-            return datetime.datetime(year, month, day)
+        date_part, time_part = date_str.split("T")
+        time_part = time_part.split("+")[0]
+        year, month, day = map(int, date_part.split("-"))
+        hour, minute, second = map(int, time_part.split(":"))
+        result = datetime.datetime(year, month, day, hour, minute, second)
+        return result
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -395,10 +399,14 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         response = make_request(self.full_url, self.config)
-        if response.status_code < 400:
+        if response.ok:
+            #data = response.content.decode(self.config.get_encoding())
             article_bs = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(article_bs)
             self._fill_article_with_meta_information(article_bs)
+        else:
+            return Article(self.full_url, self.article_id)
+
         return self.article
 
 
@@ -427,8 +435,9 @@ def main() -> None:
     for identifier, url in enumerate(crawler.urls):
         parser = HTMLParser(url, identifier + 1, config)
         article = parser.parse()
-        to_raw(article)
-        to_meta(article)
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 if __name__ == "__main__":
     main()
