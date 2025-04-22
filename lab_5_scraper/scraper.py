@@ -5,10 +5,14 @@ Crawler implementation.
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import json
+import random
 import shutil
+import time
 
 import requests
+import datetime
 
+from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 from bs4 import BeautifulSoup
@@ -45,14 +49,14 @@ class IncorrectHeadersError(Exception):
 
 class IncorrectEncodingError(Exception):
     """
-    Exception raised when encoding must be specified as a string.
+    Exception raised when encoding is not specified as a string.
     """
     pass
 
 
 class IncorrectTimeoutError(Exception):
     """
-    Exception raised when timeout value must be a positive integer less than 60.
+    Exception raised when timeout value is not a positive integer less than 60.
     """
     pass
 
@@ -79,11 +83,11 @@ class Config:
         self.path_to_config = path_to_config
         self.config = self._extract_config_content()
         self._seed_urls = self.config.seed_urls
-        self._total_articles = self.config.total_articles
+        self._num_articles = self.config.total_articles
         self._headers = self.config.headers
         self._encoding = self.config.encoding
         self._timeout = self.config.timeout
-        self._verify_certificate = self.config.should_verify_certificate
+        self._should_verify_certificate = self.config.should_verify_certificate
         self._headless_mode = self.config.headless_mode
         self._validate_config_content()
 
@@ -96,25 +100,22 @@ class Config:
         """
         with open(self.path_to_config, 'r', encoding='utf-8') as file_to_read:
             scraper_config = json.load(file_to_read)
-        config = ConfigDTO(**scraper_config)
-        return config
+        return ConfigDTO(**scraper_config)
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self._seed_urls, list) or \
-                not all(isinstance(seed_url, str) for seed_url in self._seed_urls) or \
-                not any('https://pravda-nn.ru/' not in seed_url
-                        for seed_url in self._seed_urls):
+        if (not isinstance(self._seed_urls, list)
+                or not all(isinstance(seed_url, str) for seed_url in self._seed_urls)
+                or any('https://pravda-nn.ru/' not in seed_url for seed_url in self._seed_urls)):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern.')
-        if self._total_articles not in range(1, 151):
-            raise NumberOfArticlesOutOfRangeError('Number of articles is out of range.')
-        if not isinstance(self._total_articles, int) \
-                or isinstance(self._total_articles, bool) \
-                or self._total_articles < 0:
+        if (not isinstance(self._num_articles, int) or isinstance(self._num_articles, bool)
+                or self._num_articles <= 0):
             raise IncorrectNumberOfArticlesError('Number of articles is either not integer \
             or less than 0.')
+        if self._num_articles not in range(1, 151):
+            raise NumberOfArticlesOutOfRangeError('Number of articles is out of range.')
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers do not have a form of dictionary.')
         if not isinstance(self._encoding, str):
@@ -122,8 +123,10 @@ class Config:
         if not isinstance(self._timeout, int) or isinstance(self._timeout, bool) \
                 or self._timeout not in range(1, 61):
             raise IncorrectTimeoutError('Timeout is either not positive integer or more than 60.')
-        if not isinstance(self._verify_certificate, bool):
-            raise IncorrectVerifyError('Verify certificate value is not bool.')
+        if (not isinstance(self._should_verify_certificate, bool)
+                or not isinstance(self._headless_mode, bool)):
+            raise IncorrectVerifyError('Verify certificate value or headless mode value \
+            are not bool.')
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -141,7 +144,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self._total_articles
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -177,7 +180,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self._verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -200,6 +203,10 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    requests.get(url=url, headers=config.get_headers(), timeout=config.get_timeout(),
+                 verify=config.get_verify_certificate())
+    a = random.randint(1, 10)
+    time.sleep(a)
     return requests.get(url=url, headers=config.get_headers(), timeout=config.get_timeout(),
                         verify=config.get_verify_certificate())
 
@@ -221,6 +228,7 @@ class Crawler:
         """
         self.config = config
         self.urls = []
+        self.seed_urls = None
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -232,12 +240,27 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        
+        url = article_bs.get('href')
+        if not url.startswith('https://pravda-nn.ru/'):
+            url = 'https://pravda-nn.ru/' + url
+        if url not in self.urls:
+            return url
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        self.seed_urls = self.get_search_urls()
+        for seed_url in self.seed_urls:
+            response = make_request(seed_url, self.config)
+            if response.status_code != 200:
+                continue
+            bs = BeautifulSoup(response.content, 'html.parser')
+            for article_bs in bs.find_all('a', class_='content', href=True):
+                url = self._extract_url(article_bs)
+                if make_request(url, self.config).status_code != 200:
+                    continue
+                self.urls.append(url)
 
     def get_search_urls(self) -> list:
         """
@@ -246,6 +269,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.config.get_seed_urls()
 
 
 # 10
@@ -266,6 +290,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.full_url = full_url
+        self.article_id = article_id
+        self.config = config
+        self.article = Article(self.full_url, self.article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -274,6 +302,9 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        articles_html = article_soup.find_all(class_="vc_row wpb_row vc_row-fluid")
+        for article_html in articles_html:
+            self.article.text = '\n'.join([p.text for p in article_html.find_all('p') if p.text != ''])
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -301,6 +332,11 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self.full_url, self.config)
+        article_bs = BeautifulSoup(response.text, 'html.parser')
+        self._fill_article_with_text(article_bs)
+        # self._fill_article_with_meta_information(article_bs)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -313,7 +349,7 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     if base_path.exists() and base_path.is_dir():
         if any(base_path.iterdir()):
             shutil.rmtree(base_path)
-    base_path.mkdir()
+    base_path.mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
