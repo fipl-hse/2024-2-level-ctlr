@@ -28,32 +28,26 @@ class IncorrectSeedURLError(Exception):
 
 class IncorrectNumberOfArticlesError(Exception):
     """Number of articles is not an integer or less than zero"""
-    pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """Number of articles is bigger than 150"""
-    pass
 
 
 class IncorrectHeadersError(Exception):
     """Headers are not presented as a dictionary"""
-    pass
 
 
 class IncorrectEncodingError(Exception):
     """Encoding value is not a string"""
-    pass
 
 
 class IncorrectTimeoutError(Exception):
     """Timeout value is not an integer or less than 1 or bigger than 60"""
-    pass
 
 
 class IncorrectVerifyError(Exception):
     """Verify values are not a boolean"""
-    pass
 
 
 class Config:
@@ -375,13 +369,22 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
 
 
 class CrawlerRecursive(Crawler):
+    """
+    Recursive Crawler implementation.
+    """
     def __init__(self, config):
+        """
+        Initialize an instance of the CrawlerRecursive class.
+        """
         super().__init__(config)
         self.start_url = "https://sovsakh.ru/category/obshhestvo/"
         self.recursive_PATH = ASSETS_PATH.parent / "recursive_articles.json"
         self.urls = []
 
     def find_articles(self) -> None:
+        """
+        Find articles.
+        """
         if self.urls:
             with open(self.recursive_PATH, 'r') as file:
                 self.urls = json.load(file)
