@@ -1,19 +1,20 @@
 """
 Crawler implementation.
 """
-
+import datetime
+import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
-from typing import Pattern, Union
-import json
 import shutil
+from typing import Pattern, Union
+from urllib.parse import urljoin
+
 import requests
 from bs4 import BeautifulSoup
+
 from core_utils.article.article import Article
-import datetime
-from core_utils.config_dto import ConfigDTO
-from urllib.parse import urljoin
 from core_utils.article.io import to_meta, to_raw
+from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
@@ -102,34 +103,29 @@ class Config:
         if (not isinstance(self._seed_urls, list) or
                 not all(isinstance(url, str) for url in self._seed_urls)):
             raise IncorrectSeedURLError('Seed URLs must be a list of strings')
-        if not all(url.startswith('https://www.universalinternetlibrary.ru/content/category/poleznoe/') for url in
+        if not all(url.startswith('https://www.universalinternetlibrary.ru/') for url in
                    self._seed_urls):
             raise IncorrectSeedURLError('Invalid seed URL pattern')
 
-        if not isinstance(self._num_articles, int) or self._num_articles < 1:
+        if not isinstance(self._num_articles, int) or self._num_articles <= 0:
             raise IncorrectNumberOfArticlesError("Number of articles must be integer")
 
         if not (1 <= self._num_articles <= 150):
             raise NumberOfArticlesOutOfRangeError("Number of articles must be 1-150")
 
-        # Validate headers
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError("Headers must be a dictionary")
 
-        # Validate encoding
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError("Encoding must be a string")
 
-        # Validate timeout
         if (not isinstance(self._timeout, int) or
                 not (1 <= self._timeout <= 60)):
             raise IncorrectTimeoutError("Timeout must be integer 1-60")
 
-        # Validate certificate verification
         if not isinstance(self._should_verify_certificate, bool):
             raise IncorrectVerifyError("Certificate verification must be boolean")
 
-        # Validate headless mode
         if not isinstance(self._headless_mode, bool):
             raise IncorrectVerifyError("Headless mode must be boolean")
 
@@ -243,13 +239,15 @@ class Crawler:
             str: Url from HTML
         """
         block = article_bs.find('div', {'class': 'post-card__thumbnail'})
+        if not block:
+            return ''
+
         urls = block.find_all('a', href=True)
         for url in urls:
-            if url:
-                href = url['href']
-                if 'https://www.universalinternetlibrary.ru' in href:
-                    if href not in self.urls:
-                        return href
+            href = url.get('href', '')
+            if (href.startswith('https://www.universalinternetlibrary.ru')
+                    and href not in self.urls):
+                return href
         return ''
 
     def find_articles(self) -> None:
@@ -263,6 +261,7 @@ class Crawler:
             try:
                 response = make_request(seed_url, self.config)
                 if not response.ok:
+                    print(f"Request failed for URL: {seed_url} - Status code: {response.status_code}")
                     continue
             except (requests.RequestException, requests.Timeout):
                 continue
@@ -322,12 +321,18 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        article_div = article_soup.find("div", class_="site-content-inner")
-        text = []
-        for element in article_div:
-            if element.get_text().strip():
-                text.append(element.get_text(strip=True, separator="\n"))
-        self.article.text = "\n".join(text)
+        article_content = article_soup.find("div", class_="site-content-inner")
+        if not article_content:
+            self.article.text = "Article content not found"
+            return
+
+        text_blocks = [
+            element.get_text(strip=True, separator="\n")
+            for element in article_content.find_all(recursive=True)
+            if element.get_text().strip()
+        ]
+
+        self.article.text = "\n\n".join(text_blocks)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -387,7 +392,6 @@ def main() -> None:
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
-
 
 
 if __name__ == "__main__":
