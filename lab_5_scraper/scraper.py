@@ -2,10 +2,20 @@
 Crawler implementation.
 """
 
+import datetime
+import json
+
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 from typing import Pattern, Union
 
+import requests
+from bs4 import BeautifulSoup
+
+
+from core_utils.article.article import Article
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 class Config:
     """
@@ -19,6 +29,9 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.path = path_to_config
+        self.config = self._extract_config_content()
+
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -27,6 +40,9 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
+        with open(self._path, 'r', encoding='utf-8') as file:
+            config_data = json.load(file)
+        return ConfigDTO(**config_data)
 
     def _validate_config_content(self) -> None:
         """
