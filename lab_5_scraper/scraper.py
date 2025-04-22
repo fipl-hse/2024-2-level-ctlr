@@ -3,13 +3,17 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import datetime
 import json
 import pathlib
 import shutil
 import requests
+from time import sleep
+from random import randint
 from bs4 import BeautifulSoup
 from typing import Pattern, Union
 from core_utils.article.article import Article
+from core_utils.article.io import to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -72,7 +76,7 @@ class Config:
         extractions = self._extract_config_content()
         self._seed_urls = extractions.seed_urls
         self._headers = extractions.headers
-        self._total_articles_to_find_and_parse = extractions.total_articles_to_find_and_parse
+        self._num_articles = extractions.total_articles
         self._encoding = extractions.encoding
         self._timeout = extractions.timeout
         self._should_verify_certificate = extractions.should_verify_certificate
@@ -102,18 +106,20 @@ class Config:
         """
         if not isinstance(self._seed_urls, list) or \
                 not all(isinstance(url, str) for url in self._seed_urls) or \
-                not all(isinstance(url.startswith("https://polkrug.ru")) for url in self._seed_urls):
+                not all(url.startswith("https://polkrug.ru") for url in self._seed_urls):
             raise IncorrectSeedURLError("Seed URL is not a valid URL")
-        if not isinstance(self._total_articles_to_find_and_parse, int) or \
-                isinstance(self._total_articles_to_find_and_parse, bool) or \
-                self._total_articles_to_find_and_parse < 0:
+        if not isinstance(self._num_articles, int) or \
+                isinstance(self._num_articles, bool) or \
+                self._num_articles < 0:
             raise IncorrectNumberOfArticlesError("Number of articles is not integer or less than 0")
-        if self._total_articles_to_find_and_parse > 150:
+        if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError("Total number of articles is out of range")
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError("Headers are not in a form of dictionary")
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError("Encoding is not a string")
+        if not isinstance(self._timeout, int):
+            raise IncorrectTimeoutError('Timeout is not int')
         if self._timeout < 0 or self._timeout > 60:
             raise IncorrectTimeoutError("Timeout is out of range")
         if not isinstance(self._should_verify_certificate, bool):
@@ -137,7 +143,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self._total_articles_to_find_and_parse
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -146,7 +152,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
-        self._headers
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -173,7 +179,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        self._should_verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -182,7 +188,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-        self._headless_mode
+        return self._headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
@@ -229,9 +235,9 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        articles = article_bs.find_all('a', {'class': 'news_item'})
+        articles = article_bs.find_all('div', {'class': 'news_item'})
         for el in articles:
-            href = el["href"]
+            href = el.find('a')["href"]
             link = "https://polkrug.ru" + href
             if isinstance(link, str) and link not in self.urls:
                 return link
@@ -242,9 +248,11 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.get_search_urls():
+            if len(self.urls) >= self.config.get_num_articles():
+                break
             response = make_request(seed_url, self.config)
             if response.ok:
-                while len(self.urls) < self.config.get_num_articles():
+                for _ in range(20):
                     extracted_url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
                     if extracted_url not in self.urls:
                         self.urls.append(extracted_url)
@@ -288,11 +296,8 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        article = article_soup.find_all('div', {'class': 'articleBody'})
-        text = []
-        for element in article:
-            text.append(element.get_text(strip=True))
-        self.article.text = "\n".join(text)
+        article = article_soup.find('div', {'itemprop': 'articleBody'})
+        self.article.text = article.text
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -327,7 +332,6 @@ class HTMLParser:
         return self.article
 
 
-
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
     Create ASSETS_PATH folder if no created and remove existing folder.
@@ -342,14 +346,19 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     pathlib.Path(base_path).mkdir(parents=True)
 
 
-
-
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config=configuration)
+    crawler.find_articles()
+    for i, url in enumerate(crawler.urls):
+        parser = HTMLParser(url, i + 1, configuration)
+        article = parser.parse()
+        if isinstance(article, Article):
+            to_raw(article)
 
 
 if __name__ == "__main__":
     main()
-    #Hello)))
