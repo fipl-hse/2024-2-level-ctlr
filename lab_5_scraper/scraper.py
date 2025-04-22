@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH, PROJECT_ROOT
 
 
 class IncorrectSeedURLError(Exception):
@@ -70,7 +70,6 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
-        # prepare_environment(ASSETS_PATH)
         self.config_dto = self._extract_config_content()
         self._seed_urls = self.config_dto.seed_urls
         self._num_articles = self.config_dto.total_articles
@@ -379,19 +378,30 @@ class CrawlerRecursive(Crawler):
     def __init__(self, config):
         super().__init__(config)
         self.start_url = "https://sovsakh.ru/category/obshhestvo/"
+        self.recursive_PATH = ASSETS_PATH.parent / "recursive_articles.json"
         self.urls = []
 
     def find_articles(self) -> None:
+        if self.urls:
+            with open(self.recursive_PATH, 'r') as file:
+                self.urls = json.load(file)
         if len(self.urls) < self.config.get_num_articles():
-            response = make_request(self.start_url, self.config)
+            response = requests.get(self.start_url)
             if not response.ok:
                 return
             soup = BeautifulSoup(response.text, 'lxml')
             got_url = self._extract_url(soup)
             if not got_url:
-                return
-            self.urls.append(got_url)
-            self.start_url = got_url
+                self.start_url = self.urls[self.urls.index(self.start_url) - 1]
+            while got_url:
+                if not got_url or got_url in self.urls:
+                    continue
+                if 'https://sovsakh.ru/' in got_url:
+                    self.start_url = got_url
+                self.urls.append(got_url)
+                with open(self.recursive_PATH, 'w') as file:
+                    json.dump(self.urls, file)
+                got_url = self._extract_url(soup)
             self.find_articles()
 
 
@@ -400,7 +410,7 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
-    crawler = Crawler(config)
+    crawler = CrawlerRecursive(config)
     prepare_environment(ASSETS_PATH)
     crawler.find_articles()
     for ind, url in enumerate(crawler.urls):
