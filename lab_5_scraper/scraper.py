@@ -326,6 +326,13 @@ class HTMLParser:
         self.article.title = title.get_text().strip() if title else "NO TITLE"
         self.article.author = ["NOT FOUND"]
 
+        time_tag = article_soup.find('time')
+        if time_tag:
+            self.article.date = self.unify_date_format(time_tag.text.strip())
+
+        topic_tags = article_soup.find_all(class_='topic')
+        self.article.topics = [topic.text.strip() for topic in topic_tags]
+
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unify date format.
@@ -336,6 +343,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        return datetime.datetime.strptime(date_str.strip(), '%d.%m.%Y %H:%M')
 
     def parse(self) -> Union[Article, bool, list]:
         """
