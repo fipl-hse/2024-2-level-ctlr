@@ -7,7 +7,13 @@ import json
 import requests
 import pathlib
 import shutil
+import datetime
 
+from typing import Union, Pattern
+
+from bs4 import BeautifulSoup
+
+from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -67,7 +73,6 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        self._validate_config_content()
         config = self._extract_config_content()
         self._seed_urls = config.seed_urls
         self._total_articles = config.total_articles
@@ -76,6 +81,7 @@ class Config:
         self._timeout = config.timeout
         self._verify_certificate = config.should_verify_certificate
         self._headless_mode = config.headless_mode
+        self._validate_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
         """
