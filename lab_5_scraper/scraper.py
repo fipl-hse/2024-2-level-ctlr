@@ -9,6 +9,47 @@ from core_utils.config_dto import ConfigDTO
 from typing import Pattern, Union
 
 
+class IncorrectSeedURLError(Exception):
+    """
+    Seed URL does not match standard pattern 'https?://(www.)?'
+    """
+
+
+class NumberOfArticlesOutOfRangeError(Exception):
+    """
+    Total number of articles is out of range from 1 to 150
+    """
+
+
+class IncorrectNumberOfArticlesError(Exception):
+    """
+    Total number of articles to parse is not integer or less than 0
+    """
+
+
+class IncorrectHeadersError(Exception):
+    """
+    Headers are not in a form of dictionary
+    """
+
+
+class IncorrectEncodingError(Exception):
+    """
+    Encoding must be specified as a string
+    """
+
+
+class IncorrectTimeoutError(Exception):
+    """
+    Timeout value must be a positive integer less than 60
+    """
+
+
+class IncorrectVerifyError(Exception):
+    """
+    Verify certificate value must either be True or False
+    """
+
 class Config:
     """
     Class for unpacking and validating configurations.
@@ -22,6 +63,14 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path = pathlib.Path(path_to_config)
+        extr_config = self._extract_config_content()
+        self.seed_urls = extr_config.seed_urls
+        self.total_articles = extr_config.total_articles
+        self.headers = extr_config.headers
+        self.encoding = extr_config.encoding
+        self.timeout = extr_config.timeout
+        self.should_verify_certificate = extr_config.should_verify_certificate
+        self.headless_mode = extr_config.headless_mode
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -32,12 +81,30 @@ class Config:
         """
         with open(self.path, "r", encoding="utf-8") as file:
             config_data = json.load(file)
-        return ConfigDTO(config_data)
+        return ConfigDTO(**config_data)
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
+        cfg = self._extract_config_content()
+
+        if not ("http://www.znamyatrud.ru" in url for url in self.seed_urls):
+            raise IncorrectSeedURLError('incorrect URL')
+        if self.total_articles < 1 or self.total_articles > 150:
+            raise NumberOfArticlesOutOfRangeError('number of articles is out of range')
+        if not isinstance(self.total_articles, int) or \
+            self.total_articles < 0:
+            raise IncorrectNumberOfArticlesError('incorrect number of articles')
+        if not isinstance(self.headers, dict):
+            raise IncorrectHeadersError('headers are not dict')
+        if not isinstance(self.encoding, str):
+            raise IncorrectEncodingError('encoding is not str')
+        if self.timeout < 0 or self.timeout > 60:
+            raise IncorrectTimeoutError('incorrect timeout')
+        if not isinstance(self.should_verify_certificate, bool) or \
+            not isinstance(self.headless_mode, bool):
+            raise IncorrectVerifyError("verify is not bool")
 
     def get_seed_urls(self) -> list[str]:
         """
