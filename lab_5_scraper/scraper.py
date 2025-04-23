@@ -284,6 +284,9 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.article = Article(full_url, article_id)
+        self.config = config
+
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -292,6 +295,19 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        full_text = []
+        title = article_soup.find(class_='name').text
+        extract = article_soup.find('p', class_='description').text
+        full_text.extend([title, extract])
+        article_body = article_soup.find('div', class_='entry-content')
+        for part in article_body.find_all(['p', 'ol', 'ul']):
+            if part.find('a'):
+                break
+            text = part.get_text()
+            if text:
+                full_text.append(text)
+        self.article.text = '\n'.join(full_text)
+
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -319,6 +335,9 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        article_bs = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
+        self._fill_article_with_text(article_bs)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
