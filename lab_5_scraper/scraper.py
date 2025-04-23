@@ -12,6 +12,7 @@ from core_utils.constants import CRAWLER_CONFIG_PATH
 import shutil
 import requests
 from bs4 import BeautifulSoup
+import time
 
 class IncorrectSeedURLError(Exception):
     pass
@@ -177,6 +178,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    time.sleep(5)
     return requests.get(url, headers=config.get_headers(), verify=config.get_verify_certificate(),
                         timeout=config.get_timeout())
 
@@ -209,11 +211,34 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        news_tab = article_bs.find('div', {'class': 'volga-news-line'})
+        urls = news_tab.find_all("a", href=True)
+        for url in urls:
+            if not url:
+                continue
+            article = url['href']
+            real_article = f'https://www.volga-tv.ru{article}'
+            if real_article not in self.urls:
+                return real_article
+        return ''
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        urls = self.get_search_urls()
+        for url in urls:
+            if len(self.urls) > self.config.get_num_articles():
+                return None
+            response = make_request(url, self.config)
+            if not response.ok:
+                print("response not ok")
+                continue
+            bs = BeautifulSoup(response.text, 'lxml')
+            extracted_url = self._extract_url(bs)
+            if extracted_url not in self.urls:
+                self.urls.append(extracted_url)
+
 
     def get_search_urls(self) -> list:
         """
@@ -222,6 +247,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.config.get_seed_urls()
 
 
 # 10
