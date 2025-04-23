@@ -10,6 +10,8 @@ from core_utils.article.article import Article
 import pathlib
 import datetime
 import shutil
+from time import sleep
+from random import randint 
 from typing import Pattern, Union
 import requests
 from bs4 import BeautifulSoup
@@ -192,8 +194,11 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    return requests.get(url, headers=config.get_headers(), verify=config.get_verify_certificate(),
-                        timeout=config.get_timeout())
+    response = requests.get(url, headers=config.get_headers(),
+                            verify=config.get_verify_certificate(), timeout=config.get_timeout())
+    response.encoding = config.get_encoding()
+    sleep(randint(1, 15))
+    return response
 
 
 class Crawler:
@@ -237,6 +242,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.urls
 
 
 # 10
@@ -301,9 +307,10 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if pathlib.Path(base_path).is_dir():
-        shutil.rmtree(base_path)
-    pathlib.Path(base_path).mkdir(parents=True)
+    path = pathlib.Path(base_path)
+    if path.is_dir():
+        shutil.rmtree(path)
+    path.mkdir(parents=True)
 
 
 def main() -> None:
