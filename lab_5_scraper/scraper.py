@@ -89,7 +89,7 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open('scrapper_config.json') as file:
+        with open('scraper_config.json') as file:
             config = json.load(file)
         return ConfigDTO(**config)
 
@@ -97,7 +97,7 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        with open('scrapper_config.json') as file:
+        with open('scraper_config.json') as file:
             config = json.load(file)
         if (not config['seed_urls'] or not isinstance(config['seed_urls'], list)
                 or not all(isinstance(url, str) for url in config['seed_urls'])
