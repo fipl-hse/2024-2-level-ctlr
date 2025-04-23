@@ -10,7 +10,7 @@ import pytest
 
 from core_utils.article.article import Article
 from core_utils.constants import CRAWLER_CONFIG_PATH
-from lab_5_scrapper.scrapper import Config, Crawler, HTMLParser
+from lab_5_scraper.scraper import Config, Crawler, HTMLParser
 
 
 class HTMLParserTest(unittest.TestCase):
@@ -34,7 +34,7 @@ class HTMLParserTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_3_HTML_parser_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_html_parser_instantiation(self) -> None:
         """
         Ensure Parser is instantiated correctly.
@@ -51,7 +51,7 @@ class HTMLParserTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_3_HTML_parser_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_html_parser_parse_return_value_basic(self) -> None:
         """
         Ensure Parser.parser() returns Article with filled text field.
@@ -69,7 +69,7 @@ class HTMLParserTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_3_HTML_parser_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_html_parser_parse_return_value_medium(self) -> None:
         """
         Ensure Parser.parser() returns Article with filled title and author.
@@ -83,7 +83,7 @@ class HTMLParserTest(unittest.TestCase):
     @pytest.mark.mark8
     @pytest.mark.mark10
     @pytest.mark.stage_2_3_HTML_parser_check
-    @pytest.mark.lab_5_scrapper
+    @pytest.mark.lab_5_scraper
     def test_html_parser_parse_method_advanced(self) -> None:
         """
         Ensure Parser.parser() returns Article with filled date field.
