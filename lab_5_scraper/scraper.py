@@ -10,6 +10,8 @@ import shutil
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 from pathlib import Path
+from random import randint
+from time import sleep
 from typing import Pattern, Union
 
 import requests
@@ -263,21 +265,23 @@ class Crawler:
         Find articles.
         """
         seed_urls = self.config.get_seed_urls()
+        max_articles = self.config.get_num_articles()
         for url in seed_urls:
             try:
                 response = make_request(url, self.config)
                 if not response.ok:
                     continue
 
+                if not response.ok:
+                    continue
+
                 article_bs = BeautifulSoup(response.text, 'lxml')
-                while len(self.urls) < self.config.get_num_articles():
+                while len(self.urls) < max_articles:
                     article_url = self._extract_url(article_bs)
                     if article_url == "":
                         break
                     if article_url not in self.urls:
                         self.urls.append(article_url)
-                    #if len(self.urls) > 100:
-                    #    break
 
             except requests.exceptions.RequestException:
                 continue
@@ -329,7 +333,10 @@ class HTMLParser:
             article_text.append(block.get_text(strip=True))
 
         full_text = ' '.join(article_text)
-        self.article.text = full_text
+        if hasattr(self.article, 'text'):
+            self.article.text = full_text
+        else:
+            raise AttributeError("The 'text' attribute does not exist in the Article object")
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -356,7 +363,6 @@ class HTMLParser:
                 self.article.author = ["NOT FOUND"]
 
             published_time_meta = article_soup.find('meta', property='article:published_time')
-            #if published_time_meta is not None:
             time = published_time_meta.get('content')
             if time:
                 self.article.date = self.unify_date_format(str(time))
@@ -400,8 +406,8 @@ class HTMLParser:
         """
         response = make_request(self.full_url, self.config)
         if response.ok:
-            #data = response.content.decode(self.config.get_encoding())
-            article_bs = BeautifulSoup(response.text, 'lxml')
+            data = response.content.decode(self.config.get_encoding())
+            article_bs = BeautifulSoup(data, 'lxml')
             self._fill_article_with_text(article_bs)
             self._fill_article_with_meta_information(article_bs)
         else:
@@ -433,11 +439,13 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler.find_articles()
     for identifier, url in enumerate(crawler.urls):
+        sleep(randint(1, 10))
         parser = HTMLParser(url, identifier + 1, config)
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
+
 
 if __name__ == "__main__":
     main()
