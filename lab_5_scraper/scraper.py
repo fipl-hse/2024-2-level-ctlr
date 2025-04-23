@@ -249,7 +249,7 @@ class Crawler:
         article_links = article_bs.find_all('a', href=True)
 
         for link in article_links:
-            href = link['href']
+            href = str(link['href'])
             if re.match(self.url_pattern, href) and href not in self.urls:
                 return href
         return ''
