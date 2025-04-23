@@ -112,7 +112,8 @@ class Config:
 
         if (not isinstance(config_data['total_articles_to_find_and_parse'], int) or
                 config_data['total_articles_to_find_and_parse'] <= 0):
-            raise IncorrectNumberOfArticlesError('Number of articles must be an integer and be positive :(')
+            raise IncorrectNumberOfArticlesError('Number of articles must be '
+                                                 'an integer and be positive :(')
 
         if config_data['total_articles_to_find_and_parse'] > 150:
             raise NumberOfArticlesOutOfRangeError('Number of articles cannot be more than 150 :(')
@@ -125,7 +126,8 @@ class Config:
 
         if (not isinstance(config_data['timeout'], int) or config_data['timeout'] <= 0 or
                 config_data['timeout'] > 60):
-            raise IncorrectTimeoutError('Timeout must be an integer, more than 0 and less than 60 :(')
+            raise IncorrectTimeoutError('Timeout must be an integer, more than 0 '
+                                        'and less than 60 :(')
 
         if not isinstance(config_data['should_verify_certificate'], bool):
             raise IncorrectVerifyError('Certificate verification must be boolean :(')
@@ -382,9 +384,9 @@ def main() -> None:
     crawler = Crawler(config)
     crawler.find_articles()
 
-    for i, url in enumerate(crawler.urls[: config.get_num_articles()], start=1):
-        parser = HTMLParser(url, i, config)
-        article = parser.parse()
+    parser = HTMLParser("https://moyaokruga.ru/mayakdelty/", 1, config)
+    article = parser.parse()
+    if isinstance(article, Article):
         to_raw(article)
         to_meta(article)
 
