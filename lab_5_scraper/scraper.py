@@ -276,12 +276,14 @@ class Crawler:
                     continue
 
                 article_bs = BeautifulSoup(response.text, 'lxml')
-                while len(self.urls) < max_articles:
+                if len(self.urls) < max_articles:
                     article_url = self._extract_url(article_bs)
                     if article_url == "":
                         break
                     if article_url not in self.urls:
                         self.urls.append(article_url)
+                else:
+                    break
 
             except requests.exceptions.RequestException:
                 continue
