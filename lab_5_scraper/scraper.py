@@ -87,7 +87,6 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        cfg = self._extract_config_content()
 
         if not ("http://www.znamyatrud.ru" in url for url in self.seed_urls):
             raise IncorrectSeedURLError('incorrect URL')
