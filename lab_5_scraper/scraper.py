@@ -75,11 +75,11 @@ class Config:
         self.path_to_config = path_to_config
         config = self._extract_config_content()
         self._seed_urls = config.seed_urls
-        self._total_articles = config.total_articles
+        self._num_articles = config.total_articles
         self._headers = config.headers
         self._encoding = config.encoding
         self._timeout = config.timeout
-        self._verify_certificate = config.should_verify_certificate
+        self._should_verify_certificate = config.should_verify_certificate
         self._headless_mode = config.headless_mode
         self._validate_config_content()
 
@@ -105,10 +105,10 @@ class Config:
                 or not all(isinstance(url, str) for url in self._seed_urls)
                 or not all(url.startswith("https://kgd.ru/news/biz") for url in self._seed_urls)):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern "https?://(www.)?"')
-        if (not isinstance(self._total_articles, int) or isinstance(self._total_articles, bool)
-                or self._total_articles < 0):
+        if (not isinstance(self._num_articles, int) or isinstance(self._num_articles, bool)
+                or self._num_articles < 0):
             raise IncorrectNumberOfArticlesError('Total number of articles to parse is not integer or less than 0')
-        if not 1 <= self._total_articles <= 150:
+        if not 1 <= self._num_articles <= 150:
             raise NumberOfArticlesOutOfRangeError('Total number of articles is out of range from 1 to 150')
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers are not in a form of dictionary')
@@ -117,7 +117,7 @@ class Config:
         if (not isinstance(self._timeout, int)
                 or not 0 < self._timeout <= 60):
             raise IncorrectTimeoutError('Timeout value must be a positive integer less than 60')
-        if (not isinstance(self._verify_certificate, bool)
+        if (not isinstance(self._should_verify_certificate, bool)
                 or not isinstance(self._headless_mode, bool)):
             raise IncorrectVerifyError('Verify certificate value must True or False')
 
@@ -137,7 +137,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self._total_articles
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -173,7 +173,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self._verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -231,13 +231,10 @@ class Crawler:
             str: Url from HTML
         """
 
-
-
     def find_articles(self) -> None:
         """
         Find articles.
         """
-
 
     def get_search_urls(self) -> list:
         """
