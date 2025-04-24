@@ -7,14 +7,17 @@ import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
+from random import randint
+from time import sleep
 from typing import Pattern, Union
 
 import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
+from core_utils.article.io import to_raw
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
@@ -223,6 +226,7 @@ class Crawler:
         """
         self.config = config
         self.urls = []
+        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -287,7 +291,6 @@ class HTMLParser:
         self.article = Article(full_url, article_id)
         self.config = config
 
-
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
         Find text of article.
@@ -303,11 +306,10 @@ class HTMLParser:
         for part in article_body.find_all(['p', 'ol', 'ul']):
             if part.find('a'):
                 break
-            text = part.get_text()
+            text = part.text
             if text:
                 full_text.append(text)
         self.article.text = '\n'.join(full_text)
-
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -357,6 +359,14 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config=configuration)
+    crawler.find_articles()
+    for index, url in enumerate(crawler.urls):
+        parser = HTMLParser(url, index + 1, configuration)
+        article = parser.parse()
+        sleep(randint(1, 10))
+        if isinstance(article, Article):
+            to_raw(article)
 
 
 if __name__ == "__main__":
