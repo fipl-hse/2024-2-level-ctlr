@@ -328,7 +328,8 @@ class HTMLParser:
         self.article.title = title.get_text().strip() if title else "NO TITLE"
         self.article.author = ["NOT FOUND"]
 
-        time_tag = article_soup.find('time', id=re.compile(r'^MainMasterContentPlaceHolder_.*_articleTime$'))
+        time_tag = article_soup.find('time',
+                                     id=re.compile(r'^MainMasterContentPlaceHolder_.*_articleTime$'))
         if time_tag and time_tag.text:
             self.article.date = self.unify_date_format(time_tag.text.strip())
 
