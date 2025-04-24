@@ -15,7 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw
+from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -299,9 +299,8 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         full_text = []
-        title = article_soup.find(class_='name').text
         extract = article_soup.find('p', class_='description').text
-        full_text.extend([title, extract])
+        full_text.append(extract)
         article_body = article_soup.find('div', class_='entry-content')
         for part in article_body.find_all(['p', 'ol', 'ul']):
             if part.find('a'):
@@ -318,6 +317,9 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        title = article_soup.find('p', class_='single-news-title').text
+        self.article.title = title
+        self.article.author = ['NOT FOUND']
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -339,6 +341,7 @@ class HTMLParser:
         """
         article_bs = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(article_bs)
+        self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
@@ -367,6 +370,7 @@ def main() -> None:
         sleep(randint(1, 10))
         if isinstance(article, Article):
             to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
