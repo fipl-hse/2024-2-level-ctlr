@@ -8,8 +8,6 @@ import json
 import pathlib
 import shutil
 import requests
-from time import sleep
-from random import randint
 from bs4 import BeautifulSoup
 from typing import Pattern, Union
 from core_utils.article.article import Article
@@ -224,6 +222,7 @@ class Crawler:
         """
         self.config = config
         self.urls = []
+        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -343,7 +342,7 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
         shutil.rmtree(base_path)
     except FileNotFoundError:
         pass
-    pathlib.Path(base_path).mkdir(parents=True)
+    pathlib.Path(base_path).mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
