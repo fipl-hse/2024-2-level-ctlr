@@ -258,6 +258,9 @@ class Crawler:
         """
         Find articles.
         """
+        required_articles = self.config.get_num_articles()
+        articles_collected = 0
+
         for seed_url in self.get_search_urls():
             response = make_request(seed_url, self.config)
             if not response.ok:
@@ -270,8 +273,10 @@ class Crawler:
                 href = link['href']
                 if re.match(self.url_pattern, href) and href not in self.urls:
                     self.urls.append(href)
+                    articles_collected += 1
 
-                if len(self.urls) >= self.config.get_num_articles():
+                if articles_collected >= required_articles:
+                    print(f'Articles number achieved: {articles_collected}')
                     return
 
     def get_search_urls(self) -> list:
