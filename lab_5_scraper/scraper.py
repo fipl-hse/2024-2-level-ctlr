@@ -75,7 +75,7 @@ class Config:
         self.path_to_config = path_to_config
         extr_config = self._extract_config_content()
         self._seed_urls = extr_config.seed_urls
-        self._total_articles = extr_config.total_articles
+        self._num_articles = extr_config.total_articles
         self._headers = extr_config.headers
         self._encoding = extr_config.encoding
         self._timeout = extr_config.timeout
@@ -92,19 +92,23 @@ class Config:
         """
         with open(self.path_to_config, encoding='utf-8') as file:
             config = json.load(file)
+            print(config)
         return ConfigDTO(**config)
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not ('https://aif.ru/' in url for url in self._seed_urls):
+        if not isinstance(self._seed_urls, list):
             raise IncorrectSeedURLError('incorrect url')
-        if not isinstance(self._total_articles, int) or \
-                (isinstance(self._total_articles, int) and self._total_articles < 0):
+        for url in self._seed_urls:
+            if not isinstance(url, str) or not 'https://aif.ru/' in url:
+                raise IncorrectSeedURLError('incorrect url')
+        if not isinstance(self._num_articles, int) or self._num_articles <= 0:
+            print(('я здесь правильный', self._num_articles))
             raise IncorrectNumberOfArticlesError('number is not int or less that 0')
-        if not isinstance(self._total_articles, int) or self._total_articles < 1 \
-                or self._total_articles > 150:
+        if self._num_articles < 0 or self._num_articles > 150:
+            print(('я здесь', self._num_articles))
             raise NumberOfArticlesOutOfRangeError('wrong number of articles')
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('incorrect type of headers')
@@ -112,8 +116,10 @@ class Config:
             raise IncorrectEncodingError('incorrect type of encoding')
         if not isinstance(self._timeout, int) or self._timeout <= 0 or self._timeout >= 60:
             raise IncorrectTimeoutError('incorrect timeouts')
-        if not isinstance(self._should_verify_certificate or self._headless_mode, bool):
+        if not isinstance(self._should_verify_certificate, bool) or not \
+                isinstance(self._headless_mode, bool):
             raise IncorrectVerifyError('type is not bool')
+
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -131,7 +137,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self._total_articles
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
