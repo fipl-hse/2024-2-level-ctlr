@@ -9,10 +9,9 @@ import pathlib
 import shutil
 import datetime
 
+from urllib.parse import urljoin
 from typing import Union, Pattern
-
 from bs4 import BeautifulSoup
-
 from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
@@ -230,6 +229,16 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        block = article_bs.find('div')
+        if not block:
+            return ''
+        urls = block.find_all('a', href=True)
+        for url in urls:
+            href = url.get('href', '')
+            if (href.startswith('https://kgd.ru/news/biz')
+                    and href not in self.urls):
+                return href
+        return ''
 
     def find_articles(self) -> None:
         """
