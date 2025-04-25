@@ -450,16 +450,16 @@ class HTMLParser:
 
         date_part, time_part = txt.split(",", 1)
 
-        day, month_name, year = date_part.split()
-        day = int(day)
+        day_str, month_name, year_str = date_part.split()
+        day = int(day_str)
         month = ms[month_name]
-        year = int(year)
+        year = int(year_str)
 
         pro_time_part = time_part.strip()
-        hour, minute = pro_time_part.split(":", 1)
+        hour_str, minute_str = pro_time_part.split(":", 1)
 
-        hour = int(hour)
-        minute = int(minute)
+        hour = int(hour_str)
+        minute = int(minute_str)
 
         return datetime.datetime(year, month, day, hour, minute)
 
