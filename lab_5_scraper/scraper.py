@@ -14,6 +14,7 @@ from typing import Pattern, Union
 
 import requests
 from bs4 import BeautifulSoup
+from requests import RequestException
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
@@ -98,11 +99,15 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self._seed_urls, list) or not all(isinstance(url, str) for url in self._seed_urls) or not all(url.startswith("https://www.iguides.ru/") for url in self._seed_urls):
+        if (not isinstance(self._seed_urls, list)
+                or not all(isinstance(url, str) for url in self._seed_urls)
+                or not all(url.startswith("https://www.iguides.ru/") for url in self._seed_urls)):
             raise IncorrectSeedURLError("Seed URLs have wrong format")
 
-        if not isinstance(self._num_articles, int) or isinstance(self._num_articles, bool) or self._num_articles < 0:
-            raise IncorrectNumberOfArticlesError("№ of articles has wrong format or № of articles < 0")
+        if (not isinstance(self._num_articles, int)
+                or isinstance(self._num_articles, bool) or self._num_articles < 0):
+            raise IncorrectNumberOfArticlesError("№ of articles"
+                                                 " has wrong format or № of articles < 0")
 
         if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError("Number of articles is out of range")
@@ -197,7 +202,9 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    request = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(), verify=config.get_verify_certificate())
+    request = requests.get(url, headers=config.get_headers(),
+                           timeout=config.get_timeout(),
+                           verify=config.get_verify_certificate())
 
     return request
 
@@ -253,10 +260,11 @@ class Crawler:
 
         while True:
             try:
-                button = [button for button in driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")][0]
+                button = [button for button in
+                          driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")][0]
                 button.click()
                 time.sleep(random.randint(3, 10))
-            except Exception as e:
+            except RequestException as e:
                 print(e)
                 break
 
