@@ -6,13 +6,14 @@ Crawler implementation.
 import datetime
 import json
 import pathlib
-import requests
 import shutil
-from bs4 import BeautifulSoup
-from core_utils.article.article import Article
-from core_utils.article.io import to_meta, to_raw
 from typing import Pattern, Union
 
+import requests
+from bs4 import BeautifulSoup
+
+from core_utils.article.article import Article
+from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -223,9 +224,10 @@ class Crawler:
         """
         all_links = article_bs.find_all('a', class_ = 'img_box')
         for link in all_links:
-            if isinstance(link.get('href'), str):
-                if 'https://aif.ru' in link.get('href') and link.get('href') not in self.urls:
-                    return link.get('href')
+            href_link = link.get('href')
+            if isinstance(href_link, str):
+                if 'https://aif.ru' in href_link and href_link not in self.urls:
+                    return href_link
         return ''
 
     def find_articles(self) -> None:
@@ -237,7 +239,7 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            for i in range(22):
+            for _ in range(22):
                 url = self._extract_url(soup)
                 if url not in self.urls and len(self.urls) < self.config.get_num_articles():
                     self.urls.append(url)
