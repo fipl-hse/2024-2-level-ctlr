@@ -255,7 +255,7 @@ class Crawler:
                 else:
                     full_url = url_href
 
-                if re.match(url_pattern, full_url):
+                if re.match(url_pattern, full_url) and full_url not in self.urls:
                     return full_url
 
         return ""
@@ -272,16 +272,14 @@ class Crawler:
                 if not response.ok:
                     continue
 
-                if not response.ok:
-                    continue
-
                 article_bs = BeautifulSoup(response.text, 'lxml')
                 if len(self.urls) < max_articles:
-                    article_url = self._extract_url(article_bs)
-                    if article_url == "":
-                        break
-                    if article_url not in self.urls:
-                        self.urls.append(article_url)
+                    for _ in range(20):
+                        article_url = self._extract_url(article_bs)
+                        if article_url == "":
+                            break
+                        if article_url not in self.urls:
+                            self.urls.append(article_url)
                 else:
                     break
 
