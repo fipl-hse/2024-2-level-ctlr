@@ -246,7 +246,7 @@ class Crawler:
             if link_tag and 'href' in link_tag.attrs:
                 link = "https://www.iguides.ru/" + link_tag.get("href")
                 if link not in self.urls:
-                    return link
+                    return str(link)
         raise ValueError("Incorrect URL")
 
     def find_articles(self) -> None:
@@ -463,7 +463,8 @@ class HTMLParser:
         day_month_year = [int(x) if i != 1 else ms[x] for i, x in enumerate(date_part.split())]
         hour_minute = [int(x) for x in time_part.strip().split(":")]
 
-        return datetime.datetime(day_month_year[2], day_month_year[1], day_month_year[0], hour_minute[0], hour_minute[1])
+        return datetime.datetime(day_month_year[2], day_month_year[1],
+                                 day_month_year[0], hour_minute[0], hour_minute[1])
 
     def parse(self) -> Union[Article, bool, list]:
         """
