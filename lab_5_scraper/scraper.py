@@ -450,18 +450,20 @@ class HTMLParser:
 
         date_part, time_part = txt.split(",", 1)
 
-        day_str, month_name, year_str = date_part.split()
-        day = int(day_str)
-        month = ms[month_name]
-        year = int(year_str)
+        # day_str, month_name, year_str = date_part.split()
+        # day = int(day_str)
+        # month = ms[month_name]
+        # year = int(year_str)
+        #
+        # pro_time_part = time_part.strip()
+        # hour_str, minute_str = pro_time_part.split(":", 1)
+        #
+        # hour = int(hour_str)
+        # minute = int(minute_str)
+        day_month_year = [int(x) if i != 1 else ms[x] for i, x in enumerate(date_part.split())]
+        hour_minute = [int(x) for x in time_part.strip().split(":")]
 
-        pro_time_part = time_part.strip()
-        hour_str, minute_str = pro_time_part.split(":", 1)
-
-        hour = int(hour_str)
-        minute = int(minute_str)
-
-        return datetime.datetime(year, month, day, hour, minute)
+        return datetime.datetime(day_month_year[2], day_month_year[1], day_month_year[0], hour_minute[0], hour_minute[1])
 
     def parse(self) -> Union[Article, bool, list]:
         """
