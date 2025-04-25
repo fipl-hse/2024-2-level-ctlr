@@ -1,7 +1,6 @@
 """
 Listing for practice with paths
 """
-import pathlib
 
 # pylint: disable=line-too-long,invalid-name,redefined-outer-name,duplicate-code
 
