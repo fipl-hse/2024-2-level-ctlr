@@ -8,7 +8,6 @@ import os
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
-import re
 import shutil
 from typing import Pattern, Union
 
