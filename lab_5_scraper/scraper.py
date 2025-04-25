@@ -3,9 +3,11 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import datetime
 import json
 import pathlib
 import requests
+import shutil
 from bs4 import BeautifulSoup
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
@@ -70,7 +72,6 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        self._validate_config_content()
         extr_config = self._extract_config_content()
         self.seed_urls = extr_config.seed_urls
         self.total_articles = extr_config.total_articles
@@ -79,6 +80,7 @@ class Config:
         self.timeout = extr_config.timeout
         self.should_verify_certificate = extr_config.should_verify_certificate
         self.headless_mode = extr_config.headless_mode
+        self._validate_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -222,8 +224,8 @@ class Crawler:
         all_links = article_bs.find_all('a', class_ = 'img_box')
         for link in all_links:
             if isinstance(link.get('href'), str):
-                if 'https://aif.ru' in link.get('href') and link.href not in self.urls:
-                    return link.href
+                if 'https://aif.ru' in link.get('href') and link.get('href') not in self.urls:
+                    return link.get('href')
         return ''
 
     def find_articles(self) -> None:
@@ -328,7 +330,7 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
     if base_path.exists():
-        base_path.rmdir()
+        shutil.rmtree(base_path)
     base_path.mkdir(parents= True)
 
 
