@@ -2,7 +2,7 @@
 Listing for practice with dates
 """
 
-# pylint: disable=line-too-long,invalid-name,redefined-outer-name
+# pylint: disable=line-too-long,invalid-name,redefined-outer-name,duplicate-code
 
 
 try:
