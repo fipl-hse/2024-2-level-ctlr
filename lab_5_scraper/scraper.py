@@ -291,7 +291,11 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         body_content = article_soup.find('div', class_='body-content post-content-wrap')
-        body_paragraphs = [p.get_text(strip=True) for p in body_content.find_all('p')] if body_content else []
+        body_paragraphs = []
+        for p in body_content.find_all('p'):
+            text = p.get_text(strip=True)
+            if not text.startswith('Фото:') and text:
+                body_paragraphs.append(text)
         article_text = "\n\n".join(body_paragraphs)
 
         self.article.text = article_text
@@ -308,10 +312,6 @@ class HTMLParser:
             entry_header = div.find('h1', class_='entry-title')
             if entry_header:
                 self.article.title = entry_header.get_text(strip=True)
-
-            article_id = div.find('article', class_='id')
-            if article_id:
-                self.article.id = article_id.get_text(strip=True)
 
             article_author = div.find('h3', class_='user-name')
             if article_author:
