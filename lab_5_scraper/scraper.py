@@ -14,6 +14,7 @@ from typing import Pattern, Union
 
 import requests
 from bs4 import BeautifulSoup
+from numpy.distutils.command.config import config
 from requests import RequestException
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -296,55 +297,55 @@ class Crawler:
         return self.config.get_seed_urls()
 
 
-class CrawlerRecursive(Crawler):
-    """
-    CrawlerRecursive implementation.
-    """
-
-    #: Url pattern
-    url_pattern: Union[Pattern, str]
-
-    def __init__(self, config: Config) -> None:
-        """
-        Initialize an instance of the CrawlerRecursive class.
-        """
-        super().__init__(config)
-        self.urls = []
-        self.start_url = "https://www.iguides.ru"
-        self.visited_urls = set()
-        self.recursive_crawler_path = ASSETS_PATH.parent / "recursive_articles.json"
-
-    def find_articles(self) -> None:
-        """
-        Find articles.
-        """
-        prepare_environment(ASSETS_PATH)
-
-        if self.recursive_crawler_path.exists():
-            with open(self.recursive_crawler_path, "r") as file:
-                self.urls = json.load(file)
-
-        urls_2_visit = [self.start_url]
-
-        while urls_2_visit and len(self.urls) < self.config.get_num_articles():
-            current_url = urls_2_visit.pop(0)
-            if current_url in self.visited_urls:
-                continue
-            response = requests.get(current_url)
-            if not response.ok:
-                continue
-            soup = BeautifulSoup(response.text, "lxml")
-            links = soup.find_all("a", href=True)
-            for link in links:
-                href = link["href"]
-                if href.startswith("/"):
-                    href = self.start_url + href
-                if "main" or "search" in href and href not in self.visited_urls:
-                    self.visited_urls.add(href)
-                if href not in self.urls:
-                    self.urls.append(href)
-            with open(self.recursive_crawler_path, "w") as file:
-                json.dump(self.urls, file)
+# class CrawlerRecursive(Crawler):
+#     """
+#     CrawlerRecursive implementation.
+#     """
+#
+#     #: Url pattern
+#     url_pattern: Union[Pattern, str]
+#
+#     def __init__(self, config: Config) -> None:
+#         """
+#         Initialize an instance of the CrawlerRecursive class.
+#         """
+#         super().__init__(config)
+#         self.urls = []
+#         self.start_url = "https://www.iguides.ru"
+#         self.visited_urls = set()
+#         self.recursive_crawler_path = ASSETS_PATH.parent / "recursive_articles.json"
+#
+#     def find_articles(self) -> None:
+#         """
+#         Find articles.
+#         """
+#         prepare_environment(ASSETS_PATH)
+#
+#         if self.recursive_crawler_path.exists():
+#             with open(self.recursive_crawler_path, encoding="utf-8") as file:
+#                 self.urls = json.load(file)
+#
+#         urls_2_visit = [self.start_url]
+#
+#         while urls_2_visit and len(self.urls) < self.config.get_num_articles():
+#             current_url = urls_2_visit.pop(0)
+#             if current_url in self.visited_urls:
+#                 continue
+#             response = requests.get(current_url, timeout=self.config.get_timeout())
+#             if not response.ok:
+#                 continue
+#             soup = BeautifulSoup(response.text, "lxml")
+#             links = soup.find_all("a", href=True)
+#             for link in links:
+#                 href = link["href"]
+#                 if href.startswith("/"):
+#                     href = self.start_url + href
+#                 if "main" or "search" in href and href not in self.visited_urls:
+#                     self.visited_urls.add(href)
+#                 if href not in self.urls:
+#                     self.urls.append(href)
+#             with open(self.recursive_crawler_path, "w") as file:
+#                 json.dump(self.urls, file)
 
 # 10
 # 4, 6, 8, 10
@@ -494,9 +495,9 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
-    # crawler = Crawler(config=configuration)
-    # crawler.find_articles()
-    crawler = CrawlerRecursive(config=configuration)
+    crawler = Crawler(config=configuration)
+    crawler.find_articles()
+    # crawler = CrawlerRecursive(config=configuration)
 
     for index, url in enumerate(crawler.urls):
         time.sleep(random.randint(4, 10))
