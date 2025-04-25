@@ -4,7 +4,6 @@ Listing for practice with beautifulsoup4 library
 
 # pylint: disable=missing-timeout
 
-from urllib.parse import urlparse, urlunparse
 
 try:
     import requests
