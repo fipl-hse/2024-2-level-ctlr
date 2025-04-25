@@ -2,12 +2,15 @@
 Crawler implementation.
 """
 
+import datetime
 import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
 from typing import Pattern, Union
 import requests
+from bs4 import BeautifulSoup
+from core_utils.article.article import Article
 from core_utils.constants import ASSETS_PATH
 from core_utils.constants import CRAWLER_CONFIG_PATH
 from core_utils.config_dto import ConfigDTO
@@ -92,7 +95,7 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open("lab_5_scraper/scraper_config.json", 'r', encoding='UTF-8') as file:
+        with open(self.path_to_config, encoding='utf-8') as file:
             config_dto = json.load(file)
         return ConfigDTO(**config_dto)
 
@@ -100,13 +103,16 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
+        if (not isinstance(self._seed_urls, list) or
+                not all(isinstance(url, str) for url in self._seed_urls)):
+            raise IncorrectSeedURLError('_seed_urls must be a list')
         if not all(url.startswith('https://ks-yanao.ru') for url in self._seed_urls):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern')
-        if self._num_articles > 150:
-            raise NumberOfArticlesOutOfRangeError('Number of articles out of range: should be between 1 and 150')
         if (not isinstance(self._num_articles, int) or
                 isinstance(self._num_articles, bool) or self._num_articles < 0):
             raise IncorrectNumberOfArticlesError('Invalid number of articles: must be an integer and not 0')
+        if self._num_articles > 150:
+            raise NumberOfArticlesOutOfRangeError('Number of articles out of range: should be between 1 and 150')
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers are not in a form of dictionary')
         if not isinstance(self._encoding, str):
@@ -218,6 +224,9 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
+        self.config = config
+        self.urls = []
+        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -229,11 +238,30 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        all_links = article_bs.find_all('a', href=True)
+        for link in all_links:
+            href = link['href']
+            if href.startswith('/news/'):
+                full_url = 'https://ks-yanao.ru' + href
+                if full_url not in self.urls:
+                    return full_url
+        return 'stop iteration'
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        for seed_url in self.get_search_urls():
+            response = make_request(seed_url, self.config)
+            if response and response.ok:
+                for i in range(20):
+                    url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
+                    if url == 'stop iteration':
+                        break
+                    if url not in self.urls:
+                        self.urls.append(url)
+                    if len(self.urls) >= self.config.get_num_articles():
+                        return
 
     def get_search_urls(self) -> list:
         """
@@ -242,6 +270,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.config.get_seed_urls()
 
 
 # 10
@@ -306,11 +335,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    try:
+    if pathlib.Path(base_path).is_dir():
         shutil.rmtree(base_path)
-    except FileNotFoundError:
-        pass
-    base_path.mkdir(parents=True)
+    pathlib.Path(base_path).mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
@@ -318,7 +345,9 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
+    crawler.find_articles()
 
 
 if __name__ == "__main__":
