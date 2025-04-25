@@ -8,6 +8,7 @@ import os
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
+import re
 import shutil
 from typing import Pattern, Union
 
@@ -95,10 +96,9 @@ class Config:
         Ensure configuration parameters are not corrupt.
         """
         if not (isinstance(self._seed_urls, list)
-                or all(isinstance(url, str) for url in self._seed_urls)):
-            raise IncorrectSeedURLError('Not all seed URLs are strings or they are not in the list')
-        if not all(url_start.startswith('https://govoritnn.ru') for url_start in self._seed_urls):
-            raise IncorrectSeedURLError('Not all seed URLs match standard pattern "https?://(www.)?"')
+                and all(isinstance(url, str) for url in self._seed_urls)
+                and all(url.startswith("https://govoritnn.ru") for url in self._seed_urls)):
+            raise IncorrectSeedURLError("Seed URL is not a valid URL")
         if (not isinstance(self._num_articles, int)
                 or self._num_articles < 0
                 or isinstance(self._num_articles, bool)):
@@ -109,7 +109,7 @@ class Config:
             raise IncorrectHeadersError('Headers are not in a form of dictionary;')
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('Encoding must be specified as a string')
-        if int(self._timeout) > 60 or int(self._timeout) < 0:
+        if not isinstance(self._timeout, int) or self._timeout > 60 or self._timeout < 0:
             raise IncorrectTimeoutError('Timeout value must be a positive integer less than 60')
         if not isinstance(self._should_verify_certificate, bool):
             raise IncorrectVerifyError('Verify certificate value must either be True or False')
@@ -228,12 +228,9 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        all_stuff = article_bs.find_all('a', {'class_': 'lsd-arch-link'})
+        all_stuff = article_bs.find_all('a', {'class': 'lsd-arch-link'})
         for el in all_stuff:
-            href = el.get('href', '')
-            if not href:
-                continue
-            one_whole_link = 'https://govoritnn.ru/' + href
+            one_whole_link = el.get('href', '')
             if isinstance(one_whole_link, str) and one_whole_link not in self.urls:
                 return one_whole_link
         return 'stop'
@@ -242,17 +239,19 @@ class Crawler:
         """
         Find articles.
         """
-        for page_url in self.get_search_urls():
+        for seed_url in self.get_search_urls():
             if len(self.urls) >= self.config.get_num_articles():
                 break
-            response_for_10_articles = make_request(page_url, self.config)
-            if response_for_10_articles and response_for_10_articles.ok:
-                urls_for_10_articles = self._extract_url(BeautifulSoup(response_for_10_articles.text, 'lxml'))
-                if (urls_for_10_articles and urls_for_10_articles is not None
-                        and all(isinstance(elem, str) for elem in urls_for_10_articles)):
-                    for article_url in urls_for_10_articles:
-                        if article_url not in self.urls:
-                            self.urls.append(article_url)
+            response = make_request(seed_url, self.config)
+            if not response.ok:
+                continue
+            if response.ok:
+                for _ in range(10):
+                    url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
+                    if url == 'stop':
+                        break
+                    if url not in self.urls:
+                        self.urls.append(url)
 
     def get_search_urls(self) -> list:
         """
@@ -294,6 +293,13 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        div = article_soup.find('div', class_='col-md-6 col-md-push-3')
+        entry_header = div.find('h1', class_='entry-title').get_text(strip=True) if div.find('h1', class_='entry-title') else ""
+        body_content = div.find('div', class_='body-content post-content-wrap')
+        body_paragraphs = [p.get_text(strip=True) for p in body_content.find_all('p')] if body_content else []
+        article_text = entry_header + "\n\n" + "\n\n".join(body_paragraphs)
+
+        self.article.text = article_text
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -321,6 +327,12 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self.full_url, self.config)
+        if response.ok:
+            article_bs = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(article_bs)
+            self._fill_article_with_meta_information(article_bs)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
