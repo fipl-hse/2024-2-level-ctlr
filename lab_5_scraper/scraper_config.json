@@ -1,9 +1,17 @@
 {
-    "seed_urls": [],
-    "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
-    "timeout": 0,
+    "seed_urls": ["https://nta-pfo.ru/news/?SIZEN_1=30",
+    "https://nta-pfo.ru/news/?PAGEN_1=2&SIZEN_1=30",
+    "https://nta-pfo.ru/news/?PAGEN_1=3&SIZEN_1=30",
+    "https://nta-pfo.ru/news/?PAGEN_1=4&SIZEN_1=30"],
+    "headers": {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Cookie": "NX_CITY_OFFICE_ID=14; _ym_uid=1744364646445415145; _ym_d=1744364646; tmr_lvid=4d6e07b9d0faf4b414327a7808c8c0b5; tmr_lvidTS=1744364652423; BX_USER_ID=dee2ced68cd6c4fc8e2f204aa5c61781; PHPSESSID=6ML2tuJk2Tlg6Binr0lW21YQqYj403AG; BITRIX_SM_GUEST_ID=91751764; _ym_visorc=w; _ym_isad=2; domain_sid=GkFUMMG3FbAUOYezmLYZW%3A1745586874304; BITRIX_CONVERSION_CONTEXT_s1=%7B%22ID%22%3A19%2C%22EXPIRE%22%3A1745614740%2C%22UNIQUE%22%3A%5B%22conversion_visit_day%22%5D%7D; tmr_detect=0%7C1745586877132; BITRIX_SM_PK=page_region_14; BITRIX_SM_LAST_VISIT=25.04.2025%2016%3A14%3A43",
+        "User-Agent": "Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
+    },
+    "total_articles_to_find_and_parse": 100,
+    "encoding": "utf-8",
+    "timeout": 50,
     "should_verify_certificate": true,
     "headless_mode": true
 }
