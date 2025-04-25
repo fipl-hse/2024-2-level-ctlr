@@ -14,7 +14,6 @@ from typing import Pattern, Union
 
 import requests
 from bs4 import BeautifulSoup
-from numpy.distutils.command.config import config
 from requests import RequestException
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -248,7 +247,7 @@ class Crawler:
                 link = "https://www.iguides.ru/" + link_tag.get("href")
                 if link not in self.urls:
                     return link
-        return "EXTRACTION ERROR"
+        raise ValueError("Incorrect URL")
 
     def find_articles(self) -> None:
         """
@@ -261,8 +260,7 @@ class Crawler:
 
         while True:
             try:
-                button = [button for button in
-                          driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")][0]
+                button = driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")[0]
                 button.click()
                 time.sleep(random.randint(3, 10))
             except RequestException as e:
@@ -279,12 +277,14 @@ class Crawler:
             if not query.ok:
                 continue
             for _ in range(100):
-                link = self._extract_url(soup)
-                if link == "EXTRACTION ERROR":
-                    break
-                if link not in self.urls:
-                    self.urls.append(link)
-                if len(self.urls) >= self.config.get_num_articles():
+                try:
+                    link = self._extract_url(soup)
+                    if link not in self.urls:
+                        self.urls.append(link)
+                    if len(self.urls) >= self.config.get_num_articles():
+                        break
+                except ValueError as e:
+                    print(e)
                     break
 
     def get_search_urls(self) -> list:
