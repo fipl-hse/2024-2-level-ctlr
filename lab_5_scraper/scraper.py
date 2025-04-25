@@ -414,7 +414,7 @@ class HTMLParser:
         if cleaned_author.endswith(" "):
             cleaned_author = cleaned_author[:-1]
 
-        self.article.author = cleaned_author
+        self.article.author.append(cleaned_author)
 
         date = article_soup.find_all("time", itemprop="datePublished")[0].text
         self.article.date = self.unify_date_format(date)
