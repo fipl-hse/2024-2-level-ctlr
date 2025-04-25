@@ -159,9 +159,11 @@ class RawMediumDataValidator(unittest.TestCase):
                 "Title is not found by specified in metadata "
                 "URL %s. Check how you collect titles"
             )
+            print(metadata[1]["title"])
             self.assertTrue(
                 check_title_in_html(metadata[1]["title"], html_source), msg=msg % metadata[1]["url"]
             )
+
 
             # author is presented? NOT FOUND otherwise?
             error_message = (
