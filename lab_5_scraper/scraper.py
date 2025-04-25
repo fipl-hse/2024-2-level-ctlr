@@ -242,8 +242,6 @@ class Crawler:
             if len(self.urls) >= self.config.get_num_articles():
                 break
             response = make_request(seed_url, self.config)
-            if not response.ok:
-                continue
             if response.ok:
                 for _ in range(10):
                     url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
@@ -292,11 +290,9 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        div = article_soup.find('div', class_='col-md-6 col-md-push-3')
-        entry_header = div.find('h1', class_='entry-title').get_text(strip=True) if div.find('h1', class_='entry-title') else ""
-        body_content = div.find('div', class_='body-content post-content-wrap')
+        body_content = article_soup.find('div', class_='body-content post-content-wrap')
         body_paragraphs = [p.get_text(strip=True) for p in body_content.find_all('p')] if body_content else []
-        article_text = entry_header + "\n\n" + "\n\n".join(body_paragraphs)
+        article_text = "\n\n".join(body_paragraphs)
 
         self.article.text = article_text
 
@@ -307,6 +303,19 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        div = article_soup.find('div', class_='col-md-6 col-md-push-3')
+        if div:
+            entry_header = div.find('h1', class_='entry-title')
+            if entry_header:
+                self.article.title = entry_header.get_text(strip=True)
+
+            article_id = div.find('article', class_='id')
+            if article_id:
+                self.article.id = article_id.get_text(strip=True)
+
+            article_author = div.find('h3', class_='user-name')
+            if article_author:
+                self.article.author = [article_author.get_text(strip=True)] if article_author else ["NOT FOUND"]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
