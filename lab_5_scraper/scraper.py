@@ -222,13 +222,15 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        block = article_bs.find('div', {'class': 'td_block_inner tdb-block-inner td-fix-index'})
-        urls = block.find_all('a', href=True)
+        # block = article_bs.find('div', {'class': 'td_block_inner tdb-block-inner td-fix-index'})
+        # if not block:
+        #     article_bs.find('div', {'class': 'td-block-span6 td-post-prev-post'})
+        urls = article_bs.find_all('a', href=True)
         for url in urls:
             if not url:
                 continue
             href = url['href']
-            if href not in self.urls:
+            if href not in self.urls and href.startswith('https://sovsakh.ru/') and 'category' not in href and 'reklama' not in href and href.count('/') == 4:
                 return href
         return ''
 
@@ -247,7 +249,7 @@ class Crawler:
             got_url = self._extract_url(soup)
             while got_url:
                 if not got_url or got_url in self.urls:
-                    continue
+                    break
                 self.urls.append(got_url)
                 got_url = self._extract_url(soup)
 
@@ -303,11 +305,12 @@ class HTMLParser:
         self.article.title = article_soup.find('h1', {'class': 'entry-title'}).text
         block = article_soup.find('div', {'class': 'td-ss-main-content'})
         texts = block.find_all('p')
-        author = [el.text for el in texts][-2]
-        if len(author) < 20:
-            self.article.author = [author]
-        else:
-            self.article.author = ['NOT FOUND']
+        if len(texts) > 2:
+            author = [el.text for el in texts][-2]
+            if len(author) < 20:
+                self.article.author = [author]
+            else:
+                self.article.author = ['NOT FOUND']
         self.article.date = self.unify_date_format(article_soup.find('time', {'class': 'entry-date updated td-module-date'}).text)
         topics = article_soup.find_all('li', {'class': 'entry-category'})
         self.article.topics = [topic.text for topic in topics]
@@ -395,15 +398,16 @@ class CrawlerRecursive(Crawler):
             soup = BeautifulSoup(response.text, 'lxml')
             got_url = self._extract_url(soup)
             if not got_url:
-                self.start_url = self.urls[self.urls.index(self.start_url) - 1]
+                if self.start_url == "https://sovsakh.ru/category/obshhestvo/":
+                    pass
+                else:
+                    self.start_url = self.urls[self.urls.index(self.start_url) - 1]
             while got_url:
                 if not got_url or got_url in self.urls:
-                    continue
-                if 'https://sovsakh.ru/' in got_url:
-                    self.start_url = got_url
+                    break
                 self.urls.append(got_url)
                 with open(self.recursive_PATH, 'w') as file:
-                    json.dump(self.urls, file)
+                    json.dump(self.urls, file, indent=4)
                 got_url = self._extract_url(soup)
             self.find_articles()
 
@@ -413,7 +417,7 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
-    crawler = CrawlerRecursive(config)
+    crawler = Crawler(config)
     prepare_environment(ASSETS_PATH)
     crawler.find_articles()
     for ind, url in enumerate(crawler.urls):

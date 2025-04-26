@@ -1,15 +1,24 @@
 {
     "seed_urls":
     [
+        "https://sovsakh.ru/",
+        "https://sovsakh.ru/category/politika/page/2/",
+        "https://sovsakh.ru/category/politika/page/3/",
+        "https://sovsakh.ru/category/politika/page/4/",
+        "https://sovsakh.ru/category/politika/page/5/",
         "https://sovsakh.ru/category/ekonomika/",
         "https://sovsakh.ru/category/obshhestvo/",
+        "https://sovsakh.ru/category/obshhestvo/page/2/",
+        "https://sovsakh.ru/category/obshhestvo/page/3/",
+        "https://sovsakh.ru/category/obshhestvo/page/4/",
+        "https://sovsakh.ru/category/obshhestvo/page/5/",
         "https://sovsakh.ru/category/proisshestviya/",
         "https://sovsakh.ru/category/project/"
     ],
-    "headers": {},
-    "total_articles_to_find_and_parse": 10,
+    "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36"},
+    "total_articles_to_find_and_parse": 100,
     "encoding": "",
-    "timeout": 10,
+    "timeout": 15,
     "should_verify_certificate": true,
     "headless_mode": true
 }
