@@ -231,7 +231,7 @@ class Crawler:
                 continue
             href = url['href']
             if href not in self.urls and href.startswith('https://sovsakh.ru/') and 'category' not in href and 'reklama' not in href and href.count('/') == 4:
-                return href
+                return str(href)
         return ''
 
     def find_articles(self) -> None:
@@ -350,6 +350,8 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        if not self.article.url:
+            return False
         soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(soup)
         self._fill_article_with_meta_information(soup)
@@ -364,8 +366,7 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
     base_path = pathlib.Path(base_path)
-    if base_path.mkdir(exist_ok=True, parents=True):
-        return None
+    base_path.mkdir(exist_ok=True, parents=True)
     if any(base_path.iterdir()):
         shutil.rmtree(base_path)
         base_path.mkdir(parents=True)
@@ -375,13 +376,13 @@ class CrawlerRecursive(Crawler):
     """
     Recursive Crawler implementation.
     """
-    def __init__(self, config):
+    def __init__(self, config: Config):
         """
         Initialize an instance of the CrawlerRecursive class.
         """
         super().__init__(config)
         self.start_url = "https://sovsakh.ru/category/obshhestvo/"
-        self.recursive_PATH = ASSETS_PATH.parent / "recursive_articles.json"
+        self.recursive_path = ASSETS_PATH.parent / "recursive_articles.json"
         self.urls = []
 
     def find_articles(self) -> None:
@@ -389,10 +390,10 @@ class CrawlerRecursive(Crawler):
         Find articles.
         """
         if self.urls:
-            with open(self.recursive_PATH, 'r') as file:
+            with open(self.recursive_path, 'r', encoding=self.config.get_encoding()) as file:
                 self.urls = json.load(file)
         if len(self.urls) < self.config.get_num_articles():
-            response = requests.get(self.start_url)
+            response = make_request(self.start_url, self.config)
             if not response.ok:
                 return
             soup = BeautifulSoup(response.text, 'lxml')
@@ -406,7 +407,7 @@ class CrawlerRecursive(Crawler):
                 if not got_url or got_url in self.urls:
                     break
                 self.urls.append(got_url)
-                with open(self.recursive_PATH, 'w') as file:
+                with open(self.recursive_path, 'w', encoding=self.config.get_encoding()) as file:
                     json.dump(self.urls, file, indent=4)
                 got_url = self._extract_url(soup)
             self.find_articles()
@@ -427,8 +428,9 @@ def main() -> None:
         if not article.text or len(article.text) <= 50:
             continue
         article_id += 1
-        to_raw(article)
-        to_meta(article)
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
