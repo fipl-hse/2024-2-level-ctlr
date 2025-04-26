@@ -14,6 +14,7 @@ from urllib.parse import urljoin
 from typing import Union, Pattern
 from bs4 import BeautifulSoup
 from core_utils.article.article import Article
+from core_utils.article.io import to_raw, to_meta
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -374,8 +375,20 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     configuration = Config(CRAWLER_CONFIG_PATH)
-    prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
+    prepare_environment(ASSETS_PATH)
+    crawler.find_articles()
+
+    article_id = 1
+    for url in crawler.urls:
+        parser = HTMLParser(url, article_id, configuration)
+        article = parser.parse()
+        if len(article.text) <= 100 or not article.text:
+            continue
+        article_id += 1
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
