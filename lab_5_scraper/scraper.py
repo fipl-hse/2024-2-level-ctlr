@@ -23,7 +23,6 @@ from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 class IncorrectSeedURLError(Exception):
     """Seed urls are not presented as a list or are not strings"""
-    pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
@@ -80,7 +79,7 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open(self.path_to_config, 'r') as file:
+        with open(self.path_to_config, 'r', encoding='UTF-8') as file:
             data = json.load(file)
             return ConfigDTO(**data)
 
@@ -230,7 +229,8 @@ class Crawler:
             if not url:
                 continue
             href = url['href']
-            if href not in self.urls and href.startswith('https://sovsakh.ru/') and 'category' not in href and 'reklama' not in href and href.count('/') == 4:
+            if (href not in self.urls and href.startswith('https://sovsakh.ru/') and 'category' not in href
+                    and 'reklama' not in href and href.count('/') == 4):
                 return str(href)
         return ''
 
@@ -252,6 +252,7 @@ class Crawler:
                     break
                 self.urls.append(got_url)
                 got_url = self._extract_url(soup)
+        return None
 
     def get_search_urls(self) -> list:
         """
@@ -311,7 +312,10 @@ class HTMLParser:
                 self.article.author = [author]
             else:
                 self.article.author = ['NOT FOUND']
-        self.article.date = self.unify_date_format(article_soup.find('time', {'class': 'entry-date updated td-module-date'}).text)
+        self.article.date = self.unify_date_format(article_soup.find(
+            'time',
+            {'class': 'entry-date updated td-module-date'}).text
+            )
         topics = article_soup.find_all('li', {'class': 'entry-category'})
         self.article.topics = [topic.text for topic in topics]
 
