@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH, PROJECT_ROOT
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
@@ -307,7 +307,7 @@ class HTMLParser:
         texts = block.find_all('p')
         if len(texts) > 2:
             author = [el.text for el in texts][-2]
-            if len(author) < 20:
+            if author and len(author) < 20:
                 self.article.author = [author]
             else:
                 self.article.author = ['NOT FOUND']
@@ -420,9 +420,13 @@ def main() -> None:
     crawler = Crawler(config)
     prepare_environment(ASSETS_PATH)
     crawler.find_articles()
-    for ind, url in enumerate(crawler.urls):
-        parser = HTMLParser(url, ind + 1, config)
+    article_id = 1
+    for url in crawler.urls:
+        parser = HTMLParser(url, article_id, config)
         article = parser.parse()
+        if not article.text or len(article.text) <= 50:
+            continue
+        article_id += 1
         to_raw(article)
         to_meta(article)
 
