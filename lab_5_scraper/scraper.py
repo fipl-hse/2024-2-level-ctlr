@@ -103,7 +103,7 @@ class Config:
         """
         if (not isinstance(self._seed_urls, list)
                 or not all(isinstance(url, str) for url in self._seed_urls)
-                or not all(url.startswith("https://kgd.ru/news/biz") for url in self._seed_urls)):
+                or not all(url.startswith('https://kgd.ru/news/biz') for url in self._seed_urls)):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern "https?://(www.)?"')
         if (not isinstance(self._num_articles, int) or isinstance(self._num_articles, bool)
                 or self._num_articles < 0):
@@ -231,7 +231,7 @@ class Crawler:
             str: Url from HTML
         """
         base_url = 'https://kgd.ru'
-        url_pattern = re.compile(r'(?:https?://kgd\.ru)?/news/biz/[^\s]+')
+        url_pattern = re.compile(r'(?:https?://kgd\.ru)?/news/biz/(?:$|[^\s]+)')
 
         extracted_urls = []
         for link in article_bs.find_all('a', href=True):
@@ -305,6 +305,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.full_url = full_url
+        self.article_id = article_id
+        self.config = config
+        self.article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -313,6 +317,10 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        block = article_soup.find('div', {'class': 'itemFullText'})
+        article_texts = block.find_all('p')
+        article_texts = [el.text for el in article_texts]
+        self.article.text = '\n'.join(article_texts)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -340,6 +348,12 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        if not self.article.url:
+            return False
+        soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
+        self._fill_article_with_text(soup)
+        self._fill_article_with_meta_information(soup)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
