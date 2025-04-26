@@ -4,6 +4,7 @@ Crawler implementation.
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import json
+import re
 import requests
 import pathlib
 import shutil
@@ -229,21 +230,51 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        block = article_bs.find('div')
-        if not block:
-            return ''
-        urls = block.find_all('a', href=True)
-        for url in urls:
-            href = url.get('href', '')
-            if (href.startswith('https://kgd.ru/news/biz')
-                    and href not in self.urls):
-                return href
+        base_url = 'https://kgd.ru'
+        url_pattern = re.compile(r'(?:https?://kgd\.ru)?/news/biz/[^\s]+')
+
+        extracted_urls = []
+        for link in article_bs.find_all('a', href=True):
+            href = link['href'].strip()
+            if not href:
+                continue
+            extracted_urls.append(href)
+
+        for url in extracted_urls:
+            if isinstance(url, str):
+                if not url.startswith('http'):
+                    url = urljoin(base_url, url)
+                if url_pattern.fullmatch(url) and url not in self.urls:
+                    return url
         return ''
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        seed_urls = self.config.get_seed_urls()
+        max_num_articles = self.config.get_num_articles()
+
+        for url in seed_urls:
+
+            try:
+                response = make_request(url, self.config)
+                if not response.ok:
+                    continue
+
+                article_bs = BeautifulSoup(response.text, 'lxml')
+                if len(self.urls) < max_num_articles:
+                    for _ in range(20):
+                        article_url = self._extract_url(article_bs)
+                        if article_url == '':
+                            break
+                        if article_url not in self.urls:
+                            self.urls.append(article_url)
+                else:
+                    break
+
+            except requests.exceptions.RequestException:
+                continue
 
     def get_search_urls(self) -> list:
         """
