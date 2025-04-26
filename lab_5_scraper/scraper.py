@@ -229,8 +229,9 @@ class Crawler:
             if not url:
                 continue
             href = url['href']
-            if (href not in self.urls and href.startswith('https://sovsakh.ru/') and 'category' not in href
-                    and 'reklama' not in href and href.count('/') == 4):
+            if (href not in self.urls and href.startswith('https://sovsakh.ru/')
+                    and 'category' not in href and 'reklama' not in href
+                    and href.count('/') == 4):
                 return str(href)
         return ''
 
