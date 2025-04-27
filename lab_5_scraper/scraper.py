@@ -7,6 +7,7 @@ import pathlib
 import json
 import requests
 from core_utils.config_dto import ConfigDTO
+from bs4 import BeautifulSoup
 from typing import Pattern, Union
 
 
@@ -201,6 +202,8 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
+        self.config = config
+        self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -212,6 +215,12 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        links = article_bs.find_all('a')
+        for link in links:
+            href = link.find('href')
+            if isinstance(href, str) and href not in self.urls:
+                return href
+        return 'problems with extract url'
 
     def find_articles(self) -> None:
         """
