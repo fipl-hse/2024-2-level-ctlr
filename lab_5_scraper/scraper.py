@@ -392,11 +392,14 @@ def main() -> None:
     crawler = Crawler(config)
     crawler.find_articles()
 
-    parser = HTMLParser("https://moyaokruga.ru/mayakdelty/", 100, config)
-    article = parser.parse()
-    if isinstance(article, Article):
-        to_raw(article)
-        to_meta(article)
+    article_id = 1
+    for url in crawler.urls:
+        parser = HTMLParser(url, article_id, config)
+        article = parser.parse()
+        article_id += 1
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
