@@ -7,6 +7,7 @@ import json
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
+import shutil
 from typing import Pattern, Union
 
 import requests
@@ -191,7 +192,10 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-
+    response = requests.get(url, headers=config.get_headers(),
+                            timeout=config.get_timeout(), verify=config.get_verify_certificate())
+    response.encoding = config.get_encoding()
+    return response
 
 class Crawler:
     """
@@ -296,6 +300,10 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    if pathlib.Path(base_path).is_dir():
+        shutil.rmtree(base_path)
+
+    pathlib.Path(base_path).mkdir(parents=True)
 
 
 def main() -> None:
