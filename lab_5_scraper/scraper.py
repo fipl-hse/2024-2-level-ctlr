@@ -11,6 +11,7 @@ from typing import Pattern, Union
 
 import requests
 from bs4 import BeautifulSoup
+from mypy.types_utils import NoneType
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
@@ -246,7 +247,7 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            for _ in range(22):
+            for _ in range(20):
                 url = self._extract_url(soup)
                 if url not in self.urls and len(self.urls) < self.config.get_num_articles():
                     self.urls.append(url)
@@ -293,6 +294,8 @@ class HTMLParser:
         """
         div = article_soup.find('div', class_= 'article_text')
         text = []
+        if div is None:
+            return None
         for block in div:
             if block.get_text():
                 text.append(block.get_text(separator= '\n', strip= True))
@@ -305,6 +308,33 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        title = article_soup.find('h1', itemprop = ['headline', 'headline name']).get_text(strip= True)
+        if title is None:
+            self.article.title = 'NOT FOUND'
+        else:
+            self.article.title = title
+        div_author = article_soup.find_all('div', class_= 'autor')
+        authors = []
+        if div_author is None:
+            self.article.author = 'NOT FOUND'
+        else:
+            for author in div_author:
+                if author.get_text():
+                    authors.append(author.get_text(strip= True))
+            self.article.author = ', '.join(authors)
+        div_topic = article_soup.find_all('div', class_= 'tags')
+        topics = []
+        if div_topic is None:
+            self.article.topics = 'NOT FOUND'
+        else:
+            for topic in div_topic:
+                if topic.get_text():
+                    topics.append(topic.get_text(separator= ', ', strip=True))
+            self.article.topics = ''.join(topics)
+        date_str = article_soup.find_all('time')[0].get_text(strip= True)
+        date = self.unify_date_format(date_str)
+        self.article.date = date
+
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -316,6 +346,8 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        date = datetime.datetime.strptime(date_str, "%d.%m.%Y %H:%M")
+        return date
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -328,6 +360,7 @@ class HTMLParser:
         if response.ok:
             soup = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(soup)
+            self._fill_article_with_meta_information(soup)
         return self.article
 
 
@@ -356,6 +389,7 @@ def main() -> None:
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
