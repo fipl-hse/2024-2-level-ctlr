@@ -3,10 +3,12 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-import json, pathlib, re
+import json, pathlib, re, os, requests, datetime
+from bs4 import BeautifulSoup
 from typing import Pattern, Union
+from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import (CRAWLER_CONFIG_PATH, NUM_ARTICLES_UPPER_LIMIT,
+from core_utils.constants import (ASSETS_PATH, CRAWLER_CONFIG_PATH, NUM_ARTICLES_UPPER_LIMIT,
                                   TIMEOUT_UPPER_LIMIT, TIMEOUT_LOWER_LIMIT)
 
 class IncorrectSeedURLError(Exception):
@@ -16,12 +18,14 @@ class IncorrectSeedURLError(Exception):
     def __init__(self, msg="Incorrect seed URL format in the config"):
         super().__init__(msg)
 
+
 class NumberOfArticlesOutOfRangeError(Exception):
     """
     Raised when the number of articles is too large in the configuration file.
     """
     def __init__(self, msg="Number of articles in the config is out of range"):
         super().__init__(msg)
+
 
 class IncorrectNumberOfArticlesError(Exception):
     """
@@ -30,12 +34,14 @@ class IncorrectNumberOfArticlesError(Exception):
     def __init__(self, msg="Number of articles in the config is not an int or less than 0"):
         super().__init__(msg)
 
+
 class IncorrectHeadersError(Exception):
     """
     Raised when the headers are not in a form of dictionary in the configuration file.
     """
     def __init__(self, msg="Headers need to be specified as a dictionary in the config"):
         super().__init__(msg)
+
 
 class IncorrectEncodingError(Exception):
     """
@@ -44,6 +50,7 @@ class IncorrectEncodingError(Exception):
     def __init__(self, msg="Encoding should be a string in the config"):
         super().__init__(msg)
 
+
 class IncorrectTimeoutError(Exception):
     """
     Raised when the timeout is too large or not a positive integer in the configuration file.
@@ -51,12 +58,14 @@ class IncorrectTimeoutError(Exception):
     def __init__(self, msg="Timeout is incorrect or out of range in the config"):
         super().__init__(msg)
 
+
 class IncorrectVerifyError(Exception):
     """
     Raised when the verify certificate value is neither True nor False in the configuration file.
     """
     def __init__(self, msg="Verify Certificate value should be True of False in the config"):
         super().__init__(msg)
+
 
 class Config:
     """
@@ -73,7 +82,7 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
-        # self._extract_config_content()
+        self.dto = self._extract_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -127,6 +136,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
+        return self.dto.seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -135,6 +145,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
+        return self.dto.total_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -143,6 +154,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
+        return self.dto.headers
 
     def get_encoding(self) -> str:
         """
@@ -151,6 +163,7 @@ class Config:
         Returns:
             str: Encoding
         """
+        return self.dto.encoding
 
     def get_timeout(self) -> int:
         """
@@ -159,6 +172,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
+        return self.dto.timeout
 
     def get_verify_certificate(self) -> bool:
         """
@@ -167,6 +181,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
+        return self.dto.should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -175,6 +190,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
+        return self.dto.headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
@@ -188,6 +204,12 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    response = requests.get(
+        url,
+        headers=config.get_headers(),
+        timeout=config.get_timeout())
+    print("Status code:", response.status_code)
+    return response
 
 
 class Crawler:
@@ -205,6 +227,8 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
+        self.config = config
+        self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -293,14 +317,23 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    print(os.getcwd())
+    try:
+        os.mkdir(ASSETS_PATH)
+    except FileExistsError:
+        os.rmdir(ASSETS_PATH)
+        os.mkdir(ASSETS_PATH)
 
 
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    print("OMG I ran the code no way")
+    config = Config(CRAWLER_CONFIG_PATH)
+    test_request = make_request("https://krassever.ru/news", config)
+    print(test_request.text)
 
 
 if __name__ == "__main__":
     main()
-    print("Those errors above won't get you to see this line printed")
