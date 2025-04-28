@@ -69,6 +69,9 @@ class Config:
     def __init__(self, path_to_config: pathlib.Path) -> None:
         """
         Initialize an instance of the Config class.
+
+        Args:
+            path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
         self._seed_urls = []
@@ -78,7 +81,6 @@ class Config:
         self._timeout = 0
         self._should_verify_certificate = True
         self._headless_mode = False
-
         self._load_config()
         self._validate_config_content()
 
