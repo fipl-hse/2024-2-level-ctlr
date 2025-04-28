@@ -176,7 +176,7 @@ class Crawler:
     Crawler implementation for Mordovia News website.
     """
 
-    url_pattern = re.compile(r'http://mordovia-news\.ru/\d+/\d+/\d+/[a-z0-9-]+/')
+    url_pattern = re.compile(r'news-\d-\d{5}.htm')
 
     def __init__(self, config: Config) -> None:
         self.config = config
@@ -187,8 +187,12 @@ class Crawler:
         """
         Extract article URL from BeautifulSoup object.
         """
-        article_link = article_bs.find('a', href=self.url_pattern)
-        return article_link['href'] if article_link else None
+        article_link = article_bs.find_all('dd', {'class': 'title'})
+        for url in article_link:
+            url = url.find('a')
+            if 'https://mordovia-news.ru/' + url['href'] not in self.urls:
+                return 'https://mordovia-news.ru/' + url['href'] if article_link else ''
+        return ''
 
     def find_articles(self) -> None:
         """
@@ -201,10 +205,9 @@ class Crawler:
             if response.ok:
                 for _ in range(10):
                     article_url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
-                    if article_url == '' or article_url == 'error':
+                    if article_url == '':
                         break
-                    if article_url not in self.urls:
-                        self.urls.append(article_url)
+                    self.urls.append(article_url)
             continue
 
     def get_search_urls(self) -> list:
