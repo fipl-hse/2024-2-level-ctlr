@@ -391,7 +391,8 @@ class CrawlerRecursive(Crawler):
         Initialize an instance of the CrawlerRecursive class.
         """
         super().__init__(config)
-        self.start_url = 'https://sovsakh.ru/sahalinskie-gimnastki-zavoevali-chetyre-medali-vserossijskih-sorevnovanij-voshod/'
+        end = 'sahalinskie-gimnastki-zavoevali-chetyre-medali-vserossijskih-sorevnovanij-voshod/'
+        self.start_url = f'https://sovsakh.ru/{end}'
         self.recursive_path = ASSETS_PATH.parent / "recursive_articles.json"
         self.urls = []
 
