@@ -396,6 +396,8 @@ def main() -> None:
     for url in crawler.urls:
         parser = HTMLParser(url, article_id, config)
         article = parser.parse()
+        if not article or len(article.text) <= 100 or not article.text:
+            continue
         article_id += 1
         if isinstance(article, Article):
             to_raw(article)
