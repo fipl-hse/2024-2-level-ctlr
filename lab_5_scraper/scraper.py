@@ -9,10 +9,12 @@ from typing import Pattern, Union
 import json
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils.article.article import Article
 import shutil
 import requests
 from bs4 import BeautifulSoup
 import time
+import datetime
 
 class IncorrectSeedURLError(Exception):
     pass
@@ -51,11 +53,11 @@ class Config:
         self._validate_config_content()
         self.config = self._extract_config_content()
         self._seed_urls = self.config.seed_urls
-        self._total_articles = self.config.total_articles
+        self._num_articles = self.config.total_articles
         self._headers = self.config.headers
         self._encoding = self.config.encoding
         self._timeout = self.config.timeout
-        self._verify_certificate = self.config.should_verify_certificate
+        self._should_verify_certificate = self.config.should_verify_certificate
         self._headless_mode = self.config.headless_mode
 
 
@@ -82,26 +84,26 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        with open (self.path_to_config) as config:
-            data = json.load(config)
-        if (not data['seed_urls'] or not isinstance(data['seed_urls'],list)
-                or not all(isinstance(url,str) for url in data['seed_urls'])
-                or not all('https://www.volga-tv.ru/' in url for url in data['seed_urls'])):
+        data = self._extract_config_content()
+        if (not data.seed_urls or not isinstance(data.seed_urls,list)
+                or not all(isinstance(url,str) for url in data.seed_urls)
+                or not all('https://www.volga-tv.ru/' in url for url in data.seed_urls)):
             raise IncorrectSeedURLError('Something is wrong with the urls')
-        if data['total_articles_to_find_and_parse'] > 150:
-            raise NumberOfArticlesOutOfRangeError('N of articles out of range')
-        if (not isinstance(data['total_articles_to_find_and_parse'], int) or
-            data['total_articles_to_find_and_parse'] < 0):
+        if (not isinstance(data.total_articles, int) or
+            data.total_articles < 0 or isinstance(data.total_articles, bool)):
             raise IncorrectNumberOfArticlesError('Not correct n of articles')
-        if not isinstance(data['headers'], dict) or not data['headers']:
+        if data.total_articles > 150:
+            raise NumberOfArticlesOutOfRangeError('N of articles out of range')
+        if not isinstance(data.headers, dict):
             raise IncorrectHeadersError('Headers are incorrect')
-        if not isinstance(data['encoding'], str) or not data['encoding']:
+        if not isinstance(data.encoding, str):
             raise IncorrectEncodingError('Encoding is incorrect')
-        if (not isinstance(data['timeout'],int) or data['timeout'] > 60
-               or data['timeout'] < 0):
+        if not isinstance(data.timeout,int) or not 0 < data.timeout <= 60:
             raise IncorrectTimeoutError('The timings are wrong')
-        if not isinstance(data['should_verify_certificate'], bool):
+        if not isinstance(data.should_verify_certificate, bool):
             raise IncorrectVerifyError('Verify is not a bool')
+        if not isinstance(data.headless_mode, bool):
+            raise IncorrectVerifyError("Headless mode is not bool")
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -119,7 +121,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self._total_articles
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -155,7 +157,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self._verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -178,7 +180,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    time.sleep(5)
+    # time.sleep(5)
     return requests.get(url, headers=config.get_headers(), verify=config.get_verify_certificate(),
                         timeout=config.get_timeout())
 
@@ -268,6 +270,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.full_url = full_url
+        self.article_id = article_id
+        self.config = config
+        self.article = Article(url=full_url, article_id=article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -276,6 +282,13 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        news = article_soup.find("div", class_="news-detail hyphenate")
+        text = []
+        for i in news:
+            if i.get_text().strip():
+                text.append(i.get_text(strip=True, separator="\n"))
+        self.article.text = '\n'.join(text)
+
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -303,6 +316,11 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self.full_url, self.config)
+        if response.ok:
+            bs = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(bs)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
