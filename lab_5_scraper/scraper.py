@@ -263,7 +263,6 @@ class Crawler:
 
         return ""
 
-
     def find_articles(self) -> None:
         """
         Find articles.
@@ -281,7 +280,6 @@ class Crawler:
 
                 if url and url not in self.urls:
                     self.urls.append(url)
-
 
     def get_search_urls(self) -> list:
         """
@@ -316,7 +314,6 @@ class HTMLParser:
         self._config = config
         self.article = Article(self._full_url, self._article_id)
 
-
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
         Find text of article.
@@ -333,7 +330,6 @@ class HTMLParser:
         find_text = [text.get_text(strip=True) for text in text_tag]
 
         self.article.text = "\n".join(find_text)
-
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
