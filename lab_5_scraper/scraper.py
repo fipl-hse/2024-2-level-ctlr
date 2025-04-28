@@ -2,13 +2,18 @@
 Crawler implementation.
 """
 
+import datetime
+import json
+
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
-import json
-import requests
-from core_utils.config_dto import ConfigDTO
-from bs4 import BeautifulSoup
 from typing import Pattern, Union
+
+import requests
+from bs4 import BeautifulSoup
+
+from core_utils.article.article import Article
+from core_utils.config_dto import ConfigDTO
 
 
 class IncorrectSeedURLError(Exception):
@@ -64,15 +69,16 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
-        self.path = pathlib.Path(path_to_config)
+        self.path_to_config = pathlib.Path(path_to_config)
         extr_config = self._extract_config_content()
-        self.seed_urls = extr_config.seed_urls
-        self.total_articles = extr_config.total_articles
-        self.headers = extr_config.headers
-        self.encoding = extr_config.encoding
-        self.timeout = extr_config.timeout
-        self.should_verify_certificate = extr_config.should_verify_certificate
-        self.headless_mode = extr_config.headless_mode
+        self._seed_urls = extr_config.seed_urls
+        self._num_articles = extr_config.total_articles
+        self._headers = extr_config.headers
+        self._encoding = extr_config.encoding
+        self._timeout = extr_config.timeout
+        self._should_verify_certificate = extr_config.should_verify_certificate
+        self._headless_mode = extr_config.headless_mode
+        self._validate_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -81,7 +87,7 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open(self.path, "r", encoding="utf-8") as file:
+        with open(self.path_to_config, "r", encoding="utf-8") as file:
             config_data = json.load(file)
         return ConfigDTO(**config_data)
 
@@ -90,21 +96,36 @@ class Config:
         Ensure configuration parameters are not corrupt.
         """
 
-        if not ("http://www.znamyatrud.ru" in url for url in self.seed_urls):
-            raise IncorrectSeedURLError('incorrect URL')
-        if self.total_articles < 1 or self.total_articles > 150:
-            raise NumberOfArticlesOutOfRangeError('number of articles is out of range')
-        if not isinstance(self.total_articles, int) or \
-            self.total_articles < 0:
+        if not isinstance(self._seed_urls, list):
+            raise IncorrectSeedURLError("seed urls must be a list of strings")
+        if not all(isinstance(url, str) and url.startswith(('http://', 'https://'))
+                   for url in self._seed_urls):
+            raise IncorrectSeedURLError("seed urls don't start with http:// or https://")
+
+        if not isinstance(self._num_articles, int):
+            raise IncorrectNumberOfArticlesError("number of articles must be integer")
+        if self._num_articles <= 0:
+            raise IncorrectNumberOfArticlesError("number of articles must be positive")
+        if self._num_articles > 150:
+            raise NumberOfArticlesOutOfRangeError("number of articles must be between 1 and 150")
+
+        if not isinstance(self._num_articles, int) or \
+            self._num_articles < 0:
             raise IncorrectNumberOfArticlesError('incorrect number of articles')
-        if not isinstance(self.headers, dict):
+
+        if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('headers are not dict')
-        if not isinstance(self.encoding, str):
+
+        if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('encoding is not str')
-        if self.timeout < 0 or self.timeout > 60:
-            raise IncorrectTimeoutError('incorrect timeout')
-        if not isinstance(self.should_verify_certificate, bool) or \
-            not isinstance(self.headless_mode, bool):
+
+        if not isinstance(self._timeout, (int, float)):
+            raise IncorrectTimeoutError("timeout must be a number")
+        if self._timeout <= 0 or self._timeout > 60:
+            raise IncorrectTimeoutError("timeout must be between 0 and 60")
+
+        if not isinstance(self._should_verify_certificate, bool) or \
+            not isinstance(self._headless_mode, bool):
             raise IncorrectVerifyError("verify is not bool")
 
     def get_seed_urls(self) -> list[str]:
@@ -114,7 +135,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
-        return self.seed_urls
+        return self._seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -123,7 +144,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self.total_articles
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -132,7 +153,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
-        return self.headers
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -141,7 +162,7 @@ class Config:
         Returns:
             str: Encoding
         """
-        return self.encoding
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
@@ -150,7 +171,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
-        return self.timeout
+        return self._timeout
 
     def get_verify_certificate(self) -> bool:
         """
@@ -159,7 +180,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self.should_verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -168,7 +189,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-        return self.headless_mode
+        return self._headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
@@ -182,9 +203,10 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    return requests.get(url, headers=config.get_headers(),
+    response = requests.get(url, headers=config.get_headers(),
                              timeout=config.get_timeout(),
                              verify= config.get_verify_certificate())
+    return response
 
 
 class Crawler:
@@ -226,6 +248,15 @@ class Crawler:
         """
         Find articles.
         """
+        for seedurl in self.get_search_urls():
+            response = make_request(seedurl, self.config)
+            if not response.ok:
+                continue
+            soup = BeautifulSoup(response.text, 'lxml')
+            for i in range(10):
+                url = self._extract_url(soup)
+                if url not in self.urls and len(self.urls) < self.config.get_num_articles():
+                    self.urls.append(url)
 
     def get_search_urls(self) -> list:
         """
@@ -234,6 +265,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.config.get_seed_urls()
 
 
 # 10
