@@ -82,7 +82,14 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
-        self.dto = self._extract_config_content()
+        dto = self._extract_config_content()
+        self._seed_urls = dto.seed_urls
+        self._num_articles = dto.total_articles
+        self._headers = dto.headers
+        self._encoding = dto.encoding
+        self._timeout = dto.timeout
+        self._should_verify_certificate = dto.should_verify_certificate
+        self._headless_mode = dto.headless_mode
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -136,7 +143,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
-        return self.dto.seed_urls
+        return self._seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -145,7 +152,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self.dto.total_articles
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -154,7 +161,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
-        return self.dto.headers
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -163,7 +170,7 @@ class Config:
         Returns:
             str: Encoding
         """
-        return self.dto.encoding
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
@@ -172,7 +179,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
-        return self.dto.timeout
+        return self._timeout
 
     def get_verify_certificate(self) -> bool:
         """
@@ -181,7 +188,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self.dto.should_verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -190,7 +197,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-        return self.dto.headless_mode
+        return self._headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
@@ -317,19 +324,18 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    print(os.getcwd())
     try:
-        os.mkdir(ASSETS_PATH)
+        os.makedirs(base_path)
     except FileExistsError:
-        os.rmdir(ASSETS_PATH)
-        os.mkdir(ASSETS_PATH)
+        os.rmdir(base_path)
+        os.makedirs(base_path)
 
 
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    print("OMG I ran the code no way")
+    prepare_environment(ASSETS_PATH)
     config = Config(CRAWLER_CONFIG_PATH)
     test_request = make_request("https://krassever.ru/news", config)
     print(test_request.text)
