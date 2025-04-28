@@ -82,15 +82,15 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
-        self.config = self._extract_config_content()
 
-        self._seed_urls = self.config.seed_urls
-        self._num_articles = self.config.total_articles
-        self._headers = self.config.headers
-        self._encoding = self.config.encoding
-        self._timeout = self.config.timeout
-        self._should_verify_certificate = self.config.should_verify_certificate
-        self._headless_mode = self.config.headless_mode
+        config = self._extract_config_content()
+        self._seed_urls = config.seed_urls
+        self._num_articles = config.total_articles
+        self._headers = config.headers
+        self._encoding = config.encoding
+        self._timeout = config.timeout
+        self._should_verify_certificate = config.should_verify_certificate
+        self._headless_mode = config.headless_mode
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -101,7 +101,7 @@ class Config:
         """
         with self.path_to_config.open("r", encoding="UTF-8") as config_file:
             config = json.load(config_file)
-            return ConfigDTO(**config)
+        return ConfigDTO(**config)
 
     def _validate_config_content(self) -> None:
         """
@@ -113,31 +113,34 @@ class Config:
         correct_seed_url_regex = re.compile("https?://(www.)?")
         if not (isinstance(config.seed_urls, list) and all(
                 correct_seed_url_regex.match(url) for url in config.seed_urls)):
-            raise IncorrectSeedURLError
+            raise IncorrectSeedURLError(
+                "a seed URL does not match standard pattern \"https?://(www.)?\"")
 
         # Number of articles validation
         if not (isinstance(config.total_articles, int) and config.total_articles > 0):
-            raise IncorrectNumberOfArticlesError
+            raise IncorrectNumberOfArticlesError(
+                "total number of articles to parse is not integer or less than 0")
         if config.total_articles < 1 or config.total_articles > NUM_ARTICLES_UPPER_LIMIT:
-            raise NumberOfArticlesOutOfRangeError
+            raise NumberOfArticlesOutOfRangeError(
+                "total number of articles is out of range from 1 to 150")
 
         # Headers validation
         if not isinstance(config.headers, dict):
-            raise IncorrectHeadersError
+            raise IncorrectHeadersError("headers are not in a form of dictionary")
 
         # Encoding validation
         if not isinstance(config.encoding, str):
-            raise IncorrectEncodingError
+            raise IncorrectEncodingError("encoding is not specified as a string")
 
         # Timeout validation
         if not (isinstance(config.timeout, int)
                 and TIMEOUT_LOWER_LIMIT < config.timeout < TIMEOUT_UPPER_LIMIT):
-            raise IncorrectTimeoutError
+            raise IncorrectTimeoutError("timeout value is not a positive integer less than 60")
 
         # Verify certificate and headless mode validation
         if not (isinstance(config.should_verify_certificate, bool) and isinstance(
                 config.headless_mode, bool)):
-            raise IncorrectVerifyError
+            raise IncorrectVerifyError("verify certificate value is not True or False")
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -251,13 +254,17 @@ class Crawler:
         """
         for title_tag in article_bs.find_all("h3", class_="news-title"):
             link_tag = title_tag.find("a", href=True)
-            if link_tag:
-                href = link_tag["href"]
-                if not href.startswith("/news"):
-                    continue
-                full_url = "https://www.baikal-daily.ru" + str(href)
-                if full_url and full_url not in self.urls:
-                    return full_url
+            if not link_tag:
+                continue
+
+            href = link_tag["href"]
+            if not href.startswith("/news"):
+                continue
+
+            full_url = "https://www.baikal-daily.ru" + str(href)
+            if full_url and full_url not in self.urls:
+                return full_url
+
         return ""
 
     def find_articles(self) -> None:
@@ -293,8 +300,8 @@ class Crawler:
         return self.config.get_seed_urls()
 
 
-# # 10
-# # 4, 6, 8, 10
+# 10
+# 4, 6, 8, 10
 
 
 class HTMLParser:
