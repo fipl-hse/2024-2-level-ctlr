@@ -7,7 +7,25 @@ import pathlib
 from typing import Pattern, Union
 from core_utils.config_dto import ConfigDTO
 import json
+import shutil
+import requests
+from bs4 import BeautifulSoup
+from core_utils.constants import CRAWLER_CONFIG_PATH
 
+class IncorrectSeedURLError(Exception):
+    pass
+class NumberOfArticlesOutOfRangeError(Exception):
+    pass
+class IncorrectNumberOfArticlesError(Exception):
+    pass
+class IncorrectHeadersError(Exception):
+    pass
+class IncorrectEncodingError(Exception):
+    pass
+class IncorrectTimeoutError(Exception):
+    pass
+class IncorrectVerifyError(Exception):
+    pass
 
 class Config:
     """
@@ -21,7 +39,17 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
-        self.path = pathlib.Path(path_to_config)
+        self.path_to_config = path_to_config
+        self._validate_config_content()
+        extraction = self._extract_config_content()
+        self._seed_urls = extraction.seed_urls
+        self._num_articles = extraction.total_articles
+        self._headers = extraction.headers
+        self._encoding = extraction.encoding
+        self._timeout = extraction.timeout
+        self._should_verify_certificate = extraction.should_verify_certificate
+        self._headless_mode = extraction.headless_mode
+
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -38,6 +66,7 @@ class Config:
         Ensure configuration parameters are not corrupt.
         """
 
+
     def get_seed_urls(self) -> list[str]:
         """
         Retrieve seed urls.
@@ -45,6 +74,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
+        return self._seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -53,6 +83,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -61,6 +92,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -69,6 +101,7 @@ class Config:
         Returns:
             str: Encoding
         """
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
@@ -77,6 +110,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
+        return self._timeout
 
     def get_verify_certificate(self) -> bool:
         """
@@ -85,6 +119,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -93,7 +128,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-
+        return self._headless_mode
 
 def make_request(url: str, config: Config) -> requests.models.Response:
     """
@@ -106,6 +141,9 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    request = requests.get(url, headers = config.get_headers(), timeout = config.get_timeout())
+    return request
+
 
 
 class Crawler:
@@ -123,6 +161,9 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
+        self.config = config
+        self.urls = []
+
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -211,14 +252,26 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    base_path = pathlib.Path(base_path)
+    assets_path = base_path / 'ASSETS_PATH'
+    try:
+        if assets_path.exists() and assets_path.is_dir():
+            shutil.rmtree(assets_path)
+    except FileNotFoundError:
+        pass
+    assets_path.mkdir(parents=True, exist_ok=True)
+
+
 
 
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config=configuration)
+
 
 
 if __name__ == "__main__":
-    my_change = print("hello world")
     main()
