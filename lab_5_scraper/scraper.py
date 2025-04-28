@@ -8,6 +8,7 @@ import datetime
 import json
 import pathlib
 import re
+import shutil
 from typing import Pattern, Union
 
 import requests
@@ -307,10 +308,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
-        self.full_url = full_url
-        self.article_id = article_id
-        self.config = config
-        self.article = Article(self.full_url, self.article_id)
+        self._full_url = full_url
+        self._article_id = article_id
+        self._config = config
+        self.article = Article(self._full_url, self._article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -360,7 +361,7 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
-        response = make_request(self.full_url, self.config)
+        response = make_request(self._full_url, self._config)
         if response.ok:
             soup = BeautifulSoup(response.text, "lxml")
             self._fill_article_with_text(soup)
@@ -375,9 +376,10 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    base_path.mkdir(parents=True, exist_ok=True)
-    for file in base_path.iterdir():
-        file.unlink(missing_ok=True)
+    path = pathlib.Path(base_path)
+    if path.exists() and path.is_dir():
+        shutil.rmtree(base_path)
+    path.mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
@@ -390,7 +392,7 @@ def main() -> None:
     crawler = Crawler(config)
     crawler.find_articles()
 
-    parser = HTMLParser("https://moyaokruga.ru/mayakdelty/", 1, config)
+    parser = HTMLParser("https://moyaokruga.ru/mayakdelty/", 100, config)
     article = parser.parse()
     if isinstance(article, Article):
         to_raw(article)
