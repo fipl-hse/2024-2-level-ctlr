@@ -412,7 +412,6 @@ class HTMLParser:
             self._fill_article_with_meta_information(article_bs)
         else:
             return Article(self.full_url, self.article_id)
-
         return self.article
 
 
