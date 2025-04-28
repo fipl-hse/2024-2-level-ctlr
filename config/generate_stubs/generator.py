@@ -90,6 +90,7 @@ def cleanup_code(source_code_path: Path) -> str:
             "StanzaDocument",
             "CoNLLUDocument",
             "TreeNode",
+            "UnifiedCoNLLUDocument",
         ]
         accepted_modules["core_utils.article.article"] = ["Article", "ArtifactType"]
     elif (
