@@ -253,10 +253,12 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            for i in range(10):
+            i = 0
+            while i < 10:
                 url = self._extract_url(soup)
                 if url not in self.urls and len(self.urls) < self.config.get_num_articles():
                     self.urls.append(url)
+                i += 1
 
     def get_search_urls(self) -> list:
         """
