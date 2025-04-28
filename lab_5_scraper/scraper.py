@@ -11,6 +11,7 @@ from typing import Pattern, Union
 import requests
 from bs4 import BeautifulSoup
 from core_utils.article.article import Article
+from core_utils.article.io import to_meta, to_raw
 from core_utils.constants import ASSETS_PATH
 from core_utils.constants import CRAWLER_CONFIG_PATH
 from core_utils.config_dto import ConfigDTO
@@ -121,6 +122,8 @@ class Config:
             raise IncorrectTimeoutError('Timeout value is not a positive integer less than 60')
         if not isinstance(self._should_verify_certificate, bool):
             raise IncorrectVerifyError('Verify certificate value is not either True or False')
+        if not isinstance(self._headless_mode, bool):
+            raise IncorrectVerifyError('headless_mode should be an instance of bool')
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -291,6 +294,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.full_url = full_url
+        self.article_id = article_id
+        self.config = config
+        self.article = Article(url=full_url, article_id=article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -299,6 +306,14 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        paragraphs = article_soup.find_all('p', class_=lambda class_name: (
+                class_name and (
+                    class_name.startswith('Typography_text__WDByQ Typography_size__15') or
+                    class_name.startswith('Typography_text__WDByQ Typography_size__17')
+                )
+        ))
+        article_text = "\n\n".join(p.get_text(strip=True) for p in paragraphs)
+        self.article.text = article_text
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -307,6 +322,26 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        article_title = article_soup.find('h1', class_=lambda class_name: (
+                class_name and class_name.startswith('Typography_text__WDByQ Typography_size__28')
+        ))
+        self.article.title = article_title.get_text(strip=True)
+
+        article_author = None
+        for div in article_soup.find_all('div'):
+            found_author = div.find('p', class_=lambda class_name: (
+                    class_name and class_name.startswith('Typography_text__WDByQ Typography_size__14')
+            ))
+            if found_author:
+                text = found_author.get_text(strip=True)
+                if not text.isdigit() and len(text) > 2:
+                    article_author = text
+                    break
+
+        if article_author:
+            self.article.author = [article_author]
+        else:
+            self.article.author = ["NOT FOUND"]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -326,6 +361,14 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        if self.article.url is None:
+            return False
+        response = make_request(self.full_url, self.config)
+        if response.ok:
+            article_bs = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(article_bs)
+            self._fill_article_with_meta_information(article_bs)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -348,6 +391,12 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
+    for i, full_url in enumerate(crawler.urls):
+        parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
+        article = parser.parse()
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
