@@ -11,7 +11,6 @@ from typing import Pattern, Union
 
 import requests
 from bs4 import BeautifulSoup
-from mypy.types_utils import NoneType
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
@@ -294,12 +293,12 @@ class HTMLParser:
         """
         div = article_soup.find('div', class_= 'article_text')
         text = []
-        if div is None:
-            return None
-        for block in div:
-            if block.get_text():
-                text.append(block.get_text(separator= '\n', strip= True))
-        self.article.text = '\n'.join(text)
+        if div is not None:
+            for block in div:
+                if block.get_text():
+                    text.append(block.get_text(separator= '\n', strip= True))
+                self.article.text = '\n'.join(text)
+        return None
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -308,7 +307,8 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title = article_soup.find('h1', itemprop = ['headline', 'headline name']).get_text(strip= True)
+        title = article_soup.find('h1',
+                                  itemprop = ['headline', 'headline name']).get_text(strip= True)
         if title is None:
             self.article.title = 'NOT FOUND'
         else:
@@ -321,7 +321,7 @@ class HTMLParser:
             for author in div_author:
                 if author.get_text():
                     authors.append(author.get_text(strip= True))
-            self.article.author = ', '.join(authors)
+            self.article.author = authors
         div_topic = article_soup.find_all('div', class_= 'tags')
         topics = []
         if div_topic is None:
@@ -330,7 +330,7 @@ class HTMLParser:
             for topic in div_topic:
                 if topic.get_text():
                     topics.append(topic.get_text(separator= ', ', strip=True))
-            self.article.topics = ''.join(topics)
+            self.article.topics = topics
         date_str = article_soup.find_all('time')[0].get_text(strip= True)
         date = self.unify_date_format(date_str)
         self.article.date = date
