@@ -2,70 +2,65 @@
 Crawler implementation.
 """
 
+import datetime
+import json
+
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
-import json
 import random
 import shutil
 import time
+from typing import Pattern, Union
 
 import requests
-import datetime
+from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
+from core_utils.article.io import to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-from bs4 import BeautifulSoup
-from typing import Pattern, Union
 
 
 class IncorrectSeedURLError(Exception):
     """
     Exception raised when seed URL does not match standard pattern "https?://(www.)?".
     """
-    pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """
     Exception raised when total number of articles is out of range from 1 to 150.
     """
-    pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """
     Exception raised when total number of articles to parse is not integer or less than 0.
     """
-    pass
 
 
 class IncorrectHeadersError(Exception):
     """
     Exception raised when headers are not in a form of dictionary.
     """
-    pass
 
 
 class IncorrectEncodingError(Exception):
     """
     Exception raised when encoding is not specified as a string.
     """
-    pass
 
 
 class IncorrectTimeoutError(Exception):
     """
     Exception raised when timeout value is not a positive integer less than 60.
     """
-    pass
 
 
 class IncorrectVerifyError(Exception):
     """
     Exception raised when verify certificate value is not bool.
     """
-    pass
 
 
 class Config:
@@ -228,7 +223,7 @@ class Crawler:
         """
         self.config = config
         self.urls = []
-        self.seed_urls = None
+        self.seed_urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -243,8 +238,9 @@ class Crawler:
         url = article_bs.get('href')
         if not url.startswith('https://pravda-nn.ru/'):
             url = 'https://pravda-nn.ru/' + url
-        if url not in self.urls:
+        if url not in self.urls and isinstance(url, str):
             return url
+        return ''
 
     def find_articles(self) -> None:
         """
@@ -258,7 +254,7 @@ class Crawler:
             bs = BeautifulSoup(response.content, 'html.parser')
             for article_bs in bs.find_all('a', class_='content', href=True):
                 url = self._extract_url(article_bs)
-                if make_request(url, self.config).status_code != 200:
+                if not url or make_request(url, self.config).status_code != 200:
                     continue
                 self.urls.append(url)
 
@@ -304,7 +300,8 @@ class HTMLParser:
         """
         articles_html = article_soup.find_all(class_="vc_row wpb_row vc_row-fluid")
         for article_html in articles_html:
-            self.article.text = '\n'.join([p.text for p in article_html.find_all('p') if p.text != ''])
+            self.article.text = '\n'.join([p.text for p in article_html.find_all('p')
+                                           if p.text != ''])
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -356,6 +353,14 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
+    crawler = Crawler(config=configuration)
+    for i, full_url in enumerate(crawler.urls, 1):
+        parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
+        article = parser.parse()
+        if isinstance(article, Article):
+            to_raw(article)
 
 
 if __name__ == "__main__":
