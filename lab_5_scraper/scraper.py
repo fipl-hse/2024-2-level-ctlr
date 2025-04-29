@@ -254,12 +254,13 @@ class Crawler:
             seed_url_bs = BeautifulSoup(seed_url_request.text, 'html.parser')
             num_new_urls = len(set(seed_url_bs.find_all(class_='card-title ms5')))
 
-            for num_of_urls in range(num_new_urls):
+            for _ in range(num_new_urls):
                 found_article_url = self._extract_url(seed_url_bs)
                 if found_article_url:
                     self.urls.append(found_article_url)
                 else:
                     return None
+        return None
 
 
 
