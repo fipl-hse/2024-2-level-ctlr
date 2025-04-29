@@ -16,7 +16,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw
+from core_utils.article.io import to_raw, to_meta
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -113,7 +113,7 @@ class Config:
             raise IncorrectNumberOfArticlesError('Invalid number of articles to pass')
         if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError(
-                'Number of articles out of range: should be between 1 and 150')
+                'Number of articles is out of range: should be between 1 and 150')
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers is not an instance of dict')
         if not isinstance(self._encoding, str):
@@ -223,7 +223,6 @@ class Crawler:
         """
         self.config = config
         self.urls = []
-        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -248,6 +247,8 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.get_search_urls():
+            if len(self.urls) >= self.config.get_num_articles():
+                break
             response = make_request(seed_url, self.config)
             if not response.ok:
                 continue
@@ -257,8 +258,6 @@ class Crawler:
                     break
                 if url not in self.urls:
                     self.urls.append(url)
-                if len(self.urls) >= self.config.get_num_articles():
-                    break
 
     def get_search_urls(self) -> list:
         """
@@ -420,12 +419,17 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        day, month, time = date_str.split()
+        datetime_items = date_str.split()
+        if len(datetime_items) == 4:
+            day, month, year, time = datetime_items
+        else:
+            day, month, time = datetime_items
+            year = 2025
         hour, minute = time.split(':')
         months_list = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
                        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
         month_index = months_list.index(month) + 1
-        return datetime.datetime(2025, month_index, int(day), int(hour), int(minute))
+        return datetime.datetime(year, month_index, int(day), int(hour), int(minute))
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -460,18 +464,25 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    prepare_environment(ASSETS_PATH)
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
     crawler.find_articles()
-    for idx, url in enumerate(crawler.urls):
+    for idx, url in enumerate(crawler.urls, 1):
         sleep(randint(1, 10))
-        parser = HTMLParser(url, idx + 1, config)
+        parser = HTMLParser(url, idx, config)
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
+            to_meta(article)
+
+
+def main_recursive_crawler() -> None:
+    config = Config(CRAWLER_CONFIG_PATH)
     recursive_crawler = CrawlerRecursive(config)
     recursive_crawler.find_articles()
 
 
 if __name__ == "__main__":
     main()
+    main_recursive_crawler()
