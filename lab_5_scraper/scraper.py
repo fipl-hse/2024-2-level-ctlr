@@ -131,7 +131,8 @@ class Config:
             raise IncorrectTimeoutError('Oops, timeout has to be 60 seconds or less ~_~')
 
         if not isinstance(config.should_verify_certificate, bool):
-            raise IncorrectVerifyError('Oops, certificate verification has to be a boolean value ~_~')
+            raise IncorrectVerifyError('Oops, certificate verification has '
+                                       'to be a boolean value ~_~')
 
         if not isinstance(config.headless_mode, bool):
             raise IncorrectVerifyError('Oops, headless mode has to be a boolean value ~_~')
