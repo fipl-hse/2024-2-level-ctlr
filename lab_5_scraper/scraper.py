@@ -248,14 +248,14 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        links = article_bs.find_all('a', class_='list-item__title')
-        for link in links:
-            href = link.get('href')
-            if href and isinstance(href, str):
-                if href.startswith('/'):
-                    return f"https://ria.ru{href}"
-                elif href.startswith('http'):
-                    return href
+        link = article_bs.find('a', class_='list-item__title')
+        href = link.get('href') if link else None
+
+        if isinstance(href, str):
+            if href.startswith('/'):
+                return f"https://ria.ru{href}"
+            if href.startswith('http'):
+                return href
         return ''
 
     def find_articles(self) -> None:
@@ -409,4 +409,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
