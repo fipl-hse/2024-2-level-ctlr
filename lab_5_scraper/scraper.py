@@ -101,7 +101,8 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self.config_dto.seed_urls, list):
+        if (not isinstance(self.config_dto.seed_urls, list)
+                or not all('https://sovsakh.ru/' in url for url in self.config_dto.seed_urls)):
             raise IncorrectSeedURLError
         if (not isinstance(self.config_dto.total_articles, int)
                 or isinstance(self.config_dto.total_articles, bool)
