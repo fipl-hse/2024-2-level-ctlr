@@ -106,31 +106,35 @@ class Config:
 
         if not isinstance(config.seed_urls, list) or \
                 not all(re.match(url_pattern, x) for x in config.seed_urls):
-            raise IncorrectSeedURLError
+            raise IncorrectSeedURLError('Oops, seed urls have to be a list '
+                                        'of correct urls ~_~')
 
         if not isinstance(config.total_articles, int):
-            raise IncorrectNumberOfArticlesError
+            raise IncorrectNumberOfArticlesError('Oops, number of articles has '
+                                                 'to be an integer ~_~')
         if config.total_articles <= 0:
-            raise IncorrectNumberOfArticlesError
+            raise IncorrectNumberOfArticlesError('Oops, there has to be at '
+                                                 'least one article ~_~')
         if config.total_articles > 150:
-            raise NumberOfArticlesOutOfRangeError
+            raise NumberOfArticlesOutOfRangeError('Oops, too many articles ~_~')
 
         if not isinstance(config.headers, dict):
-            raise IncorrectHeadersError
+            raise IncorrectHeadersError('Oops, headers have to be dictionary ~_~')
 
         if not isinstance(config.encoding, str):
-            raise IncorrectEncodingError
+            raise IncorrectEncodingError('Oops, encoding has to be a string ~_~')
 
         if not isinstance(config.timeout, int) or config.timeout <= 0:
-            raise IncorrectTimeoutError
+            raise IncorrectTimeoutError('Oops, timeout has to be a positive integer ~_~')
+
         if config.timeout > 60:
-            raise IncorrectTimeoutError
+            raise IncorrectTimeoutError('Oops, timeout has to be 60 seconds or less ~_~')
 
         if not isinstance(config.should_verify_certificate, bool):
-            raise IncorrectVerifyError
+            raise IncorrectVerifyError('Oops, certificate verification has to be a boolean value ~_~')
 
         if not isinstance(config.headless_mode, bool):
-            raise IncorrectVerifyError
+            raise IncorrectVerifyError('Oops, headless mode has to be a boolean value ~_~')
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -234,7 +238,7 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
-        self.config = config
+        self._config = config
         self.urls = []
 
 
@@ -263,11 +267,11 @@ class Crawler:
         Find articles.
         """
         seed_urls = self.get_search_urls()
-        targets_needed = self.config.get_num_articles()
+        targets_needed = self._config.get_num_articles()
 
         for url in seed_urls:
             if len(self.urls) != targets_needed:
-                response = make_request(url, self.config)
+                response = make_request(url, self._config)
                 if not response.ok:
                     continue
                 bs = BeautifulSoup(response.text, 'lxml')
@@ -288,7 +292,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-        return self.config.get_seed_urls()
+        return self._config.get_seed_urls()
 
 
 # 10
@@ -337,8 +341,8 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         title = article_soup.find('div', class_='article__title')
-        if title:
-            self.article.title = title.text
+
+        self.article.title = title.text if title else 'NOT FOUND'
 
         self.article.author = ['NOT FOUND']
         date_block = article_soup.find('div', class_='article__info-date')
@@ -398,8 +402,7 @@ def main() -> None:
     prepare_environment(base_path=ASSETS_PATH)
     crawler = Crawler(config=config)
     crawler.find_articles()
-    urls = crawler.urls
-    for index, url in enumerate(urls):
+    for index, url in enumerate(crawler.urls):
         parser = HTMLParser(full_url=url, article_id=index + 1, config=config)
         article = parser.parse()
         if isinstance(article, Article):
