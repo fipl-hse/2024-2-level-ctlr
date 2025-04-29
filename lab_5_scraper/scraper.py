@@ -22,31 +22,45 @@ from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
-    """Seed urls are not presented as a list or are not strings"""
+    """
+    Seed urls are not presented as a list or are not strings
+    """
 
 
 class IncorrectNumberOfArticlesError(Exception):
-    """Number of articles is not an integer or less than zero"""
+    """
+    Number of articles is not an integer or less than zero
+    """
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
-    """Number of articles is bigger than 150"""
+    """
+    Number of articles is bigger than 150
+    """
 
 
 class IncorrectHeadersError(Exception):
-    """Headers are not presented as a dictionary"""
+    """
+    Headers are not presented as a dictionary
+    """
 
 
 class IncorrectEncodingError(Exception):
-    """Encoding value is not a string"""
+    """
+    Encoding value is not a string
+    """
 
 
 class IncorrectTimeoutError(Exception):
-    """Timeout value is not an integer or less than 1 or bigger than 60"""
+    """
+    Timeout value is not an integer or less than 1 or bigger than 60
+    """
 
 
 class IncorrectVerifyError(Exception):
-    """Verify values are not a boolean"""
+    """
+    Verify values are not a boolean
+    """
 
 
 class Config:
@@ -62,8 +76,8 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        self._validate_config_content()
         self.config_dto = self._extract_config_content()
+        self._validate_config_content()
         self._seed_urls = self.config_dto.seed_urls
         self._num_articles = self.config_dto.total_articles
         self._headers = self.config_dto.headers
@@ -87,25 +101,24 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        data = self._extract_config_content()
-        if (not isinstance(data.seed_urls, list)
-                or not all('https://sovsakh.ru/' in url for url in data.seed_urls)):
+        if not isinstance(self.config_dto.seed_urls, list):
             raise IncorrectSeedURLError
-        if (not isinstance(data.total_articles, int)
-                or isinstance(data.total_articles, bool)
-                or data.total_articles < 0):
+        if (not isinstance(self.config_dto.total_articles, int)
+                or isinstance(self.config_dto.total_articles, bool)
+                or self.config_dto.total_articles < 0):
             raise IncorrectNumberOfArticlesError
-        if data.total_articles > 150:
+        if self.config_dto.total_articles > 150:
             raise NumberOfArticlesOutOfRangeError
-        if not isinstance(data.headers, dict):
+        if not isinstance(self.config_dto.headers, dict):
             raise IncorrectHeadersError
-        if not isinstance(data.encoding, str):
+        if not isinstance(self.config_dto.encoding, str):
             raise IncorrectEncodingError
-        if not isinstance(data.timeout, int) or not 0 < data.timeout <= 60:
+        if (not isinstance(self.config_dto.timeout, int) or self.config_dto.timeout <= 0
+                or self.config_dto.timeout > 60):
             raise IncorrectTimeoutError
-        if not isinstance(data.should_verify_certificate, bool):
+        if not isinstance(self.config_dto.should_verify_certificate, bool):
             raise IncorrectVerifyError
-        if not isinstance(data.headless_mode, bool):
+        if not isinstance(self.config_dto.headless_mode, bool):
             raise IncorrectVerifyError
 
     def get_seed_urls(self) -> list[str]:
@@ -221,9 +234,6 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        # block = article_bs.find('div', {'class': 'td_block_inner tdb-block-inner td-fix-index'})
-        # if not block:
-        #     article_bs.find('div', {'class': 'td-block-span6 td-post-prev-post'})
         urls = article_bs.find_all('a', href=True)
         for url in urls:
             if not url:
