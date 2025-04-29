@@ -226,7 +226,6 @@ class Crawler:
         """
         self.config = config
         self.urls = []
-        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -244,7 +243,7 @@ class Crawler:
                 href = link['href']
                 if href not in self.urls:
                     return href
-        return "stop"
+        return ''
 
     def find_articles(self) -> None:
         """
@@ -255,10 +254,13 @@ class Crawler:
             if not response.ok:
                 continue
             url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
-            for _ in range(13):
-                if url == 'stop':
-                    break
+            while url:
                 self.urls.append(url)
+                url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
+            '''for _ in range(13):
+                if url == '':
+                    break
+                self.urls.append(url)'''
 
     def get_search_urls(self) -> list:
         """
@@ -362,6 +364,7 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     for index, url in enumerate(crawler.urls):
