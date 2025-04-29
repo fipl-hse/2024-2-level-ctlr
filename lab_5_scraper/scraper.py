@@ -258,24 +258,27 @@ class Crawler:
                     return href
         return ''
 
-
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        for seed_url in self.get_search_urls():
-            if len(self.urls) >= self.config.get_num_articles():
+        seed_urls = self.get_search_urls()
+        targets_needed = self.config.get_num_articles()
+
+        for url in seed_urls:
+            if len(self.urls) != targets_needed:
+                response = make_request(url, self.config)
+                if not response.ok:
+                    continue
+                bs = BeautifulSoup(response.text, 'lxml')
+                extracted_url = self._extract_url(bs)
+                while extracted_url:
+                    self.urls.append(extracted_url)
+                    if len(self.urls) == targets_needed:
+                        break
+                    extracted_url = self._extract_url(bs)
+            if len(self.urls) == targets_needed:
                 break
-
-            response = make_request(seed_url, self.config)
-            if not response.ok:
-                continue
-
-            soup = BeautifulSoup(response.text, 'lxml')
-            url = self._extract_url(soup)
-
-            if url and url not in self.urls:
-                self.urls.append(url)
 
 
     def get_search_urls(self) -> list:
@@ -338,6 +341,13 @@ class HTMLParser:
             self.article.title = title.text
 
         self.article.author = ['NOT FOUND']
+        date_block = article_soup.find('div', class_='article__info-date')
+        if date_block and date_block.a:
+            raw_date = date_block.a.text.strip()
+            self.article.date = self.unify_date_format(raw_date)
+
+        topic_tags = article_soup.find_all('a', rel='tag')
+        self.article.topics = [tag.text.strip() for tag in topic_tags] if topic_tags else []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -349,6 +359,8 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        return datetime.datetime.strptime(date_str, "%H:%M %d.%m.%Y")
+
 
     def parse(self) -> Union[Article, bool, list]:
         """
