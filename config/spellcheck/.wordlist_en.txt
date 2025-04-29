@@ -208,6 +208,7 @@ challenges
 change
 chart
 check
+checks
 child
 children
 choose
@@ -390,6 +391,7 @@ differences
 different
 differently
 digraph
+directly
 directory
 disable
 disables

@@ -92,7 +92,7 @@ def cleanup_code(source_code_path: Path) -> str:
             "TreeNode",
             "UnifiedCoNLLUDocument",
         ]
-        accepted_modules["core_utils.article.article"] = ["Article", "ArtifactType"]
+        accepted_modules["core_utils.article.article"] = ["Article"]
     elif (
         "lab_4_retrieval_w_clustering" in str(source_code_path)
         and source_code_path.name == "main.py"
