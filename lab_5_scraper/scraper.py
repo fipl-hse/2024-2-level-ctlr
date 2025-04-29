@@ -345,62 +345,25 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        #try:
-        #    title_element = article_soup.find("h1", class_="entry-title")
-        #    self.article.title = (title_element.get_text
-        #                          (strip=True)) if title_element else "NOT FOUND"
-
-        #    spans_author = article_soup.find_all('span', style="color: #808080; font-size: 10pt;")
-        #    text_author = article_soup.find_all('strong', attrs={"original-font-size": "15px"})
-        #    left_author = article_soup.find_all('p', attrs={"style":"text-align: right;"})
-        #    if spans_author:
-        #        self.article.author = [spans_author[0].get_text(strip=True)]
-        #    if text_author:
-        #        self.article.author = [text_author[0].get_text(strip=True)]
-        #    if left_author:
-        #        self.article.author = [left_author[0].get_text(strip=True)]
-        #    if not spans_author and not text_author and not left_author:
-        #        self.article.author = ["NOT FOUND"]
-
-        #    published_time_meta = article_soup.find('meta', property='article:published_time')
-        #    time = published_time_meta.get('content')
-        #    if time:
-        #        self.article.date = self.unify_date_format(str(time))
-        #    else:
-        #        self.article.date = datetime.datetime.min
-
-        #    self.article.topics = []
-        #    categories = article_soup.find_all('ul', class_="td-tags td-post-small-box clearfix")
-        #    for category in categories:
-        #        for a in category.find_all('a'):
-        #            self.article.topics.append(a.get_text(strip=True))
-
-        #except AttributeError:
-        #    print('Something has gone wrong with url:', self.full_url)
-        #    self.article.date = datetime.datetime.min
         try:
             title_element = article_soup.find("h1", class_="entry-title")
-            self.article.title = title_element.get_text(strip=True) if title_element else "NOT FOUND"
+            self.article.title = (title_element.get_text
+                                  (strip=True)) if title_element else "NOT FOUND"
 
             spans_author = article_soup.find_all('span', style="color: #808080; font-size: 10pt;")
             text_author = article_soup.find_all('strong', attrs={"original-font-size": "15px"})
-            left_author = article_soup.find_all('p', attrs={"style": "text-align: right;"})
-
-            authors = []
+            left_author = article_soup.find_all('p', attrs={"style":"text-align: right;"})
             if spans_author:
-                authors.append(spans_author[0].get_text(strip=True))
+                self.article.author = [spans_author[0].get_text(strip=True)]
             if text_author:
-                authors.append(text_author[0].get_text(strip=True))
+                self.article.author = [text_author[0].get_text(strip=True)]
             if left_author:
-                authors.append(left_author[0].get_text(strip=True))
-
-            if not authors:
-                authors = ["NOT FOUND"]
-
-            self.article.author = authors
+                self.article.author = [left_author[0].get_text(strip=True)]
+            if not spans_author and not text_author and not left_author:
+                self.article.author = ["NOT FOUND"]
 
             published_time_meta = article_soup.find('meta', property='article:published_time')
-            time = published_time_meta.get('content') if published_time_meta else None
+            time = published_time_meta.get('content')
             if time:
                 self.article.date = self.unify_date_format(str(time))
             else:
