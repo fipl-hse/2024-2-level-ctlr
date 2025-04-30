@@ -9,7 +9,10 @@
       "https://tomsk-novosti.ru/category/news/page/7/",
       "https://tomsk-novosti.ru/category/news/page/8/",
       "https://tomsk-novosti.ru/category/news/page/9/",
-      "https://tomsk-novosti.ru/category/news/page/10/"
+      "https://tomsk-novosti.ru/category/news/page/10/",
+      "https://tomsk-novosti.ru/category/kriminalnye-istorii/",
+      "https://tomsk-novosti.ru/category/guberniya/",
+      "https://tomsk-novosti.ru/category/health/"
                 ],
     "headers": {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",

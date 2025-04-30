@@ -2,19 +2,23 @@
 Crawler implementation.
 """
 
-# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-import json
-from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-from core_utils.config_dto import ConfigDTO
-from core_utils.article.article import Article
-import pathlib
 import datetime
+import json
+
+# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import pathlib
 import shutil
-from time import sleep
 from random import random
+from time import sleep
 from typing import Pattern, Union
+
 import requests
 from bs4 import BeautifulSoup
+
+from core_utils.article.article import Article
+from core_utils.article.io import to_meta, to_raw
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectEncodingError(Exception):
@@ -245,10 +249,13 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            url = self._extract_url(soup)
-            if len(self.urls) < self.config.get_num_articles():
-                if url not in self.urls:
-                    self.urls.append(url)
+            post_class = soup.find_all('a', class_='post-thumbnail')
+            for post in post_class:
+                url = post['href']
+                if url:
+                    if len(self.urls) < self.config.get_num_articles():
+                        if url not in self.urls:
+                            self.urls.append(url)
 
     def get_search_urls(self) -> list:
         """
@@ -289,7 +296,7 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         texts = article_soup.find_all('p')
-        self.article.text = ' '.join([text.text for text in texts if text.text])
+        self.article.text = ' '.join([text.text for text in texts])
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -298,6 +305,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        self.article.title = article_soup.find('title').text
+        self.article.author = article_soup.find('a', class_='url fn n').text
+        date = article_soup.find('time', class_='entry-date').attrs['datetime']
+        self.article.date = self.unify_date_format(date)
+        self.article.topics = article_soup.find('span', class_='cat-links').text.split(', ')
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -309,8 +321,8 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        # date = date_str.split('T')
-        # return datetime.datetime.strptime(' '.join(date), '%d-%b-%Y %H:%M')
+        date = date_str.split('T')
+        return datetime.datetime.strptime(' '.join(date), '%Y-%m-%d %H:%M:%S%z')
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -321,9 +333,8 @@ class HTMLParser:
         """
         soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(soup)
-        if self.article.text:
-            return self.article
-        return False
+        self._fill_article_with_meta_information(soup)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -333,10 +344,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    path = pathlib.Path(base_path)
-    if path.is_dir():
-        shutil.rmtree(path)
-    path.mkdir(parents=True)
+    if base_path.is_dir():
+        shutil.rmtree(base_path)
+    base_path.mkdir(parents=True)
 
 
 def main() -> None:
@@ -344,8 +354,17 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
     crawler = Crawler(config)
     crawler.find_articles()
+    for article_id, url in enumerate(crawler.urls, 1):
+        parser = HTMLParser(url, article_id=article_id, config=config)
+        article = parser.parse()
+        if not article:
+            continue
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
