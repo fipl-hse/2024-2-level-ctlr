@@ -7,9 +7,12 @@ import pathlib
 from typing import Pattern, Union
 import json
 from core_utils.config_dto import ConfigDTO
+from core_utils.article.article import Article
+from core_utils.article.io import to_raw
 from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 import shutil
 import requests
+from bs4 import BeautifulSoup
 
 class IncorrectSeedURLError(Exception):
     """
@@ -204,7 +207,8 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
-
+        self.config = config
+        self.urls = []
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
         Find and retrieve url from HTML.
@@ -215,12 +219,26 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        all_links = article_bs.find_all('a', class_='img_box')
+        for link in all_links:
+            href_link = link.get('href')
+            if isinstance(href_link, str) and href_link not in self.urls:
+                return href_link
+            return ''
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-
+        for seed in self.get_search_urls():
+            response = make_request(seed, self.config)
+            if not response.ok:
+                continue
+            soup = BeautifulSoup(response.text, 'lxml')
+            url = self._extract_url(soup)
+            while url and len(self.urls) != self.config.get_num_articles():
+                self.urls.append(url)
+                url = self._extract_url(soup)
     def get_search_urls(self) -> list:
         """
         Get seed_urls param.
@@ -228,7 +246,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-
+        return self.config.get_seed_urls()
 
 # 10
 # 4, 6, 8, 10
@@ -248,7 +266,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
-
+        self.full_url = full_url
+        self.article_id = article_id
+        self.config = config
+        self.article = Article(url=full_url, article_id=article_id)
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
         Find text of article.
@@ -256,6 +277,13 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        div = article_soup.find('div', class_='article_text')
+        text = []
+        if div is not None:
+            for block in div:
+                if block.get_text():
+                    text.append(block.get_text(separator='\n', strip=True))
+                self.article.text = '\n'.join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -283,7 +311,11 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
-
+        response = make_request(self.full_url, self.config)
+        if response.ok:
+            soup = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(soup)
+        return self.article
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
@@ -304,7 +336,13 @@ def main() -> None:
     """
     configuration = Config(CRAWLER_CONFIG_PATH)
     prepare_environment(ASSETS_PATH)
-
+    crawler = Crawler(config=configuration)
+    crawler.find_articles()
+    parser = HTMLParser(full_url="https://vestiprim.ru/news/ptrnews/163045-generalnoe-konsulstvo-respubliki-belarus-otkrylos-v-primore.html", article_id=1, config=configuration)
+    parsed_article = parser.parse()
+    if isinstance(parsed_article, Article):
+        to_raw(parsed_article)
+    print(to_raw(parsed_article))
 
 if __name__ == "__main__":
     main()
