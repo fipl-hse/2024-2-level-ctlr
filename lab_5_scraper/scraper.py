@@ -253,14 +253,11 @@ class Crawler:
             response = requests.get(seed_url, headers=self.config.get_headers())
             if not response.ok:
                 continue
-            url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
-            while url:
-                self.urls.append(url)
+            while True:
                 url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
-            '''for _ in range(13):
-                if url == '':
+                if not url:
                     break
-                self.urls.append(url)'''
+                self.urls.append(url)
 
     def get_search_urls(self) -> list:
         """
