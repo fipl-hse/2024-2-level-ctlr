@@ -212,6 +212,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     headers = config.get_headers()
     verify = config.get_verify_certificate()
     response = requests.get(url, headers=headers, timeout=timeout, verify=verify)
+    requests.encoding = config.get_encoding()
     response.raise_for_status()
     return response
 
@@ -424,10 +425,12 @@ def main() -> None:
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
     prepare_environment(ASSETS_PATH)
+    sleep(randint(1, 5))
     crawler.find_articles()
-    for identifier, url in enumerate(crawler.urls):
+    for identifier, url in enumerate(crawler.urls, start=1):
         sleep(randint(1, 10))
-        parser = HTMLParser(url, identifier + 1, config)
+        #response = requests.get(url, config)
+        parser = HTMLParser(url, identifier, config)
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
