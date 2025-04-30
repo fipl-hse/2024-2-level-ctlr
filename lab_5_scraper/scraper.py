@@ -265,7 +265,7 @@ class Crawler:
 
                 article_bs = BeautifulSoup(response.text, 'lxml')
                 if len(self.urls) < max_num_articles:
-                    for _ in range(20):
+                    while True:
                         article_url = self._extract_url(article_bs)
                         if article_url == '':
                             break
