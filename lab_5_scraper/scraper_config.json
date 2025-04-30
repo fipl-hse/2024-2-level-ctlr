@@ -23,4 +23,5 @@
     "timeout": 50,
     "should_verify_certificate": true,
     "headless_mode": true
+
 }
