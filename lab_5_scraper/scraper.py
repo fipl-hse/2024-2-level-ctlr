@@ -222,6 +222,7 @@ class Crawler:
         """
         self.config = config
         self.urls = []
+        self.burl = "https://daily-nn.ru/"
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -237,7 +238,7 @@ class Crawler:
             ltag = ttag.find("a", href=True)
             if ltag:
                 href = ltag["href"]
-                url = "https://daily-nn.ru/" + str(href)
+                url = self.burl + str(href)
                 if url and url not in self.urls:
                     return url
         return ""
@@ -375,13 +376,12 @@ def main() -> None:
     crl.find_articles()
     print(f"Articles required: {ini.get_num_articles()}")
     print(f"Found: {len(crl.urls)} urls")
-    prs = HTMLParser \
-        ("https://daily-nn.ru/konkurentsiya_za_rabochie_mesta_rastet_v_nizhegorodskoy_oblasti.html",
-         1, ini)
-    art_p = prs.parse()
-    if isinstance(art_p, Article):
-        to_raw(art_p)
-        to_meta(art_p)
+    for furl in crl.urls:
+        prs = HTMLParser(furl, 1, ini)
+        art_p = prs.parse()
+        if isinstance(art_p, Article):
+            to_raw(art_p)
+            to_meta(art_p)
 
 
 if __name__ == "__main__":
