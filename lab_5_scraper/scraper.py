@@ -106,10 +106,8 @@ class Config:
             if not isinstance(url, str) or not 'https://aif.ru/' in url:
                 raise IncorrectSeedURLError('incorrect url')
         if not isinstance(self._num_articles, int) or self._num_articles <= 0:
-            print(('я здесь правильный', self._num_articles))
             raise IncorrectNumberOfArticlesError('number is not int or less that 0')
         if self._num_articles < 0 or self._num_articles > 150:
-            print(('я здесь', self._num_articles))
             raise NumberOfArticlesOutOfRangeError('wrong number of articles')
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('incorrect type of headers')
@@ -197,10 +195,12 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    #time.sleep(random.randint(1, 9))
-    return requests.get(url, headers= config.get_headers(),
-                             timeout= config.get_timeout(),
-                             verify= config.get_verify_certificate())
+    time.sleep(random.randint(1, 10))
+    req = requests.get(url, headers= config.get_headers(),
+                            timeout= config.get_timeout(),
+                            verify= config.get_verify_certificate())
+    req.encoding = config.get_encoding()
+    return req
 
 
 class Crawler:
@@ -220,7 +220,6 @@ class Crawler:
         """
         self.config = config
         self.urls = []
-        self.id_counter = 1
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -249,7 +248,7 @@ class Crawler:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
             url = self._extract_url(soup)
-            while url and len(self.urls) != self.config.get_num_articles():
+            while url and len(self.urls) <= self.config.get_num_articles():
                 self.urls.append(url)
                 url = self._extract_url(soup)
 
@@ -299,7 +298,7 @@ class HTMLParser:
             for block in div:
                 if block.get_text():
                     text.append(block.get_text(separator='\n', strip=True))
-                self.article.text = '\n'.join(text)
+            self.article.text = '\n'.join(text)
 
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
@@ -313,21 +312,17 @@ class HTMLParser:
                                   itemprop = ['headline',
                                               'headline name']).get_text(strip=True)
         self.article.title = title
-        div_author = article_soup.find_all('div', class_='autor')
-        authors = []
+        div_author = article_soup.find('div', class_='authors')
         if div_author is None:
             self.article.author = ['NOT FOUND']
         else:
-            for author in div_author:
-                if author.get_text():
-                    authors.append(author.get_text(strip=True).strip(','))
-            self.article.author = authors
-        div_topic = article_soup.find_all('div', class_='tags')
-        topics = []
-        for topic in div_topic:
-            if topic.get_text():
-                topics.append(topic.get_text(separator=', ', strip=True))
-        self.article.topics = topics
+            if div_author.get_text():
+                authors = (div_author.get_text(strip=True)).split(',')
+                self.article.author = authors
+        div_topic = article_soup.find('div', class_='tags')
+        if div_topic.get_text():
+            topics = (div_topic.get_text(strip=True)).split(',')
+            self.article.topics = topics
         date_str = article_soup.find_all('time')[0].get_text(strip=True)
         date = self.unify_date_format(date_str)
         self.article.date = date
@@ -380,15 +375,16 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
+    article_id = 1
     for url in crawler.urls:
-        parser = HTMLParser(full_url=url, article_id=crawler.id_counter, config=configuration)
+        parser = HTMLParser(url, article_id, configuration)
         article = parser.parse()
         if not article.text:
             continue
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
-        crawler.id_counter += 1
+        article_id += 1
 
 
 if __name__ == "__main__":
