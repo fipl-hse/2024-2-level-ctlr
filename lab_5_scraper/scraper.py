@@ -381,25 +381,41 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    try:
+        print("=== Starting scraper ===")
+        print(f"Config path: {CRAWLER_CONFIG_PATH}")
+        print(f"Assets path: {ASSETS_PATH}")
 
+        if not CRAWLER_CONFIG_PATH.exists():
+            raise FileNotFoundError(f"Config file not found at {CRAWLER_CONFIG_PATH}")
 
-print("Starting scraper...")  # Добавлено
-configuration = Config(CRAWLER_CONFIG_PATH)
-prepare_environment(ASSETS_PATH)
-crawler = Crawler(configuration)
+        configuration = Config(CRAWLER_CONFIG_PATH)
+        prepare_environment(ASSETS_PATH)
 
-print("Finding articles...")  # Добавлено
-crawler.find_articles()
-print(f"Found {len(crawler.urls)} articles")  # Добавлено
+        print(f"Seed URLs: {configuration.get_seed_urls()}")
+        print(f"Target articles: {configuration.get_num_articles()}")
 
-for article_id, url in enumerate(crawler.urls, start=1):
-    print(f"Processing article {article_id}: {url}")  # Добавлено
-    parser = HTMLParser(full_url=url, article_id=article_id, config=configuration)
-    article = parser.parse()
+        crawler = Crawler(configuration)
+        crawler.find_articles()
 
-    if isinstance(article, Article):
-        to_raw(article)
-        print(f"Saved: {article.url}")  # Добавлено
+        print(f"\nFound {len(crawler.urls)} articles:")
+        for i, url in enumerate(crawler.urls, 1):
+            print(f"{i}. {url}")
+
+        for article_id, url in enumerate(crawler.urls, start=1):
+            print(f"\nProcessing article {article_id}: {url}")
+            parser = HTMLParser(full_url=url, article_id=article_id, config=configuration)
+            article = parser.parse()
+
+            if isinstance(article, Article):
+                to_raw(article)
+                print(f"Saved article {article_id}")
+
+        print("\n=== Scraping completed successfully ===")
+
+    except Exception as e:
+        print(f"\n!!! ERROR: {str(e)}")
+        raise
 
 if __name__ == "__main__":
     main()
