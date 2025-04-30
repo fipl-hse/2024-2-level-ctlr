@@ -2,10 +2,10 @@
 Crawler implementation.
 """
 
+# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import datetime
 import json
 
-# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
 from random import random
@@ -201,7 +201,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(),
                             verify=config.get_verify_certificate(), timeout=config.get_timeout())
     response.encoding = config.get_encoding()
-    sleep(random())
+    # sleep(random())
     return response
 
 
@@ -252,10 +252,8 @@ class Crawler:
             post_class = soup.find_all('a', class_='post-thumbnail')
             for post in post_class:
                 url = post['href']
-                if url:
-                    if len(self.urls) < self.config.get_num_articles():
-                        if url not in self.urls:
-                            self.urls.append(url)
+                if url and len(self.urls) < self.config.get_num_articles() and url not in self.urls:
+                    self.urls.append(url)
 
     def get_search_urls(self) -> list:
         """
