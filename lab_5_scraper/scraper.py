@@ -2,19 +2,21 @@
 Crawler implementation.
 """
 
-# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-import json
-import re
-import requests
-import pathlib
-import shutil
 import datetime
 
+# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import json
+import pathlib
+import re
+import shutil
+from typing import Pattern, Union
 from urllib.parse import urljoin
-from typing import Union, Pattern
+
+import requests
 from bs4 import BeautifulSoup
+
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw, to_meta
+from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
