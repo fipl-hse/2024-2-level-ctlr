@@ -8,7 +8,7 @@ import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
-from random import randint
+from random import uniform
 from time import sleep
 from typing import Pattern, Union
 
@@ -197,7 +197,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    sleep(randint(1, 5))
+    # sleep(uniform(0.1, 2.0))
     response = requests.get(
         url,
         headers=config.get_headers(),
