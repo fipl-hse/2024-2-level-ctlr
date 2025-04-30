@@ -317,11 +317,11 @@ class HTMLParser:
             self.article.author = ['NOT FOUND']
         else:
             if div_author.get_text():
-                authors = (div_author.get_text(strip=True)).split(',')
+                authors = (div_author.get_text(separator=',', strip=True)).split(',')
                 self.article.author = authors
         div_topic = article_soup.find('div', class_='tags')
         if div_topic.get_text():
-            topics = (div_topic.get_text(strip=True)).split(',')
+            topics = (div_topic.get_text(separator=',', strip=True)).split(',')
             self.article.topics = topics
         date_str = article_soup.find_all('time')[0].get_text(strip=True)
         date = self.unify_date_format(date_str)
