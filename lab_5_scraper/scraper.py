@@ -16,26 +16,34 @@ from bs4 import BeautifulSoup
 import time
 import datetime
 
+
 class IncorrectSeedURLError(Exception):
-    pass
+    """Urls don't match the standard pattern"""
+
 
 class NumberOfArticlesOutOfRangeError(Exception):
-    pass
+    """Number of articles is out of range"""
+
 
 class IncorrectNumberOfArticlesError(Exception):
-    pass
+    """Number of articles is wrong"""
+
 
 class IncorrectHeadersError(Exception):
-    pass
+    """Headers are not in a dictionary"""
+
 
 class IncorrectEncodingError(Exception):
-    pass
+    """Encoding is wrong"""
+
 
 class IncorrectTimeoutError(Exception):
-    pass
+    """Timeout value incorrect"""
+
 
 class IncorrectVerifyError(Exception):
-    pass
+    """Verify certificate is wrong"""
+
 
 class Config:
     """
@@ -50,8 +58,8 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        self._validate_config_content()
         self.config = self._extract_config_content()
+        self._validate_config_content()
         self._seed_urls = self.config.seed_urls
         self._num_articles = self.config.total_articles
         self._headers = self.config.headers
@@ -71,38 +79,31 @@ class Config:
         """
         with open(self.path_to_config, 'r', encoding='utf-8') as config:
             data = json.load(config)
-            return ConfigDTO(data['seed_urls'],
-                             data['total_articles_to_find_and_parse'],
-                             data['headers'],
-                             data['encoding'],
-                             data['timeout'],
-                             data['should_verify_certificate'],
-                             data['headless_mode'])
+        return ConfigDTO(**data)
 
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
-        data = self._extract_config_content()
-        if (not data.seed_urls or not isinstance(data.seed_urls,list)
-                or not all(isinstance(url,str) for url in data.seed_urls)
-                or not all('https://www.volga-tv.ru/' in url for url in data.seed_urls)):
+        if (not self.config.seed_urls or not isinstance(self.config.seed_urls,list)
+                or not all(isinstance(url,str) for url in self.config.seed_urls)
+                or not all('https://www.volga-tv.ru/' in url for url in self.config.seed_urls)):
             raise IncorrectSeedURLError('Something is wrong with the urls')
-        if (not isinstance(data.total_articles, int) or
-            data.total_articles < 0 or isinstance(data.total_articles, bool)):
+        if (not isinstance(self.config.total_articles, int) or
+            self.config.total_articles < 0 or isinstance(self.config.total_articles, bool)):
             raise IncorrectNumberOfArticlesError('Not correct n of articles')
-        if data.total_articles > 150:
+        if self.config.total_articles > 150:
             raise NumberOfArticlesOutOfRangeError('N of articles out of range')
-        if not isinstance(data.headers, dict):
+        if not isinstance(self.config.headers, dict):
             raise IncorrectHeadersError('Headers are incorrect')
-        if not isinstance(data.encoding, str):
+        if not isinstance(self.config.encoding, str):
             raise IncorrectEncodingError('Encoding is incorrect')
-        if not isinstance(data.timeout,int) or not 0 < data.timeout <= 60:
+        if not isinstance(self.config.timeout,int) or not 0 < self.config.timeout <= 60:
             raise IncorrectTimeoutError('The timings are wrong')
-        if not isinstance(data.should_verify_certificate, bool):
+        if not isinstance(self.config.should_verify_certificate, bool):
             raise IncorrectVerifyError('Verify is not a bool')
-        if not isinstance(data.headless_mode, bool):
+        if not isinstance(self.config.headless_mode, bool):
             raise IncorrectVerifyError("Headless mode is not bool")
 
     def get_seed_urls(self) -> list[str]:
@@ -181,8 +182,10 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         requests.models.Response: A response from a request
     """
     # time.sleep(5)
-    return requests.get(url, headers=config.get_headers(), verify=config.get_verify_certificate(),
+    response = requests.get(url, headers=config.get_headers(), verify=config.get_verify_certificate(),
                         timeout=config.get_timeout())
+    response.encoding = config.get_encoding()
+    return response
 
 
 class Crawler:
@@ -220,8 +223,7 @@ class Crawler:
                 continue
             article = url['href']
             real_article = f'https://www.volga-tv.ru{article}'
-            if real_article not in self.urls:
-                return real_article
+            return real_article
         return ''
 
     def find_articles(self) -> None:
@@ -234,7 +236,6 @@ class Crawler:
                 return None
             response = make_request(url, self.config)
             if not response.ok:
-                print("response not ok")
                 continue
             bs = BeautifulSoup(response.text, 'lxml')
             extracted_url = self._extract_url(bs)
