@@ -53,6 +53,7 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
+        self._validate_config_content()
         self.config_dto = self._extract_config_content()
         self._seed_urls = self.config_dto.seed_urls
         self._num_articles = self.config_dto.total_articles
@@ -363,7 +364,6 @@ def main() -> None:
     """
 
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
-    configuration._validate_config_content()
 
     prepare_environment(ASSETS_PATH)
 
