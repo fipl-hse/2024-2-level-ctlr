@@ -319,6 +319,12 @@ class HTMLParser:
         title = article_soup.find('p', class_='single-news-title').text
         self.article.title = title
         self.article.author = ['NOT FOUND']
+        date_json = article_soup.find('script', {'type': 'application/ld+json', 'class': 'yoast-schema-graph'}).text
+        date = json.load(date_json)
+        for elem in date.get('@graph'):
+            if elem.get('@type') == 'WebPage':
+                date_published = elem.get('datePublished')
+                self.article.date = self.unify_date_format(date_published)
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -330,6 +336,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S%z")
 
     def parse(self) -> Union[Article, bool, list]:
         """
