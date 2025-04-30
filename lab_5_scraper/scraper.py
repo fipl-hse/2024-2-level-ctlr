@@ -377,8 +377,5 @@ def main() -> None:
             to_raw(article_parsed)
             to_meta(article_parsed)
 
-
-
-
 if __name__ == "__main__":
     main()
