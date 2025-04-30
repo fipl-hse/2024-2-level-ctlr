@@ -14,10 +14,13 @@ import shutil
 import requests
 from bs4 import BeautifulSoup
 
+
 class IncorrectSeedURLError(Exception):
     """
     Seed URL does not match standard pattern 'https?://(www.)?'
     """
+
+
 class NumberOfArticlesOutOfRangeError(Exception):
     """
     Total number of articles is out of range from 1 to 150
@@ -52,6 +55,7 @@ class IncorrectVerifyError(Exception):
     """
     Verify certificate value must either be True or False
     """
+
 
 class Config:
     """
@@ -187,9 +191,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
                             headers=config.get_headers(),
                             timeout=config.get_timeout(),
                             verify=config.get_verify_certificate())
-    response.encoding=config.get_encoding()
+    response.encoding = config.get_encoding()
     return response
-
 
 
 class Crawler:
@@ -209,6 +212,7 @@ class Crawler:
         """
         self.config = config
         self.urls = []
+
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
         Find and retrieve url from HTML.
@@ -239,6 +243,7 @@ class Crawler:
             while url and len(self.urls) != self.config.get_num_articles():
                 self.urls.append(url)
                 url = self._extract_url(soup)
+
     def get_search_urls(self) -> list:
         """
         Get seed_urls param.
@@ -270,6 +275,7 @@ class HTMLParser:
         self.article_id = article_id
         self.config = config
         self.article = Article(url=full_url, article_id=article_id)
+
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
         Find text of article.
@@ -282,7 +288,7 @@ class HTMLParser:
         if div is not None:
             for block in div:
                 if block.get_text():
-                    text.append(block.get_text(separator='\n', strip=True))
+                    text.append(block.get_text(strip=True))
                 self.article.text = '\n'.join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
@@ -291,17 +297,6 @@ class HTMLParser:
 
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
-        """
-
-    def unify_date_format(self, date_str: str) -> datetime.datetime:
-        """
-        Unify date format.
-
-        Args:
-            date_str (str): Date in text format
-
-        Returns:
-            datetime.datetime: Datetime object
         """
 
     def parse(self) -> Union[Article, bool, list]:
@@ -317,6 +312,7 @@ class HTMLParser:
             self._fill_article_with_text(soup)
         return self.article
 
+
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
     Create ASSETS_PATH folder if no created and remove existing folder.
@@ -327,7 +323,6 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     if base_path.exists():
         shutil.rmtree(base_path)
         base_path.mkdir(parents=True)
-
 
 
 def main() -> None:
@@ -343,6 +338,7 @@ def main() -> None:
     if isinstance(parsed_article, Article):
         to_raw(parsed_article)
     print(to_raw(parsed_article))
+
 
 if __name__ == "__main__":
     main()
