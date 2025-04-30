@@ -1,9 +1,13 @@
 {
-    "seed_urls": [],
+    "seed_urls": ["https://v-life.ru/index.php?area=news&action=category&id=1",
+        "https://v-life.ru/index.php?area=news&action=category&id=2",
+        "https://v-life.ru/index.php?area=news&action=category&id=3",
+        "https://v-life.ru/index.php?area=news&action=category&id=4",
+        "https://v-life.ru/index.php?area=news&action=category&id=5"],
     "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
-    "timeout": 0,
+    "total_articles_to_find_and_parse": 150,
+    "encoding": "utf-8",
+    "timeout": 10,
     "should_verify_certificate": true,
     "headless_mode": true
 }
