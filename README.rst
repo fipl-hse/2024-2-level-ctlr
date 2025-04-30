@@ -53,7 +53,7 @@ Project Timeline
    1. Short summary: Your code can automatically process raw texts from
       previous step, make point-of-speech tagging and basic
       morphological analysis.
-   2. Deadline: **May, TBD**.
+   2. Deadline: **May, 23**.
    3. Format: each student works in their own PR.
    4. Dataset volume: 5-7 articles.
    5. Design document: :ref:`pipeline-label`.
