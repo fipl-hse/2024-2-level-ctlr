@@ -24,49 +24,42 @@ class IncorrectSeedURLError(Exception):
     """
     Raises when seed URL does not match standard pattern
     """
-    pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """
     Raises when total number of articles is out of range from 1 to 150
     """
-    pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """
     Raises when total number of articles to parse is not integer or less than 0
     """
-    pass
 
 
 class IncorrectHeadersError(Exception):
     """
     Raises when headers are not in a form of dictionary
     """
-    pass
 
 
 class IncorrectEncodingError(Exception):
     """
     Raises when encoding is not a string
     """
-    pass
 
 
 class IncorrectTimeoutError(Exception):
     """
     Raises when timeout value is not a positive integer less than 60
     """
-    pass
 
 
 class IncorrectVerifyError(Exception):
     """
     Raises when verify certificate value is neither ``True`` nor ``False``
     """
-    pass
 
 
 class Config:
@@ -113,7 +106,7 @@ class Config:
         if not all(url.startswith('https://literaturno.com') for url in self._seed_urls):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern')
         if not isinstance(self._num_articles, int) or self._num_articles <= 0:
-            raise IncorrectNumberOfArticlesError('Total number of articles is not integer or less than 0')
+            raise IncorrectNumberOfArticlesError('Number of articles is not int or less than 0')
         if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError('Total number of articles is out of range')
         if not isinstance(self._headers, dict):
@@ -241,7 +234,7 @@ class Crawler:
         if all_links:
             for link in all_links:
                 href = link['href']
-                if href not in self.urls:
+                if href not in self.urls and isinstance(href, str):
                     return href
         return ''
 
@@ -250,7 +243,7 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.get_search_urls():
-            response = requests.get(seed_url, headers=self.config.get_headers())
+            response = make_request(seed_url, self.config)
             if not response.ok:
                 continue
             while True:
@@ -319,8 +312,9 @@ class HTMLParser:
         title = article_soup.find('p', class_='single-news-title').text
         self.article.title = title
         self.article.author = ['NOT FOUND']
-        date_json = article_soup.find('script', {'type': 'application/ld+json', 'class': 'yoast-schema-graph'}).text
-        date = json.load(date_json)
+        date_json = article_soup.find(
+            'script', {'type': 'application/ld+json', 'class': 'yoast-schema-graph'}).text
+        date = json.loads(date_json)
         for elem in date.get('@graph'):
             if elem.get('@type') == 'WebPage':
                 date_published = elem.get('datePublished')
@@ -345,6 +339,8 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        if self.article.url is None:
+            return False
         article_bs = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(article_bs)
         self._fill_article_with_meta_information(article_bs)
