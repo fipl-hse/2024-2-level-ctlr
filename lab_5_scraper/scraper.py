@@ -402,5 +402,4 @@ def main() -> None:
             to_raw(article)
 
 if __name__ == "__main__":
-    "rt34refdvfdifeowfhsdo"
     main()
