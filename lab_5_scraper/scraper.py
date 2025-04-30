@@ -347,11 +347,11 @@ class HTMLParser:
             left_author = article_soup.find_all('p', attrs={"style":"text-align: right;"})
 
             if spans_author:
-                self.article.author = authors.append(spans_author[0].get_text(strip=True))
+                authors.append(spans_author[0].get_text(strip=True))
             if text_author:
-                self.article.author = authors.append(text_author[0].get_text(strip=True))
+                authors.append(text_author[0].get_text(strip=True))
             if left_author:
-                self.article.author = authors.append(left_author[0].get_text(strip=True))
+                authors.append(left_author[0].get_text(strip=True))
 
             self.article.author = authors if authors else ["NOT FOUND"]
 
