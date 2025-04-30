@@ -197,7 +197,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(),
                             verify=config.get_verify_certificate(), timeout=config.get_timeout())
     response.encoding = config.get_encoding()
-    sleep(random() * 5)
+    sleep(random())
     return response
 
 
@@ -234,6 +234,7 @@ class Crawler:
             url = post['href']
             if url:
                 return url
+        return ''
 
     def find_articles(self) -> None:
         """
