@@ -11,7 +11,7 @@ import pathlib
 import datetime
 import shutil
 from time import sleep
-from random import randint 
+from random import random
 from typing import Pattern, Union
 import requests
 from bs4 import BeautifulSoup
@@ -197,7 +197,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(),
                             verify=config.get_verify_certificate(), timeout=config.get_timeout())
     response.encoding = config.get_encoding()
-    sleep(randint(1, 15))
+    sleep(random() * 5)
     return response
 
 
