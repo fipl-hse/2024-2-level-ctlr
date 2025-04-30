@@ -437,6 +437,26 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config)
+    prepare_environment(ASSETS_PATH)
+    crawler.find_articles()
+    article_id = 1
+    for url in crawler.urls:
+        parser = HTMLParser(url, article_id, config)
+        article = parser.parse()
+        if not article or not article.text or len(article.text) <= 50:
+            continue
+        article_id += 1
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
+
+
+def main2() -> None:
+    """
+    Entrypoint for scrapper module.
+    """
+    config = Config(CRAWLER_CONFIG_PATH)
     crawler = CrawlerRecursive(config)
     prepare_environment(ASSETS_PATH)
     crawler.find_articles()
