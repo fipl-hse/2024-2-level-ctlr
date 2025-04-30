@@ -95,7 +95,7 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        config = self._extr_config
+        config = self._extract_config_content()
 
         if not ('https://vestiprim.ru/' in url for url in config.seed_urls):
             raise IncorrectSeedURLError
