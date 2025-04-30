@@ -330,6 +330,19 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        title = article_soup.find('h1', {'class': 'itemTitle'})
+        self.article.title = title.text if title else 'NOT FOUND'
+
+        authors = article_soup.find_all('div', {'class': 'itemAuthorName'})
+        self.article.author = [a.get_text(strip=True) for author in authors for a in author.find_all('a')] \
+            if authors else ['NOT FOUND']
+
+        date = article_soup.find('span', {'class': 'itemDateCreated'}).text
+        self.article.date = self.unify_date_format(date)
+
+        topics = article_soup.find_all('span', {'class': 'itemCategory'})
+        self.article.topics = [a.get_text(strip=True) for topic in topics for a in topic.find_all('a')] \
+            if topics else []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
