@@ -421,7 +421,8 @@ class HTMLParser:
         """
         datetime_items = date_str.split()
         if len(datetime_items) == 4:
-            day, month, year, time = datetime_items
+            day, month, year_, time = datetime_items
+            year = int(year_)
         else:
             day, month, time = datetime_items
             year = 2025
@@ -478,6 +479,9 @@ def main() -> None:
 
 
 def main_recursive_crawler() -> None:
+    """
+    Recursive crawler showcase.
+    """
     config = Config(CRAWLER_CONFIG_PATH)
     recursive_crawler = CrawlerRecursive(config)
     recursive_crawler.find_articles()
