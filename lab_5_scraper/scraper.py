@@ -98,9 +98,7 @@ class Config:
         """
         with open(self.path_to_config, 'r', encoding='utf-8') as file:
             config_data = json.load(file)
-        config_dto = ConfigDTO(**config_data)
-
-        return config_dto
+        return ConfigDTO(**config_data)
 
     def _validate_config_content(self) -> None:
         """
@@ -250,11 +248,8 @@ class Crawler:
         url_pattern = r'^(https?://(www\.)?zvezdaaltaya\.ru/\d{4}/\d{2}/.*)$'
         for url_href in extracted_hrefs:
             if isinstance(url_href, str):
-                if url_href.startswith('/'):
-                    full_url = f"https://zvezdaaltaya.ru{url_href}"
-                else:
-                    full_url = url_href
-
+                full_url = url_href if url_href.startswith('http')\
+                    else f"https://zvezdaaltaya.ru{url_href}"
                 if re.match(url_pattern, full_url) and full_url not in self.urls:
                     return full_url
 
@@ -266,6 +261,7 @@ class Crawler:
         """
         seed_urls = self.config.get_seed_urls()
         max_articles = self.config.get_num_articles()
+        max_extract_attempts = 20
         for url in seed_urls:
             try:
                 response = make_request(url, self.config)
@@ -273,15 +269,15 @@ class Crawler:
                     continue
 
                 article_bs = BeautifulSoup(response.text, 'lxml')
-                if len(self.urls) < max_articles:
-                    for _ in range(20):
-                        article_url = self._extract_url(article_bs)
-                        if article_url == "":
-                            break
-                        if article_url not in self.urls:
-                            self.urls.append(article_url)
-                else:
-                    break
+                extracted_count = 0
+                while extracted_count < max_extract_attempts and len(self.urls) < max_articles:
+                    article_url = self._extract_url(article_bs)
+                    if not article_url:
+                        break
+
+                    if article_url not in self.urls:
+                        self.urls.append(article_url)
+                        extracted_count += 1
 
             except requests.exceptions.RequestException:
                 continue
@@ -328,15 +324,9 @@ class HTMLParser:
         """
         all_body = article_soup.find_all("p")
 
-        article_text = []
-        for block in all_body:
-            article_text.append(block.get_text(strip=True))
-
+        article_text = [block.get_text(strip=True) for block in all_body]
         full_text = ' '.join(article_text)
-        if hasattr(self.article, 'text'):
-            self.article.text = full_text
-        else:
-            raise AttributeError("The 'text' attribute does not exist in the Article object")
+        self.article.text = full_text
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -350,24 +340,25 @@ class HTMLParser:
             self.article.title = (title_element.get_text
                                   (strip=True)) if title_element else "NOT FOUND"
 
+            authors = []
+
             spans_author = article_soup.find_all('span', style="color: #808080; font-size: 10pt;")
             text_author = article_soup.find_all('strong', attrs={"original-font-size": "15px"})
             left_author = article_soup.find_all('p', attrs={"style":"text-align: right;"})
+
             if spans_author:
-                self.article.author = [spans_author[0].get_text(strip=True)]
+                self.article.author = authors.append(spans_author[0].get_text(strip=True))
             if text_author:
-                self.article.author = [text_author[0].get_text(strip=True)]
+                self.article.author = authors.append(text_author[0].get_text(strip=True))
             if left_author:
-                self.article.author = [left_author[0].get_text(strip=True)]
-            if not spans_author and not text_author and not left_author:
-                self.article.author = ["NOT FOUND"]
+                self.article.author = authors.append(left_author[0].get_text(strip=True))
+
+            self.article.author = authors if authors else ["NOT FOUND"]
 
             published_time_meta = article_soup.find('meta', property='article:published_time')
             time = published_time_meta.get('content')
-            if time:
-                self.article.date = self.unify_date_format(str(time))
-            else:
-                self.article.date = datetime.datetime.min
+            self.article.date = self.unify_date_format(str(time)) if (
+                time) else datetime.datetime.min
 
             self.article.topics = []
             categories = article_soup.find_all('ul', class_="td-tags td-post-small-box clearfix")
@@ -394,8 +385,7 @@ class HTMLParser:
         time_part = time_part.split("+")[0]
         year, month, day = map(int, date_part.split("-"))
         hour, minute, second = map(int, time_part.split(":"))
-        result = datetime.datetime(year, month, day, hour, minute, second)
-        return result
+        return datetime.datetime(year, month, day, hour, minute, second)
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -410,8 +400,6 @@ class HTMLParser:
             article_bs = BeautifulSoup(data, 'lxml')
             self._fill_article_with_text(article_bs)
             self._fill_article_with_meta_information(article_bs)
-        else:
-            return Article(self.full_url, self.article_id)
         return self.article
 
 
