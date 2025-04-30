@@ -71,13 +71,13 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
-        extr_config = self._extract_config_content()
-        self.seed_urls = extr_config.seed_urls
-        self.total_articles = extr_config.total_articles
-        self.headers = extr_config.headers
-        self.encoding = extr_config.encoding
-        self.timeout = extr_config.timeout
-        self.should_verify_certificate = extr_config.should_verify_certificate
+        self._extr_config = self._extract_config_content()
+        self.seed_urls = self._config.seed_urls
+        self.total_articles = self._extr_config.total_articles
+        self.headers = self._extr_config.headers
+        self.encoding = self._extr_config.encoding
+        self.timeout = self._extr_config.timeout
+        self.should_verify_certificate = self._extr_config.should_verify_certificate
         self.headless_mode = extr_config.headless_mode
 
     def _extract_config_content(self) -> ConfigDTO:
@@ -95,6 +95,8 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
+        config = self._extr_config
+
         if not ('https://vestiprim.ru/' in url for url in self.seed_urls):
             raise IncorrectSeedURLError
         if self.total_articles < 1 or self.total_articles > 150:
