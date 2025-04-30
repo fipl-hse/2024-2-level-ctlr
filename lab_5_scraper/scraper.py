@@ -11,8 +11,8 @@ import shutil
 from typing import Pattern, Union
 
 import requests
+import requests.compat
 from bs4 import BeautifulSoup
-
 
 from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
@@ -72,7 +72,6 @@ class Config:
         self._should_verify_certificate = self.config.should_verify_certificate
         self._headless_mode = self.config.headless_mode
         self._validate_config_content()
-
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -197,6 +196,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response.encoding = config.get_encoding()
     return response
 
+
 class Crawler:
     """
     Crawler implementation.
@@ -212,6 +212,8 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
+        self.config = config
+        self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -223,11 +225,28 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        article_link = article_bs.find('a', href=lambda x: x and '/news/' in x)
+        if article_link and article_link.get('href'):
+            absolute_url = requests.compat.urljoin(my_website, article_link['href'])
+            if absolute_url.startswith(my_website):
+                return absolute_url
+        return ''
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        for seed_url in self.get_search_urls():
+            response = make_request(seed_url, self.config)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                while True:
+                    url = self._extract_url(soup)
+                    if not url:
+                        break
+                    if url not in self.urls:
+                        self.urls.append(url)
+                    soup.find('a', href=lambda x: x and url.endswith(x)).decompose()
 
     def get_search_urls(self) -> list:
         """
@@ -236,6 +255,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
+        return self.config.get_seed_urls()
 
 
 # 10
