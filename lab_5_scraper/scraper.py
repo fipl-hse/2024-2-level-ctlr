@@ -7,7 +7,7 @@ import datetime
 import json
 import pathlib
 import shutil
-from random import random
+from random import uniform
 from time import sleep
 from typing import Pattern, Union
 
@@ -200,7 +200,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(),
                             verify=config.get_verify_certificate(), timeout=config.get_timeout())
     response.encoding = config.get_encoding()
-    # sleep(random())
+    sleep(uniform(0.1, 1.5))
     return response
 
 
@@ -293,7 +293,7 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         texts = article_soup.find_all('p')
-        self.article.text = ' '.join([text.text for text in texts])
+        self.article.text = '\n'.join([text.text for text in texts])
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -302,11 +302,12 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        self.article.title = article_soup.find('title').text
+        self.article.title = article_soup.find('h1', class_="entry-title").text
         self.article.author = [article_soup.find('a', class_='url fn n').text]
-        date = article_soup.find('time', class_='entry-date').attrs['datetime']
-        self.article.date = self.unify_date_format(date)
-        self.article.topics = article_soup.find('span', class_='cat-links').text.split(', ')
+        date_str = article_soup.find('time', class_='entry-date').attrs['datetime']
+        self.article.date = self.unify_date_format(date_str)
+        tags = article_soup.find_all('a', rel='tag')
+        self.article.topics = [tag.text for tag in tags if 'tag' in tag['href']]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
