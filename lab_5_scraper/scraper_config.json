@@ -1,10 +1,15 @@
 {
-    "seed_urls": ["https://aif.ru/culture", "https://aif.ru/sport",
-        "https://aif.ru/moscow", "https://aif.ru/society", "https://aif.ru/politics"],
-    "headers": {},
-    "total_articles_to_find_and_parse": 6,
-    "encoding": "UTF-8",
-    "timeout": 20,
-    "should_verify_certificate": true,
-    "headless_mode": true
+  "seed_urls": [
+    "https://aif.ru/culture",
+    "https://aif.ru/society",
+    "https://aif.ru/money",
+    "https://aif.ru/sport",
+    "https://aif.ru/techno"
+  ],
+  "headers": {},
+  "total_articles_to_find_and_parse": 100,
+  "encoding": "UTF-8",
+  "timeout": 20,
+  "should_verify_certificate": true,
+  "headless_mode": true
 }
