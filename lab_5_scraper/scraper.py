@@ -49,7 +49,7 @@ class IncorrectTimeoutError(Exception):
 
 class IncorrectVerifyError(Exception):
     """
-    Raised when verify certificate value is corrupt.
+    Raised when verify certificate or headless mode values are corrupt.
     """
 
 
@@ -73,14 +73,14 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
-        config = self._extract_config_content()
-        self._seed_urls = config.seed_urls
-        self._num_articles = config.total_articles
-        self._headers = config.headers
-        self._encoding = config.encoding
-        self._timeout = config.timeout
-        self._verify_certificate = config.should_verify_certificate
-        self._headless_mode = config.headless_mode
+        self.config_dto = self._extract_config_content()
+        self._seed_urls = self.config_dto.seed_urls
+        self._num_articles = self.config_dto.total_articles
+        self._headers = self.config_dto.headers
+        self._encoding = self.config_dto.encoding
+        self._timeout = self.config_dto.timeout
+        self._should_verify_certificate = self.config_dto.should_verify_certificate
+        self._headless_mode = self.config_dto.headless_mode
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -89,7 +89,7 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open('scraper_config.json') as file:
+        with open(self.path_to_config, 'r', encoding='utf-8') as file:
             config = json.load(file)
         return ConfigDTO(**config)
 
@@ -97,27 +97,27 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        with open('scraper_config.json') as file:
-            config = json.load(file)
-        if (not config['seed_urls'] or not isinstance(config['seed_urls'], list)
-                or not all(isinstance(url, str) for url in config['seed_urls'])
-                or not all('https://tomsk-novosti.ru/' in url for url in config['seed_urls'])):
-            raise IncorrectSeedURLError('Seed URL is corrupt.')
-        if (not isinstance(config['total_articles_to_find_and_parse'], int)
-                or isinstance(config['total_articles_to_find_and_parse'], bool)
-                or config['total_articles_to_find_and_parse'] < 0):
+        config = self._extract_config_content()
+        if (not config.seed_urls or not isinstance(config.seed_urls, list)
+                or not all(isinstance(url, str) for url in config.seed_urls)
+                or not all('https://tomsk-novosti.ru/' in url for url in config.seed_urls)):
+            raise IncorrectSeedURLError('Seed URLs value is corrupt.')
+        if (not isinstance(config.total_articles, int) or isinstance(config.total_articles, bool)
+                or config.total_articles < 0):
             raise IncorrectNumberOfArticlesError('Number of articles value is corrupt.')
-        if 1 > config['total_articles_to_find_and_parse'] > 150:
-            raise NumberOfArticlesOutOfRangeError('Number of articles is out of range (0-150).')
-        if not config['encoding'] or not isinstance(config['encoding'], str):
+        if config.total_articles >= 150:
+            raise NumberOfArticlesOutOfRangeError('Number of articles is out of range (1-150).')
+        if not config.encoding or not isinstance(config.encoding, str):
             raise IncorrectEncodingError('Encoding is corrupt.')
-        if not config['headers'] or not isinstance(config['headers'], dict):
+        if not config.headers or not isinstance(config.headers, dict):
             raise IncorrectHeadersError('Headers value is corrupt.')
-        if (not isinstance(config['timeout'], int) or isinstance(config['timeout'], bool)
-                or 0 > config['timeout'] > 60):
+        if (not isinstance(config.timeout, int) or isinstance(config.timeout, bool)
+                or not 0 < config.timeout <= 60):
             raise IncorrectTimeoutError('Timeout value is either corrupt or out of range (0-60).')
-        if not isinstance(config['should_verify_certificate'], bool):
+        if not isinstance(config.should_verify_certificate, bool):
             raise IncorrectVerifyError('Verify certificate value is corrupt.')
+        if not isinstance(config.headless_mode, bool):
+            raise IncorrectVerifyError('Headless mode value is corrupt.')
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -171,7 +171,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self._verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -229,11 +229,25 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
+        post_class = article_bs.find_all('a', class_='post-thumbnail')
+        for post in post_class:
+            url = post['href']
+            if url:
+                return url
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        for seed_url in self.get_search_urls():
+            response = make_request(seed_url, self.config)
+            if not response.ok:
+                continue
+            soup = BeautifulSoup(response.text, 'lxml')
+            url = self._extract_url(soup)
+            if len(self.urls) < self.config.get_num_articles():
+                if url not in self.urls:
+                    self.urls.append(url)
 
     def get_search_urls(self) -> list:
         """
@@ -242,7 +256,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-        return self.urls
+        return self.config.get_seed_urls()
 
 
 # 10
@@ -263,6 +277,8 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.article = Article(url=full_url, article_id=article_id)
+        self.config = config
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -271,6 +287,8 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        texts = article_soup.find_all('p')
+        self.article.text = ' '.join([text.text for text in texts if text.text])
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -290,6 +308,8 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        # date = date_str.split('T')
+        # return datetime.datetime.strptime(' '.join(date), '%d-%b-%Y %H:%M')
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -298,6 +318,11 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
+        self._fill_article_with_text(soup)
+        if self.article.text:
+            return self.article
+        return False
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -317,8 +342,10 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    config = Config(CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config)
+    crawler.find_articles()
 
 
 if __name__ == "__main__":
     main()
-
