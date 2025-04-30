@@ -10,6 +10,7 @@ from typing import Pattern, Union
 class Config:
     """
     Class for unpacking and validating configurations.
+    miau
     """
 
     def __init__(self, path_to_config: pathlib.Path) -> None:
