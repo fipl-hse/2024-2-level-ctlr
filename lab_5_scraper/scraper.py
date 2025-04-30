@@ -53,7 +53,6 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        self._validate_config_content()
         self.config_dto = self._extract_config_content()
         self._seed_urls = self.config_dto.seed_urls
         self._num_articles = self.config_dto.total_articles
@@ -72,8 +71,7 @@ class Config:
         """
         with open(self.path_to_config, 'r', encoding='UTF-8') as config_data:
             config_data_to_return = json.load(config_data)
-            dto = ConfigDTO(**config_data_to_return)
-        return dto
+        return ConfigDTO(**config_data_to_return)
 
 
     def _validate_config_content(self) -> None:
@@ -218,7 +216,6 @@ class Crawler:
         """
         self.config = config
         self.urls = []
-        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -366,6 +363,9 @@ def main() -> None:
     """
 
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    configuration._validate_config_content()
+
+    prepare_environment(ASSETS_PATH)
 
     crawler = Crawler(config=configuration)
     crawler.find_articles()
