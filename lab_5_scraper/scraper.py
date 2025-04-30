@@ -304,7 +304,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        adiv = article_soup.find("div", class_="content cn")
+        adiv = article_soup.find("div", class_="content_cn")
         text = []
         for a in adiv:
             if a.get_text().strip():
@@ -321,10 +321,10 @@ class HTMLParser:
         self.article.article_id = self.article_id
         self.article.url = self.full_url
         self.article.author = ["No information"]
-        self.article.title = article_soup.find("h1", attrs={"itemprop": "headline"}).text
-        tmt = article_soup.find("span", class_="news-date-time").find("time")
-        self.article.date = self.unify_date_format(tmt.text.strip())
-        tpt = article_soup.find("div", class_="news-tags").find_all("a")
+        self.article.title = article_soup.find("h1").text
+        tmt = article_soup.find("span").text
+        self.article.date = tmt
+        tpt = article_soup.find("div", class_="claer public_data").find_all("a")
         self.article.topics = [t.text.strip() for t in tpt]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
@@ -337,7 +337,10 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        return datetime.datetime.strptime(date_str, "%d.%m.%Y %H:%M")
+        dt, tm = date_str.split(", ")
+        d, m, y = map(str, dt.split(" "))
+        hr, mnt = map(int, tm.split(":"))
+        return datetime.datetime(y, m, d, hr, mnt)
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -381,7 +384,7 @@ def main() -> None:
         art_p = prs.parse()
         if isinstance(art_p, Article):
             to_raw(art_p)
-            to_meta(art_p)
+            #to_meta(art_p)
 
 
 if __name__ == "__main__":
