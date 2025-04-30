@@ -103,6 +103,7 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
+
         config_dto = self._extract_config_content()
 
         if not isinstance(config_dto.seed_urls, list):
@@ -140,6 +141,7 @@ class Config:
 
         if not isinstance(config_dto.headless_mode, bool):
             raise IncorrectVerifyError
+
     def get_seed_urls(self) -> list[str]:
         """
         Retrieve seed urls.
@@ -258,13 +260,7 @@ class Crawler:
         """
 
         href = article_bs.find("a").get('href')
-
-        href = article_bs.find("a").get('href')
-
-        if href and href.startswith("https://livennov.ru/"):
-            return href
-
-        return ""
+        return href if href and href.startswith("https://livennov.ru/") else ""
 
     def find_articles(self) -> None:
         """
@@ -385,21 +381,25 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    configuration = Config(CRAWLER_CONFIG_PATH)
-    prepare_environment(ASSETS_PATH)
-    crawler = Crawler(configuration)
-    crawler.find_articles()
 
-    for article_id, url in enumerate(crawler.urls, start=1):
-        parser = HTMLParser(
-            full_url=url,
-            article_id=article_id,
-            config=configuration
-        )
-        article = parser.parse()
 
-        if isinstance(article, Article):
-            to_raw(article)
+print("Starting scraper...")  # Добавлено
+configuration = Config(CRAWLER_CONFIG_PATH)
+prepare_environment(ASSETS_PATH)
+crawler = Crawler(configuration)
+
+print("Finding articles...")  # Добавлено
+crawler.find_articles()
+print(f"Found {len(crawler.urls)} articles")  # Добавлено
+
+for article_id, url in enumerate(crawler.urls, start=1):
+    print(f"Processing article {article_id}: {url}")  # Добавлено
+    parser = HTMLParser(full_url=url, article_id=article_id, config=configuration)
+    article = parser.parse()
+
+    if isinstance(article, Article):
+        to_raw(article)
+        print(f"Saved: {article.url}")  # Добавлено
 
 if __name__ == "__main__":
     main()
