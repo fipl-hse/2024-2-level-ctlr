@@ -253,7 +253,6 @@ class Crawler:
                     else f"https://zvezdaaltaya.ru{url_href}"
                 if re.match(url_pattern, full_url) and full_url not in self.urls:
                     return full_url
-
         return ""
 
     def find_articles(self) -> None:
