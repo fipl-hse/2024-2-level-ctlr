@@ -303,7 +303,7 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find('title').text
-        self.article.author = article_soup.find('a', class_='url fn n').text
+        self.article.author = [article_soup.find('a', class_='url fn n').text]
         date = article_soup.find('time', class_='entry-date').attrs['datetime']
         self.article.date = self.unify_date_format(date)
         self.article.topics = article_soup.find('span', class_='cat-links').text.split(', ')
