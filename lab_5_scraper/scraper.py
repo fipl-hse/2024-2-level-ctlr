@@ -337,7 +337,7 @@ def main() -> None:
     parsed_article = parser.parse()
     if isinstance(parsed_article, Article):
         to_raw(parsed_article)
-    print(to_raw(parsed_article))
+
 
 
 if __name__ == "__main__":
