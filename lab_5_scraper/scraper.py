@@ -248,8 +248,7 @@ class Crawler:
             href = link['href']
             if href.startswith('/news/'):
                 full_url = 'https://ks-yanao.ru' + href
-                if full_url not in self.urls:
-                    return full_url
+                return full_url
         return 'stop iteration'
 
     def find_articles(self) -> None:
@@ -259,8 +258,9 @@ class Crawler:
         for seed_url in self.get_search_urls():
             response = make_request(seed_url, self.config)
             if response and response.ok:
+                soup = BeautifulSoup(response.text, 'lxml')
                 for i in range(20):
-                    url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
+                    url = self._extract_url(soup)
                     if url == 'stop iteration':
                         break
                     if url not in self.urls:
@@ -363,13 +363,13 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
-        if self.article.url is None:
-            return False
         response = make_request(self.full_url, self.config)
-        if response.ok:
-            article_bs = BeautifulSoup(response.text, 'lxml')
-            self._fill_article_with_text(article_bs)
-            self._fill_article_with_meta_information(article_bs)
+        if not response.ok:
+            return self.article
+
+        article_bs = BeautifulSoup(response.text, 'lxml')
+        self._fill_article_with_text(article_bs)
+        self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
