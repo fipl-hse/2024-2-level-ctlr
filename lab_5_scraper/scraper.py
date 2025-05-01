@@ -10,11 +10,13 @@ import random
 import shutil
 import time
 from typing import Pattern, Union
+import tempfile
 
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
@@ -232,7 +234,11 @@ class Crawler:
         """
         Find articles.
         """
-        driver = webdriver.Chrome()
+        data_dir = tempfile.mkdtemp()
+        opts = Options()
+        opts.add_argument(f"--user-data-dir={data_dir}")
+
+        driver = webdriver.Chrome(options=opts)
         try:
             driver.get("https://www.iguides.ru/")
             click_attempts = 0
@@ -278,6 +284,7 @@ class Crawler:
 
         finally:
             driver.quit()
+            shutil.rmtree(data_dir)
 
 
     def get_search_urls(self) -> list:
