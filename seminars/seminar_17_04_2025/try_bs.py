@@ -88,7 +88,3 @@ def main() -> None:
 
         # skipping all other links - remove break if you want all links to be processed
         break
-
-
-if __name__ == "__main__":
-    main()
