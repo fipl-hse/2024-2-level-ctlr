@@ -241,7 +241,7 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        links = article_bs.find_all('a')
+        links = article_bs.find_all('a', class_="news_pic")
         for link in links:
             href = link.get('href')
             if not href:
