@@ -77,7 +77,7 @@ class Config:
         self._num_articles = self.get_num_articles()
         self._timeout = self.config.timeout
         self._encoding = self.get_encoding()
-        # self.headless_mode = self.get_headless_mode()
+        self.headless_mode = self.get_headless_mode()
         self._should_verify_certificate = self.get_verify_certificate()
         self._validate_config_content()
 
@@ -236,6 +236,10 @@ class Crawler:
         """
         data_dir = tempfile.mkdtemp()
         opts = Options()
+
+        if self.config.get_headless_mode():
+            opts.add_argument("--headless")
+
         opts.add_argument(f"--user-data-dir={data_dir}")
 
         driver = webdriver.Chrome(options=opts)
