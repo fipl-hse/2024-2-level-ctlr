@@ -89,7 +89,7 @@ class Config:
                 raise IncorrectSeedURLError(
                     'Seed URL does not match standard pattern "https?://(www.)?"')
 
-        if  not (isinstance(config_data.total_articles, int) and config_data.total_articles > 0):
+        if not (isinstance(config_data.total_articles, int) and config_data.total_articles > 0):
             raise IncorrectNumberOfArticlesError(
                 'Total number of articles to parse is not integer or less than 0')
 
@@ -253,6 +253,8 @@ class Crawler:
             num_new_urls = len(set(seed_url_bs.find_all(class_='card-title ms5')))
 
             for _ in range(num_new_urls):
+                if len(self.urls) == self.config.get_num_articles():
+                    return None
                 found_article_url = self._extract_url(seed_url_bs)
                 if found_article_url:
                     self.urls.append(found_article_url)
@@ -315,7 +317,6 @@ class HTMLParser:
         self.article.article_id = self.article_id
         self.article.title = article_soup.find(class_="ms7 titlenews").find("span").text
         date_to_unify = article_soup.find(class_="date").text.strip()
-        print(date_to_unify)
         self.article.date = self.unify_date_format(date_to_unify)
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
