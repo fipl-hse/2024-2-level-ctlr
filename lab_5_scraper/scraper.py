@@ -9,6 +9,8 @@ import os
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
+from random import randint
+from time import sleep
 from typing import Pattern, Union
 
 import requests
@@ -196,6 +198,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
                             verify=config.get_verify_certificate(),
                             )
     response.encoding = config.get_encoding()
+    #sleep(randint(1, 10))
     return response
 
 
@@ -227,10 +230,11 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        all_stuff = article_bs.find_all('a', {'class': 'lsd-arch-link'})
-        for el in all_stuff:
-            one_whole_link = el.get('href', '')
-            return one_whole_link
+        link = article_bs.find('a', class_='lsd-arch-link')
+        if link:
+            url = link.get('href', '')
+            link.decompose()
+            return url
         return 'stop'
 
     def find_articles(self) -> None:
@@ -245,11 +249,12 @@ class Crawler:
                 soup = BeautifulSoup(response.text, 'lxml')
                 while True:
                     url = self._extract_url(soup)
-                    if url == 'stop' or url in self.urls:
+                    if url == 'stop':
                         break
-                    self.urls.append(url)
-                    if len(self.urls) >= self.config.get_num_articles():
-                        return
+                    if url not in self.urls:
+                        self.urls.append(url)
+                        if len(self.urls) >= self.config.get_num_articles():
+                            return
 
     def get_search_urls(self) -> list:
         """
@@ -309,14 +314,20 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         div = article_soup.find('div', class_='col-md-6 col-md-push-3')
-        if div:
-            entry_header = div.find('h1', class_='entry-title')
-            if entry_header:
-                self.article.title = entry_header.get_text(strip=True)
 
-            article_author = div.find('h3', class_='user-name')
-            if article_author:
-                self.article.author = [article_author.get_text(strip=True)] if article_author else ["NOT FOUND"]
+        entry_header = div.find('h1', class_='entry-title')
+        if entry_header:
+            self.article.title = entry_header.get_text(strip=True)
+
+        article_author = div.find('h3', class_='user-name')
+        if article_author:
+            self.article.author = [article_author.get_text(strip=True)] if article_author else ["NOT FOUND"]
+
+        date = div.find('meta', {'property': 'article:published_time'})
+        self.article.date = (self.unify_date_format(date['content'])
+                             if date else datetime.datetime.now().replace(microsecond=0))
+
+        self.article.topics = []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -328,6 +339,12 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        date_str = date_str[:-6]
+        for el in date_str:
+            if el.isalpha():
+                date_str = date_str.replace(el, ' ')
+        return datetime.datetime(int(date_str[:4]), int(date_str[5:7]),
+                                 int(date_str[8:10]), int(date_str[11:13]), int(date_str[14:16]))
 
     def parse(self) -> Union[Article, bool, list]:
         """
