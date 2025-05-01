@@ -271,19 +271,24 @@ class Crawler:
         targets_needed = self._config.get_num_articles()
 
         for url in seed_urls:
-            if len(self.urls) != targets_needed:
-                response = make_request(url, self._config)
-                if not response.ok:
-                    continue
-                bs = BeautifulSoup(response.text, 'lxml')
-                extracted_url = self._extract_url(bs)
-                while extracted_url:
-                    self.urls.append(extracted_url)
-                    if len(self.urls) == targets_needed:
-                        break
-                    extracted_url = self._extract_url(bs)
-            if len(self.urls) == targets_needed:
+            if len(self.urls) >= targets_needed:
                 break
+
+            response = make_request(url, self._config)
+            if not response.ok:
+                continue
+
+            soup = BeautifulSoup(response.text, 'lxml')
+
+            article_blocks = soup.find_all('div', class_='list-item')
+
+            for article in article_blocks:
+                if len(self.urls) >= targets_needed:
+                    break
+
+                extracted_url = self._extract_url(article)
+                if extracted_url and extracted_url not in self.urls:
+                    self.urls.append(extracted_url)
 
 
     def get_search_urls(self) -> list:
@@ -341,10 +346,10 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title = article_soup.find('div', class_='article__title')
-
+        title = (article_soup.find('h1', class_='article__title') or
+                 article_soup.find('h1', class_='article-title') or
+                 article_soup.find('div', class_='article__title'))
         self.article.title = title.text if title else 'NOT FOUND'
-
         self.article.author = ['NOT FOUND']
         date_block = article_soup.find('div', class_='article__info-date')
         if date_block and date_block.a:
