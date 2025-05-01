@@ -322,8 +322,8 @@ class HTMLParser:
         self.article.url = self.full_url
         self.article.author = ["No information"]
         self.article.title = article_soup.find("h1").text
-        tmt = article_soup.find("div", class_="claer public_data").find_all("span")
-        self.article.date = tmt
+        tmt = article_soup.find("div", class_="claer public_data").find("span")
+        self.article.date = self.unify_date_format(tmt.text.strip())
         tpt = article_soup.find("div", class_="claer public_data").find_all("a")
         self.article.topics = [t.text.strip() for t in tpt]
 
@@ -337,7 +337,8 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        dt, tm = date_str.split(", ")
+        print(date_str)
+        tm, dt = date_str.split(", ")
         d, m, y = map(str, dt.split(" "))
         d = int(d)
         y = int(y)
