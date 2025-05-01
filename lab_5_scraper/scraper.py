@@ -276,6 +276,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.full_url = full_url
+        self.article_id = article_id
+        self.config = config
+        self.article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -284,6 +288,15 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        text_blocks = article_soup.find_all(['p', 'div'])
+        cleaned_text = []
+
+        for block in text_blocks:
+            text = block.get_text(' ', strip=True)
+            if text and len(text.split()) > 5:
+                cleaned_text.append(text)
+
+        self.article.text = '\n'.join(cleaned_text) if cleaned_text else 'No text found'
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -292,6 +305,19 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        title = article_soup.find('h1') or article_soup.find('title')
+        self.article.title = title.get_text(strip=True) if title else self.full_url
+
+        author = article_soup.find(class_=lambda x: x and 'author' in x.lower())
+        self.article.author = author.get_text(strip=True) if author else 'Unknown author'
+
+        date_element = (article_soup.find('time') or
+                        article_soup.find(class_=lambda x: x and 'date' in x.lower()))
+        if date_element:
+            date_str = date_element.get('datetime') or date_element.get_text(strip=True)
+            self.article.date = self.unify_date_format(date_str)
+        else:
+            self.article.date = datetime.datetime.now()
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -303,6 +329,12 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        for fmt in ('%Y-%m-%d', '%d.%m.%Y', '%B %d, %Y', '%d %B %Y', '%Y-%m-%dT%H:%M:%S'):
+            try:
+                return datetime.datetime.strptime(date_str, fmt)
+            except ValueError:
+                continue
+        return datetime.datetime.fromisoformat(date_str.split('T')[0])
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -311,6 +343,12 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self.article.url, self.config)
+        if response.ok:
+            article_bs = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(article_bs)
+            self._fill_article_with_meta_information(article_bs)
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
