@@ -14,13 +14,12 @@ except ImportError:
 if __name__ == "__main__":
     # Step 1. Get the directory where this script is located
     base_dir = Path(__file__).parent
-    file_txt = base_dir / "file.txt"
 
     # Step 2. Create file.txt if it doesn't exist
-    # file_txt = base_dir / "file.txt"
+    file_txt = base_dir / "file.txt"
     if not file_txt.exists():
         file_txt.write_text("This is a sample file.\nCreated for path examples.")
-    print(file_txt.read_text())
+
     # Step 3. Show both absolute and relative paths to file.txt
     print(f"Absolute path to file.txt: {file_txt.absolute()}")
     print(f"Relative path to file.txt: {file_txt.relative_to(base_dir)}")
