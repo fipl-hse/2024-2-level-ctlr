@@ -320,7 +320,7 @@ class HTMLParser:
         if div is not None:
             for block in div:
                 if block.get_text():
-                    text.append(block.get_text(separator='\n', strip=True))
+                    text.append(block.get_text(strip=True))
             self.article.text = '\n'.join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
