@@ -320,7 +320,7 @@ class HTMLParser:
         """
         self.article.article_id = self.article_id
         self.article.url = self.full_url
-        self.article.author = ["No information"]
+        self.article.author = ["NOT FOUND"]
         self.article.title = article_soup.find("h1").text
         tmt = article_soup.find("div", class_="claer public_data").find("span")
         self.article.date = self.unify_date_format(tmt.text.strip())
