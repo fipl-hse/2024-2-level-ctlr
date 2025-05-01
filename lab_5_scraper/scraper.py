@@ -14,6 +14,7 @@ from typing import Pattern, Union
 
 import requests
 from bs4 import BeautifulSoup
+from requests import RequestException
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -245,10 +246,9 @@ class Crawler:
         driver = webdriver.Chrome(options=opts)
         try:
             driver.get("https://www.iguides.ru/")
-            click_attempts = 0
-            max_clicks = 20
+            remaining_clicks = 20
 
-            while click_attempts < max_clicks:
+            while remaining_clicks > 0:
                 try:
                     buttons = driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")
                     if not buttons:
@@ -256,8 +256,8 @@ class Crawler:
                     button = buttons[0]
                     button.click()
                     time.sleep(random.randint(3, 10))
-                    click_attempts += 1
-                except Exception as e:
+                    remaining_clicks -= 1
+                except RequestException as e:
                     print(f"Button click error: {e}")
                     break
 
