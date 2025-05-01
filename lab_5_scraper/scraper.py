@@ -250,7 +250,8 @@ class Crawler:
         if link:
             url = link.get('href', '')
             link.decompose()
-            return url
+            if isinstance(url, str):
+                return url
         return 'stop'
 
     def find_articles(self) -> None:
