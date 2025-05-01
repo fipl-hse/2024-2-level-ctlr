@@ -334,7 +334,7 @@ class HTMLParser:
             'time',
             {'class': 'entry-date updated td-module-date'}).text
             )
-        topics = article_soup.find_all('li', {'class': 'entry-category'})
+        topics = article_soup.find_all('ul', {'class': 'td-category'})
         self.article.topics = [topic.text for topic in topics]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
