@@ -8,12 +8,16 @@ import json
 import pathlib
 import shutil
 import requests
+from random import randint
+from time import sleep
 from bs4 import BeautifulSoup
 from typing import Pattern, Union
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw
+from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+
+WEBSITE = "https://polkrug.ru"
 
 
 class IncorrectSeedURLError(Exception):
@@ -104,7 +108,7 @@ class Config:
         """
         if not isinstance(self._seed_urls, list) or \
                 not all(isinstance(url, str) for url in self._seed_urls) or \
-                not all(url.startswith("https://polkrug.ru") for url in self._seed_urls):
+                not all(url.startswith(WEBSITE) for url in self._seed_urls):
             raise IncorrectSeedURLError("Seed URL is not a valid URL")
         if not isinstance(self._num_articles, int) or \
                 isinstance(self._num_articles, bool) or \
@@ -222,7 +226,6 @@ class Crawler:
         """
         self.config = config
         self.urls = []
-        prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -237,7 +240,7 @@ class Crawler:
         articles = article_bs.find_all('div', {'class': 'news_item'})
         for el in articles:
             href = el.find('a')["href"]
-            link = "https://polkrug.ru" + href
+            link = WEBSITE + href
             if isinstance(link, str) and link not in self.urls:
                 return link
         return ''
@@ -350,9 +353,11 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     for i, url in enumerate(crawler.urls):
+        sleep(randint(5, 15))
         parser = HTMLParser(url, i + 1, configuration)
         article = parser.parse()
         if isinstance(article, Article):
