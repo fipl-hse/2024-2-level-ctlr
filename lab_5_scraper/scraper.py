@@ -93,22 +93,33 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self._seed_urls, list) or not all(isinstance(url, str) for url in self._seed_urls) or not all(url.startswith("https://www.iguides.ru/") for url in self._seed_urls):
+        if (not isinstance(self._seed_urls, list)
+                or not all(isinstance(url, str) for url in self._seed_urls)
+                or not all(url.startswith("https://www.iguides.ru/") for url in self._seed_urls)):
             raise IncorrectSeedURLError("Seed URLs have wrong format")
-        if not isinstance(self._num_articles, int) or isinstance(self._num_articles, bool) or self._num_articles < 0:
-            raise IncorrectNumberOfArticlesError("№ of articles has wrong format or № of articles < 0")
+
+        if (not isinstance(self._num_articles, int)
+                or isinstance(self._num_articles, bool) or self._num_articles < 0):
+            raise (IncorrectNumberOfArticlesError
+                   ("№ of articles has wrong format or № of articles < 0"))
+
         if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError("Number of articles is out of range")
+
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError("Headers must be a dict")
+
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError("Encoding must be a string")
+
         if not isinstance(self._timeout, int) or not self._timeout in range(0, 61):
             raise IncorrectTimeoutError("Timeout has wrong format ot timeout is out of range")
+
         # if not isinstance(self.headless_mode, bool):
         #     raise IncorrectVerifyError("Headless mode has wrong format")
         # if not isinstance(self._should_verify_certificate, bool):
         #     raise IncorrectVerifyError("Verifying has wrong format")
+
         if (not isinstance(self.config.should_verify_certificate, bool)
                 or not isinstance(self.config.headless_mode, bool)):
             raise IncorrectVerifyError('Verify certificate value must either be True or False')
@@ -180,7 +191,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         requests.models.Response: A response from a request
     """
     time.sleep(random.randint(4, 10))
-    request = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(), verify=config.get_verify_certificate())
+    request = requests.get(url, headers=config.get_headers(),
+                           timeout=config.get_timeout(), verify=config.get_verify_certificate())
     request.encoding = config.get_encoding()
     return request
 
@@ -225,7 +237,8 @@ class Crawler:
         driver.get("https://www.iguides.ru/")
         while True:
             try:
-                button = [button for button in driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")][0]
+                button = [button for button in
+                          driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")][0]
                 button.click()
                 time.sleep(random.randint(3, 10))
             except Exception as e:
