@@ -248,7 +248,7 @@ class Crawler:
             for block in soup.find_all('a', class_='img_box'):
                 url = self._extract_url(block)
                 if url and url not in self.urls and \
-                        len(self.urls) <= self.config.get_num_articles():
+                        len(self.urls) < self.config.get_num_articles():
                     self.urls.append(url)
                 else:
                     break
