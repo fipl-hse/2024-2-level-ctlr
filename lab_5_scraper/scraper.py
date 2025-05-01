@@ -247,7 +247,7 @@ class Crawler:
         driver = webdriver.Chrome(options=opts)
         try:
             driver.get("https://www.iguides.ru/")
-            remaining_clicks = 20
+            remaining_clicks = 1
 
             while remaining_clicks > 0:
                 try:
