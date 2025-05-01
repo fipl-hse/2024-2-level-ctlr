@@ -2,10 +2,10 @@
 Crawler implementation.
 """
 
-import datetime
-import json
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import datetime
+import json
 import pathlib
 import shutil
 from random import uniform
@@ -223,6 +223,7 @@ class Crawler:
             config (Config): Configuration
         """
         self.config = config
+        self.not_urls = []
         self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
@@ -374,7 +375,7 @@ class HTMLParser:
         soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(soup)
         if not self.article.text:
-            return False
+            return self.article
         self._fill_article_with_meta_information(soup)
         return self.article
 
@@ -387,10 +388,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
     base_path = pathlib.Path(base_path)
-    base_path.mkdir(exist_ok=True, parents=True)
-    if any(base_path.iterdir()):
+    if base_path.exists():
         shutil.rmtree(base_path)
-        base_path.mkdir(parents=True)
+    base_path.mkdir(parents=True)
 
 
 class CrawlerRecursive(Crawler):
