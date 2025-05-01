@@ -106,14 +106,16 @@ class Config:
             raise IncorrectSeedURLError('Seed URL does not match standard pattern')
         if (not isinstance(self._num_articles, int) or
                 isinstance(self._num_articles, bool) or self._num_articles < 0):
-            raise IncorrectNumberOfArticlesError('Invalid number of articles: must be an integer and not 0')
+            raise IncorrectNumberOfArticlesError('Invalid number of articles: '
+                                                 'must be an integer and not 0')
         if self._num_articles > 150:
-            raise NumberOfArticlesOutOfRangeError('Number of articles out of range: should be between 1 and 150')
+            raise NumberOfArticlesOutOfRangeError('Number of articles out of range: '
+                                                  'should be between 1 and 150')
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers are not in a form of dictionary')
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('Encoding is not is not specified as a string')
-        if not isinstance(self._timeout, int) or not (0 < self._timeout < 60):
+        if not isinstance(self._timeout, int) or not 0 < self._timeout < 60:
             raise IncorrectTimeoutError('Timeout value is not a positive integer less than 60')
         if not isinstance(self._should_verify_certificate, bool):
             raise IncorrectVerifyError('Verify certificate value is not either True or False')
@@ -327,7 +329,8 @@ class HTMLParser:
         article_author = None
         for div in article_soup.find_all('div'):
             found_author = div.find('p', class_=lambda class_name: (
-                    class_name and class_name.startswith('Typography_text__WDByQ Typography_size__14')
+                    class_name and class_name.startswith('Typography_text__WDByQ '
+                                                         'Typography_size__14')
             ))
             if found_author:
                 text = found_author.get_text(strip=True)
