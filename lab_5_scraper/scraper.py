@@ -11,7 +11,6 @@ import json
 import requests
 from core_utils.article.article import Article
 from core_utils.article.io import to_raw
-from lab_5_scraper.scraper import HTMLParser
 from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 from core_utils.config_dto import ConfigDTO
 from typing import Pattern, Union
