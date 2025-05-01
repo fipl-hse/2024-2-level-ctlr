@@ -256,15 +256,16 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.get_search_urls():
+            if len(self.urls) >= self.config.get_num_articles():
+                break
             response = make_request(seed_url, self.config)
             if response and response.ok:
                 soup = BeautifulSoup(response.text, 'lxml')
-                for i in range(20):
+                while True:
                     url = self._extract_url(soup)
-                    if url == 'stop iteration':
+                    if url == 'stop iteration' or url in self.urls:
                         break
-                    if url not in self.urls:
-                        self.urls.append(url)
+                    self.urls.append(url)
                     if len(self.urls) >= self.config.get_num_articles():
                         return
 
