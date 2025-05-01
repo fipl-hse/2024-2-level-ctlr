@@ -349,7 +349,7 @@ class HTMLParser:
                                        'Typography_text__WDByQ' in class_name)
         )
         if date and date.get('datetime'):
-            date_str = date['datetime']
+            date_str = str(date['datetime'])
             self.article.date = self.unify_date_format(date_str)
             #print('OK')
         else:
