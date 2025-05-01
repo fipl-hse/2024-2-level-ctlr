@@ -242,9 +242,10 @@ class Crawler:
         for link in all_links:
             href = link['href']
             if href.startswith('/news/'):
-                full_url = 'https://ks-yanao.ru' + href
+                full_url = 'https://ks-yanao.ru' + str(href)
                 link.decompose()
-                return full_url
+                if full_url not in self.urls and isinstance(full_url, str):
+                    return full_url
         return 'stop iteration'
 
     def find_articles(self) -> None:
