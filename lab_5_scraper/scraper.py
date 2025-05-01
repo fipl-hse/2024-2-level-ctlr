@@ -321,9 +321,14 @@ class HTMLParser:
         div = article_soup.find('div', class_="fullnews_content")
         text = []
         if div is not None:
-            for block in div:
-                if block.get_text():
-                    text.append(block.get_text(strip=True))
+            # Get all paragraph tags within the div
+            paragraphs = div.find_all('p')
+            for p in paragraphs:
+                if p.text.strip():  # Only add non-empty paragraphs
+                    text.append(p.text.strip())
+            # If no paragraphs found, try getting direct text
+            if not text:
+                text = [div.get_text(strip=True)]
             self.article.text = '\n'.join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
