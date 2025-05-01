@@ -3,19 +3,20 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import datetime
+import json
 import pathlib
+import shutil
+from time import sleep
 from typing import Pattern, Union
 
-import json
-from core_utils.config_dto import ConfigDTO
-from core_utils.article.io import to_meta, to_raw
-from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
-from core_utils.article.article import Article
-import shutil
 import requests
 from bs4 import BeautifulSoup
-from time import sleep
-import datetime
+
+from core_utils.article.article import Article
+from core_utils.article.io import to_meta, to_raw
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
@@ -83,8 +84,6 @@ class Config:
         self._should_verify_certificate = self.config.should_verify_certificate
         self._headless_mode = self.config.headless_mode
 
-
-
     def _extract_config_content(self) -> ConfigDTO:
         """
         Get config values.
@@ -92,32 +91,37 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open(self.path_to_config, 'r', encoding='utf-8') as config:
+        with open(self.path_to_config, "r", encoding="utf-8") as config:
             data = json.load(config)
         return ConfigDTO(**data)
-
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if (not self.config.seed_urls or not isinstance(self.config.seed_urls,list)
-                or not all(isinstance(url,str) for url in self.config.seed_urls)
-                or not all('https://www.volga-tv.ru/' in url for url in self.config.seed_urls)):
-            raise IncorrectSeedURLError('Something is wrong with the urls')
-        if (not isinstance(self.config.total_articles, int) or
-            self.config.total_articles < 0 or isinstance(self.config.total_articles, bool)):
-            raise IncorrectNumberOfArticlesError('Not correct n of articles')
+        if (
+            not self.config.seed_urls
+            or not isinstance(self.config.seed_urls, list)
+            or not all(isinstance(url, str) for url in self.config.seed_urls)
+            or not all("https://www.volga-tv.ru/" in url for url in self.config.seed_urls)
+        ):
+            raise IncorrectSeedURLError("Something is wrong with the urls")
+        if (
+            not isinstance(self.config.total_articles, int)
+            or self.config.total_articles < 0
+            or isinstance(self.config.total_articles, bool)
+        ):
+            raise IncorrectNumberOfArticlesError("Not correct n of articles")
         if self.config.total_articles > 150:
-            raise NumberOfArticlesOutOfRangeError('N of articles out of range')
+            raise NumberOfArticlesOutOfRangeError("N of articles out of range")
         if not isinstance(self.config.headers, dict):
-            raise IncorrectHeadersError('Headers are incorrect')
+            raise IncorrectHeadersError("Headers are incorrect")
         if not isinstance(self.config.encoding, str):
-            raise IncorrectEncodingError('Encoding is incorrect')
-        if not isinstance(self.config.timeout,int) or not 0 < self.config.timeout <= 60:
-            raise IncorrectTimeoutError('The timings are wrong')
+            raise IncorrectEncodingError("Encoding is incorrect")
+        if not isinstance(self.config.timeout, int) or not 0 < self.config.timeout <= 60:
+            raise IncorrectTimeoutError("The timings are wrong")
         if not isinstance(self.config.should_verify_certificate, bool):
-            raise IncorrectVerifyError('Verify is not a bool')
+            raise IncorrectVerifyError("Verify is not a bool")
         if not isinstance(self.config.headless_mode, bool):
             raise IncorrectVerifyError("Headless mode is not bool")
 
@@ -197,7 +201,9 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         requests.models.Response: A response from a request
     """
     # sleep(5)
-    response = requests.get(url, headers=config.get_headers(), verify=config.get_verify_certificate())
+    response = requests.get(
+        url, headers=config.get_headers(), verify=config.get_verify_certificate()
+    )
     response.encoding = config.get_encoding()
     return response
 
@@ -231,11 +237,11 @@ class Crawler:
             str: Url from HTML
         """
         link = article_bs.find("a", class_="prw")
-        href = link.get('href')
+        href = link.get("href")
         if isinstance(href, str):
-            real_link = f'https://www.volga-tv.ru{href}'
+            real_link = f"https://www.volga-tv.ru{href}"
             return real_link
-        return ''
+        return ""
 
     def find_articles(self) -> None:
         """
@@ -248,15 +254,14 @@ class Crawler:
             response = make_request(url, self.config)
             if not response.ok:
                 continue
-            bs = BeautifulSoup(response.text, 'lxml')
-            news = bs.find_all('div', class_="item news")
+            bs = BeautifulSoup(response.text, "lxml")
+            news = bs.find_all("div", class_="item news")
             for article in news:
                 if len(self.urls) >= self.config.get_num_articles():
                     break
                 extracted_url = self._extract_url(article)
                 if extracted_url and extracted_url not in self.urls:
                     self.urls.append(extracted_url)
-
 
     def get_search_urls(self) -> list:
         """
@@ -301,11 +306,14 @@ class HTMLParser:
         news = article_soup.find("div", class_="news-detail hyphenate")
         text = []
         for i in news:
-            if i.get_text().strip() and not (i.get_text().strip().startswith('Служба информации:')
-                                             or i.get_text().strip() == 'Поделитесь этой новостью с друзьями в соцсетях:'\
-                    or i.get_text().strip() == 'Все новости раздела «Новости дня»' or str(i).startswith('<time class=')):
+            if i.get_text().strip() and not (
+                i.get_text().strip().startswith("Служба информации:")
+                or i.get_text().strip() == "Поделитесь этой новостью с друзьями в соцсетях:"
+                or i.get_text().strip() == "Все новости раздела «Новости дня»"
+                or str(i).startswith("<time class=")
+            ):
                 text.append(i.get_text(strip=True, separator="\n"))
-        self.article.text = '\n'.join(text)
+        self.article.text = "\n".join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -314,17 +322,17 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        self.article.title = article_soup.find('h1').text
-        date = article_soup.find('time', class_="news-date-time").attrs['datetime']
+        self.article.title = article_soup.find("h1").text
+        date = article_soup.find("time", class_="news-date-time").attrs["datetime"]
         self.article.date = self.unify_date_format(date)
-        self.article.topics = ['Новости дня']
+        self.article.topics = ["Новости дня"]
 
         full_text = article_soup.find("div", class_="news-detail hyphenate")
-        self.article.author = ['NOT FOUND']
+        self.article.author = ["NOT FOUND"]
         for i in full_text:
-            if i.get_text().strip().startswith('Служба информации:'):
-                authors = i.get_text().strip().replace('Служба информации: ', '')[:-1:]
-                authors_list = authors.split(', ')
+            if i.get_text().strip().startswith("Служба информации:"):
+                authors = i.get_text().strip().replace("Служба информации: ", "")[:-1:]
+                authors_list = authors.split(", ")
                 self.article.author = authors_list
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
@@ -349,7 +357,7 @@ class HTMLParser:
         """
         response = make_request(self.full_url, self.config)
         if response.ok:
-            bs = BeautifulSoup(response.text, 'lxml')
+            bs = BeautifulSoup(response.text, "lxml")
             self._fill_article_with_text(bs)
             self._fill_article_with_meta_information(bs)
         return self.article
