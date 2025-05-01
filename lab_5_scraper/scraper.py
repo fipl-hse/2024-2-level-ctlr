@@ -376,14 +376,11 @@ class HTMLParser:
         txt = date_str.strip()
         date_part, time_part = txt.split(",", 1)
         day, month_name, year = date_part.split()
-        d = int(day)
         month = months[month_name]
-        y = int(year)
         pro_time_part = time_part.strip()
         hour, minute = pro_time_part.split(":", 1)
-        h = int(hour)
-        mi = int(minute)
-        return datetime.datetime(y, month, d, h, mi)
+
+        return datetime.datetime(int(year), month, int(day), int(hour), int(minute))
 
     def parse(self) -> Union[Article, bool, list]:
         """
