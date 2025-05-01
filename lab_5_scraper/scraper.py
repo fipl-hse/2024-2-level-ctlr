@@ -337,9 +337,9 @@ class HTMLParser:
         tit = article_soup.find("h2", itemprop="name").text
         self.article.title = tit
 
-
-        author = article_soup.find("span", itemprop="author").text
-        self.article.author = author
+        author = article_soup.find("span", itemprop="author").text.strip()
+        cleaned_author = " ".join(author.split())
+        self.article.author = [cleaned_author]
 
         date = article_soup.find_all("time", itemprop="datePublished")[0].text
         self.article.date = self.unify_date_format(date)
