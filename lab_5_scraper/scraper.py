@@ -190,7 +190,6 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    time.sleep(random.randint(4, 10))
     request = requests.get(url, headers=config.get_headers(),
                            timeout=config.get_timeout(), verify=config.get_verify_certificate())
     request.encoding = config.get_encoding()
@@ -234,31 +233,50 @@ class Crawler:
         Find articles.
         """
         driver = webdriver.Chrome()
-        driver.get("https://www.iguides.ru/")
-        while True:
-            try:
-                button = [button for button in
-                          driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")][0]
-                button.click()
-                time.sleep(random.randint(3, 10))
-            except Exception as e:
-                print(e)
-                break
-        src = driver.page_source
-        driver.quit()
-        soup = BeautifulSoup(src, "lxml")
-        for i in self.get_search_urls():
-            if len(self.urls) >= self.config.get_num_articles():
-                break
-            query = make_request(i, self.config)
-            if not query.ok:
-                continue
-            for _ in range(100):
-                link = self._extract_url(soup)
-                if link == "EXTRACTION ERROR":
+        try:
+            driver.get("https://www.iguides.ru/")
+            click_attempts = 0
+            max_clicks = 20
+
+            while click_attempts < max_clicks:
+                try:
+                    buttons = driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")
+                    if not buttons:
+                        break
+                    button = buttons[0]
+                    button.click()
+                    time.sleep(random.randint(3, 10))
+                    click_attempts += 1
+                except Exception as e:
+                    print(f"Button click error: {e}")
                     break
-                if link not in self.urls:
-                    self.urls.append(link)
+
+            src = driver.page_source
+            soup = BeautifulSoup(src, "lxml")
+
+            max_url_attempts = self.config.get_num_articles() * 2
+            url_attempts = 0
+
+            for i in self.get_search_urls():
+                query = make_request(i, self.config)
+                if not query.ok:
+                    continue
+
+                while (len(self.urls) < self.config.get_num_articles() and
+                       url_attempts < max_url_attempts):
+                    link = self._extract_url(soup)
+                    if link == "EXTRACTION ERROR":
+                        url_attempts += 1
+                        continue
+                    if link not in self.urls:
+                        self.urls.append(link)
+                    url_attempts += 1
+
+                if len(self.urls) >= self.config.get_num_articles():
+                    break
+
+        finally:
+            driver.quit()
 
 
     def get_search_urls(self) -> list:
@@ -390,7 +408,7 @@ def main() -> None:
     crawler.find_articles()
 
     for index, url in enumerate(crawler.urls):
-        time.sleep(random.randint(4, 10))
+        # time.sleep(random.randint(3, 8))
         parser = HTMLParser(full_url=url, article_id=index + 1, config=configuration)
         article_info = parser.parse()
 
