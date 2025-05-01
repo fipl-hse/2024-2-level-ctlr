@@ -23,30 +23,51 @@ from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
+    """
+        Raises when seed URL does not match standard pattern
+        """
     pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
+    """
+        Raises when total number of articles is out of range from 1 to 150
+        """
     pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
+    """
+        Raises when total number of articles to parse is not integer or less than 0
+        """
     pass
 
 
 class IncorrectHeadersError(Exception):
+    """
+        Raises when headers are not in a form of dictionary
+        """
     pass
 
 
 class IncorrectEncodingError(Exception):
+    """
+        Raises when encoding is not specified as a string
+        """
     pass
 
 
 class IncorrectTimeoutError(Exception):
+    """
+        Raises when timeout value is not a positive integer less than 60
+        """
     pass
 
 
 class IncorrectVerifyError(Exception):
+    """
+        Raises when verify certificate value is not either True or False
+        """
     pass
 
 
@@ -103,9 +124,11 @@ class Config:
         if (not isinstance(self._num_articles, int)
                 or self._num_articles < 0
                 or isinstance(self._num_articles, bool)):
-            raise IncorrectNumberOfArticlesError('Total number of articles to parse is not integer or less than 0')
+            raise (IncorrectNumberOfArticlesError
+                   ('Total number of articles to parse is not integer or less than 0'))
         if self._num_articles > 150:
-            raise NumberOfArticlesOutOfRangeError('Total number of articles is out of range from 1 to 150')
+            raise (NumberOfArticlesOutOfRangeError
+                   ('Total number of articles is out of range from 1 to 150'))
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers are not in a form of dictionary;')
         if not isinstance(self._encoding, str):
@@ -321,7 +344,8 @@ class HTMLParser:
 
         article_author = div.find('h3', class_='user-name')
         if article_author:
-            self.article.author = [article_author.get_text(strip=True)] if article_author else ["NOT FOUND"]
+            self.article.author = ([article_author.get_text(strip=True)]
+                                   if article_author else ["NOT FOUND"])
 
         date = div.find('meta', {'property': 'article:published_time'})
         self.article.date = (self.unify_date_format(date['content'])
