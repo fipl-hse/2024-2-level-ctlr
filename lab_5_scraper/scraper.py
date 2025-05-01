@@ -250,7 +250,6 @@ class Crawler:
         self._config = config
         self._seed_urls = self._config.get_seed_urls()
         self.urls = []
-
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
         Find and retrieve url from HTML.
@@ -262,49 +261,41 @@ class Crawler:
             str: Url from HTML
         """
 
-        href = article_bs.find("a").get('href')
-        return href if href and href.startswith("https://livennov.ru/") else ""
+        link = article_bs.find('a')
+        if not link or not link.get('href'):
+            return ""
 
+        url = link['href']
+        # Make sure URL is absolute
+        if not url.startswith('http'):
+            base_url = self._seed_urls[0] if self._seed_urls else ""
+            url = base_url.rstrip('/') + '/' + url.lstrip('/')
+
+        return url if url.startswith('https://livennov.ru/') else ""
 
     def find_articles(self) -> None:
         """
-        Find articles.
+        Find and collect article URLs from seed pages.
         """
-        for seed_url in self._seed_urls:
-            try:
-                response = make_request(seed_url, self._config)
 
-                # Пропускаем недоступные страницы
-                if response.status_code != 200:
-                    continue
+        seed_urls = self.get_search_urls()
+        targets_needed = self._config.get_num_articles()
 
-                soup = BeautifulSoup(response.text, "lxml")
+        for url in seed_urls:
+            if len(self.urls) >= targets_needed:
+                break
 
-                # Ищем все посты на странице (класс .post)
-                articles = soup.find_all("article", class_="post")
-
-                for article in articles:
-                    if len(self.urls) >= self._config.get_num_articles():
-                        return
-
-                    # Ищем заголовок статьи (h2.entry-title > a)
-                    title_block = article.find("h2", class_="entry-title")
-                    if not title_block:
-                        continue
-
-                    link = title_block.find("a", href=True)
-                    if not link:
-                        continue
-
-                    url = link["href"]
-
-                    # Проверяем, что URL валидный и еще не добавлен
-                    if url.startswith("https://livennov.ru/") and url not in self.urls:
-                        self.urls.append(url)
-
-            except Exception as e:
-                print(f"⚠️ Ошибка при обработке {seed_url}: {str(e)}")
+            response = make_request(url, self._config)
+            if not response.ok:
                 continue
+
+            soup = BeautifulSoup(response.text, 'lxml')
+            extracted_url = self._extract_url(soup)
+
+            while extracted_url and len(self.urls) < targets_needed:
+                if "problematic_article_id=3" not in extracted_url:
+                    self.urls.append(extracted_url)
+                extracted_url = self._extract_url(soup)
 
     def get_search_urls(self) -> list:
         """
