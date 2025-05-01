@@ -200,7 +200,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(),
                             verify=config.get_verify_certificate(), timeout=config.get_timeout())
     response.encoding = config.get_encoding()
-    sleep(uniform(0.1, 2.2))
+    sleep(uniform(0.1, 1.5))
     return response
 
 
