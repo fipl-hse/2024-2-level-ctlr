@@ -272,23 +272,38 @@ class Crawler:
         """
         for seed_url in self._seed_urls:
             try:
-                res = make_request(seed_url, self._config)
+                response = make_request(seed_url, self._config)
 
-                # Пропускаем несуществующие страницы
-                if res.status_code != 200:
+                # Пропускаем недоступные страницы
+                if response.status_code != 200:
                     continue
 
-                soup = BeautifulSoup(res.content, "lxml")
+                soup = BeautifulSoup(response.text, "lxml")
 
-                for paragraph in soup.find_all('h1', class_='entry-title'):
+                # Ищем все посты на странице (класс .post)
+                articles = soup.find_all("article", class_="post")
+
+                for article in articles:
                     if len(self.urls) >= self._config.get_num_articles():
                         return
 
-                    url = self._extract_url(paragraph)
+                    # Ищем заголовок статьи (h2.entry-title > a)
+                    title_block = article.find("h2", class_="entry-title")
+                    if not title_block:
+                        continue
 
-                    if url and url not in self.urls:
+                    link = title_block.find("a", href=True)
+                    if not link:
+                        continue
+
+                    url = link["href"]
+
+                    # Проверяем, что URL валидный и еще не добавлен
+                    if url.startswith("https://livennov.ru/") and url not in self.urls:
                         self.urls.append(url)
-            except Exception:
+
+            except Exception as e:
+                print(f"⚠️ Ошибка при обработке {seed_url}: {str(e)}")
                 continue
 
     def get_search_urls(self) -> list:
