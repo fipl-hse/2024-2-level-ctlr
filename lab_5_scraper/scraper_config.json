@@ -1,9 +1,17 @@
 {
-    "seed_urls": ["https://tuvapravda.ru"],
-    "headers": {},
-    "total_articles_to_find_and_parse": 100,
-    "encoding": "",
-    "timeout": 0,
+    "seed_urls": [
+        "https://tuvapravda.ru/news",
+        "https://tuvapravda.ru/articles"
+    ],
+    "headers": {
+        "Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "User-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36",
+        "Accept-language" : "ru,en;q=0.9,es;q=0.8",
+        "Cookie" : "_ga_DMM69SRWJZ=GS1.1.1746103112.1.0.1746103112.60.0.0; _ga=GA1.1.1992805500.1746103113"
+    },
+    "total_articles_to_find_and_parse": 50,
+    "encoding": "utf-8",
+    "timeout": 10,
     "should_verify_certificate": true,
     "headless_mode": true
 }
