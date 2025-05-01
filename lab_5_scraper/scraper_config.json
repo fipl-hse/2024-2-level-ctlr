@@ -9,9 +9,9 @@
         "Accept-language" : "ru,en;q=0.9,es;q=0.8",
         "Cookie" : "_ga_DMM69SRWJZ=GS1.1.1746103112.1.0.1746103112.60.0.0; _ga=GA1.1.1992805500.1746103113"
     },
-    "total_articles_to_find_and_parse": 50,
+    "total_articles_to_find_and_parse": 10,
     "encoding": "utf-8",
-    "timeout": 10,
+    "timeout": 5,
     "should_verify_certificate": true,
     "headless_mode": true
 }
