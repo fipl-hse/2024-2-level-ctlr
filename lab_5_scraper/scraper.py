@@ -8,15 +8,15 @@ import json
 import pathlib
 import random
 import shutil
+import tempfile
 import time
 from typing import Pattern, Union
-import tempfile
 
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
