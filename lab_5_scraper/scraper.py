@@ -234,8 +234,8 @@ class Crawler:
         """
         post_class = article_bs.find_all('a', class_='post-thumbnail')
         for post in post_class:
-            url = post['href']
-            if url and isinstance(url, str):
+            url = post.get('href')
+            if url:
                 return url
         return ''
 
