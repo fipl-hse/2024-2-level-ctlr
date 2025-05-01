@@ -339,32 +339,33 @@ class HTMLParser:
         """
         print(date_str)
         tm, dt = date_str.split(", ")
-        d, m, y = map(str, dt.split(" "))
-        d = int(d)
-        y = int(y)
-        if m == 'января':
+        di, mi, yi = map(str, dt.split(" "))
+        d = int(di)
+        y = int(yi)
+        m = 4
+        if mi == 'января':
             m = 1
-        if m == 'февраля':
+        if mi == 'февраля':
             m = 2
-        if m == 'марта':
+        if mi == 'марта':
             m = 3
-        if m == 'апреля':
+        if mi == 'апреля':
             m = 4
-        if m == 'мая':
+        if mi == 'мая':
             m = 5
-        if m == 'июня':
+        if mi == 'июня':
             m = 6
-        if m == 'июля':
+        if mi == 'июля':
             m = 7
-        if m == 'августа':
+        if mi == 'августа':
             m = 8
-        if m == 'сентября':
+        if mi == 'сентября':
             m = 9
-        if m == 'октября':
+        if mi == 'октября':
             m = 10
-        if m == 'ноября':
+        if mi == 'ноября':
             m = 11
-        if m == 'декабря':
+        if mi == 'декабря':
             m = 12
         hr, mnt = map(int, tm.split(":"))
         return datetime.datetime(y, m, d, hr, mnt)
