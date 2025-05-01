@@ -6,17 +6,16 @@ Crawler implementation.
 import json
 import pathlib
 import shutil
-
-from typing import Pattern, Union
-from core_utils.config_dto import ConfigDTO
-from core_utils.article.io import to_raw
+from typing import Union
 import re
 import datetime
-from core_utils.article.article import Article
-import requests
-from bs4 import BeautifulSoup
 from random import randint
 from time import sleep
+import requests
+from bs4 import BeautifulSoup
+from core_utils.config_dto import ConfigDTO
+from core_utils.article.io import to_raw
+from core_utils.article.article import Article
 from core_utils.constants import (
     ASSETS_PATH,
     CRAWLER_CONFIG_PATH,
@@ -24,7 +23,6 @@ from core_utils.constants import (
     TIMEOUT_LOWER_LIMIT,
     TIMEOUT_UPPER_LIMIT
 )
-
 
 class IncorrectSeedURLError(Exception):
     """Seed URLs list cannot be empty"""
@@ -47,12 +45,11 @@ class IncorrectEncodingError(Exception):
 
 
 class IncorrectTimeoutError(Exception):
-    """"Timeout must be a positive integer less than 60"""
+    """Timeout must be a positive integer less than 60"""
 
 
 class IncorrectVerifyError(Exception):
     """Verify certificate must be a boolean"""
-
 
 class Config:
     """
@@ -68,16 +65,15 @@ class Config:
         """
 
         self.path_to_config = path_to_config
-        config_data = self._extract_config_content()
+        self._config = self._extract_config_content()
         self._validate_config_content()
-        self._seed_urls = config_data.seed_urls
-        self._num_articles = config_data.total_articles
-        self._headers = config_data.headers
-        self._encoding = config_data.encoding
-        self._timeout = config_data.timeout
-        self._should_verify_certificate = config_data.should_verify_certificate
-        self._headless_mode = config_data.headless_mode
-
+        self._seed_urls = self._config.seed_urls
+        self._num_articles = self._config.total_articles
+        self._headers = self._config.headers
+        self._encoding = self._config.encoding
+        self._timeout = self._config.timeout
+        self._should_verify_certificate = self._config.should_verify_certificate
+        self._headless_mode = self._config.headless_mode
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -98,13 +94,20 @@ class Config:
                 should_verify_certificate=data.get('should_verify_certificate', True),
                 headless_mode=data.get('headless_mode', True)
             )
-
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
 
         config_dto = self._extract_config_content()
+
+        if not isinstance(config_dto.headers, dict):
+            raise IncorrectHeadersError
+
+        # Validate individual headers
+        for header_value in config_dto.headers.values():
+            if '\n' in str(header_value):
+                raise IncorrectHeadersError("Headers cannot contain newline characters")
 
         if not isinstance(config_dto.seed_urls, list):
             raise IncorrectSeedURLError
@@ -176,7 +179,6 @@ class Config:
         Returns:
             str: Encoding
         """
-
         return self._encoding
     def get_timeout(self) -> int:
         """
@@ -216,26 +218,27 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    sleep_time = randint(1, 3)
-    sleep(sleep_time)
+    try:
+        sleep_time = randint(1, 3)
+        sleep(sleep_time)
 
-    request = requests.get(
-        url,
-        headers=config.get_headers(),
-        timeout=config.get_timeout(),
-        verify=config.get_verify_certificate()
-    )
+        request = requests.get(
+            url,
+            headers=config.get_headers(),
+            timeout=config.get_timeout(),
+            verify=config.get_verify_certificate()
+        )
+        request.raise_for_status()
+        request.encoding = config.get_encoding()
+        return request
 
-    request.encoding = config.get_encoding()
-    return request
-
+    except requests.RequestException as e:
+        print(f"Request failed for {url}: {e}")
+        raise
 class Crawler:
     """
     Crawler implementation.
     """
-
-    #: Url pattern
-    url_pattern: Union[Pattern, str]
 
     def __init__(self, config: Config) -> None:
         """
@@ -244,10 +247,11 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
-
         self._config = config
         self._seed_urls = self._config.get_seed_urls()
         self.urls = []
+        self._seen_urls = set()
+
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
         Find and retrieve url from HTML.
