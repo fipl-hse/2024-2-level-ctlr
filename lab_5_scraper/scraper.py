@@ -235,7 +235,7 @@ class Crawler:
         post_class = article_bs.find_all('a', class_='post-thumbnail')
         for post in post_class:
             url = post['href']
-            if url:
+            if url and isinstance(url, str):
                 return url
         return ''
 
@@ -329,6 +329,8 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        if not self.article.url:
+            return False
         soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(soup)
         self._fill_article_with_meta_information(soup)
