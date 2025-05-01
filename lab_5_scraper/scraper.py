@@ -54,14 +54,13 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
-        self.config_dto = self._extract_config_content()
-        self._seed_urls = self.config_dto.seed_urls
-        self._num_articles = self.config_dto.total_articles
-        self._headers = self.config_dto.headers
-        self._encoding = self.config_dto.encoding
-        self._timeout = self.config_dto.timeout
-        self._should_verify_certificate = self.config_dto.should_verify_certificate
-        self._headless_mode = self.config_dto.headless_mode
+        self._seed_urls = self._extract_config_content().seed_urls
+        self._num_articles = self._extract_config_content().total_articles
+        self._headers = self._extract_config_content().headers
+        self._encoding = self._extract_config_content().encoding
+        self._timeout = self._extract_config_content().timeout
+        self._should_verify_certificate = self._extract_config_content().should_verify_certificate
+        self._headless_mode = self._extract_config_content().headless_mode
 
     def _extract_config_content(self) -> ConfigDTO:
         """
