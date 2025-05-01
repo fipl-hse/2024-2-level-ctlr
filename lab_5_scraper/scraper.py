@@ -200,12 +200,12 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    sleep(10)
+    sleep(15)
     response = requests.get(
         url,
         headers=config.get_headers(),
         verify=config.get_verify_certificate(),
-        timeout=60,
+        timeout=120,
     )
     response.encoding = config.get_encoding()
     return response
