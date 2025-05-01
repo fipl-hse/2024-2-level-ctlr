@@ -337,7 +337,6 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        print(date_str)
         tm, dt = date_str.split(", ")
         di, mi, yi = map(str, dt.split(" "))
         d = int(di)
@@ -412,7 +411,7 @@ def main() -> None:
         art_p = prs.parse()
         if isinstance(art_p, Article):
             to_raw(art_p)
-            #to_meta(art_p)
+            to_meta(art_p)
 
 
 if __name__ == "__main__":
