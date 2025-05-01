@@ -334,6 +334,8 @@ class HTMLParser:
             'time',
             {'class': 'entry-date updated td-module-date'}).text
             )
+        if not self.article.date:
+            self.article.date = datetime.datetime(3333, 1, 31, 23, 59, 59)
         topics = article_soup.find_all('ul', {'class': 'td-category'})
         self.article.topics = [topic.text for topic in topics]
 
