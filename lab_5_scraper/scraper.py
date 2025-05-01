@@ -251,6 +251,7 @@ class Crawler:
                     print(f"Button click error: {e}")
                     break
 
+
             src = driver.page_source
             soup = BeautifulSoup(src, "lxml")
 
