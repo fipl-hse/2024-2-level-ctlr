@@ -14,7 +14,9 @@ import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
+from core_utils.article.io import to_raw
 from core_utils.config_dto import ConfigDTO
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
@@ -364,6 +366,21 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    configuration = Config(CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
+    crawler = Crawler(configuration)
+    crawler.find_articles()
+
+    for article_id, url in enumerate(crawler.urls, start=1):
+        parser = HTMLParser(
+            full_url=url,
+            article_id=article_id,
+            config=configuration
+        )
+        article = parser.parse()
+
+        if isinstance(article, Article):
+            to_raw(article)
 
 
 if __name__ == "__main__":

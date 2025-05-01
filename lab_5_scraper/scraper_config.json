@@ -1,7 +1,9 @@
 {
     "seed_urls": ["http://www.znamyatrud.ru/news.html", "http://www.znamyatrud.ru/news.html?page=2",
         "http://www.znamyatrud.ru/news.html?page=3", "http://www.znamyatrud.ru/news.html?page=4",
-        "http://www.znamyatrud.ru/news.html?page=5", "http://www.znamyatrud.ru/news.html?page=6"],
+        "http://www.znamyatrud.ru/news.html?page=5", "http://www.znamyatrud.ru/news.html?page=6",
+        "http://www.znamyatrud.ru/news.html?page=7", "http://www.znamyatrud.ru/news.html?page=8",
+        "http://www.znamyatrud.ru/news.html?page=9", "http://www.znamyatrud.ru/news.html?page=10"],
     "headers": {},
     "total_articles_to_find_and_parse": 30,
     "encoding": "windows-1251",
