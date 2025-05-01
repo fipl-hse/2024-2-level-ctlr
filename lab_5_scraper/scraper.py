@@ -248,6 +248,7 @@ class Crawler:
             href = link['href']
             if href.startswith('/news/'):
                 full_url = 'https://ks-yanao.ru' + href
+                link.decompose()
                 return full_url
         return 'stop iteration'
 
