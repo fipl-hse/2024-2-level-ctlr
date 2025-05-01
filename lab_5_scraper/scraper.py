@@ -200,7 +200,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    # sleep(30)
+    sleep(30)
     response = requests.get(
         url,
         headers=config.get_headers(),
