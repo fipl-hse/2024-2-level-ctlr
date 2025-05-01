@@ -7,6 +7,7 @@ import json
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
+import shutil
 from typing import Pattern, Union
 from urllib.parse import urljoin
 
@@ -305,10 +306,10 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
-        self.full_url = full_url
-        self.article_id = article_id
-        self.config = config
-        self.article = Article(full_url, article_id)
+        self._full_url = full_url
+        self._article_id = article_id
+        self._config = config
+        self._article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -323,7 +324,7 @@ class HTMLParser:
             for block in div:
                 if block.get_text():
                     text.append(block.get_text(strip=True))
-            self.article.text = '\n'.join(text)
+            self._article.text = '\n'.join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -351,6 +352,10 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        response = make_request(self._full_url, self._config)
+        main_bs = BeautifulSoup(response.text, "lxml")
+        self._fill_article_with_text(main_bs)
+        return self._article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -360,6 +365,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    if base_path.exists():
+        shutil.rmtree(base_path)
+    base_path.mkdir(parents=True)
 
 
 def main() -> None:
