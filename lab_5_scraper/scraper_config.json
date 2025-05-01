@@ -1,21 +1,23 @@
 {
-  "seed_urls": [
-    "https://www.volga-tv.ru/news/?PAGEN_1=1",
-    "https://www.volga-tv.ru/news/?PAGEN_1=2",
-    "https://www.volga-tv.ru/news/?PAGEN_1=3",
-    "https://www.volga-tv.ru/news/?PAGEN_1=4",
-    "https://www.volga-tv.ru/news/?PAGEN_1=5",
-    "https://www.volga-tv.ru/news/?PAGEN_1=6"
-  ],
-  "headers": {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36",
-    "Cookie": "BITRIX_SM_TZ=Europe/Moscow; _ym_uid=1744806628947283838; _ym_d=1744806628; adtech_uid=aea6da95-a114-402a-bb83-f8e7e5c4b0b3%3Avolga-tv.ru; top100_id=t1.7096681.502560118.1744806628477; _ga=GA1.2.197670613.1744806629; BX_USER_ID=1d1b7ecf450d715584fc7ec337340883; BITRIX_CONVERSION_CONTEXT_s1=%7B%22ID%22%3A3%2C%22EXPIRE%22%3A1745873940%2C%22UNIQUE%22%3A%5B%22conversion_visit_day%22%5D%7D; _gid=GA1.2.467701648.1745836950; _ym_isad=2; PHPSESSID=tCnev6JbSJp1bMujhMtPYK9lVriS04Vl; _ym_visorc=w; _ga_BJS8B9GS3G=GS1.2.1745843921.15.0.1745843921.0.0.0; BITRIX_SM_BANNERS=1_112_24_05052025%2C1_114_23_05052025; t3_sid_7096681=s1.2000766946.1745843612088.1745844071615.39.13.0.1",
-    "Accept-Language": "nru,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
-  },
-  "total_articles_to_find_and_parse": 100,
-  "encoding": "utf-8",
-  "timeout": 30,
-  "should_verify_certificate": true,
-  "headless_mode": true
+    "seed_urls": [
+        "https://www.volga-tv.ru/news/?PAGEN_1=1",
+        "https://www.volga-tv.ru/news/?PAGEN_1=2",
+        "https://www.volga-tv.ru/news/?PAGEN_1=3",
+        "https://www.volga-tv.ru/news/?PAGEN_1=4",
+        "https://www.volga-tv.ru/news/?PAGEN_1=5",
+        "https://www.volga-tv.ru/news/?PAGEN_1=6"
+    ],
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36",
+        "Cookie":"BITRIX_SM_TZ=Europe/Moscow; _ym_uid=1744806628947283838; _ym_d=1744806628; adtech_uid=aea6da95-a114-402a-bb83-f8e7e5c4b0b3%3Avolga-tv.ru; top100_id=t1.7096681.502560118.1744806628477; _ga=GA1.2.197670613.1744806629; BX_USER_ID=1d1b7ecf450d715584fc7ec337340883; _gid=GA1.2.467701648.1745836950; BITRIX_CONVERSION_CONTEXT_s1=%7B%22ID%22%3A3%2C%22EXPIRE%22%3A1746133140%2C%22UNIQUE%22%3A%5B%22conversion_visit_day%22%5D%7D; _ym_isad=2; _ym_visorc=w; PHPSESSID=pyWKJU8hosL8kwKxKmNVZHab6YLa43Lr; BITRIX_SM_BANNERS=1_112_31_08052025%2C1_114_27_08052025; _ga_BJS8B9GS3G=GS1.2.1746107126.23.1.1746107585.0.0.0; t3_sid_7096681=s1.120111005.1746105152255.1746107646443.58.67.5.1",
+        "Accept-Language": "nru,en;q=0.9",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+        "Sec-Fetch-Mode": "navigate"
+    },
+    "total_articles_to_find_and_parse": 20,
+    "encoding": "utf-8",
+    "timeout": 60,
+    "should_verify_certificate": true,
+    "headless_mode": true
 }

@@ -8,41 +8,56 @@ from typing import Pattern, Union
 
 import json
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils.article.io import to_meta, to_raw
+from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 from core_utils.article.article import Article
 import shutil
 import requests
 from bs4 import BeautifulSoup
-import time
+from time import sleep
 import datetime
 
 
 class IncorrectSeedURLError(Exception):
-    """Urls don't match the standard pattern"""
+    """
+    Urls don't match the standard pattern
+    """
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
-    """Number of articles is out of range"""
+    """
+    Number of articles is out of range
+    """
 
 
 class IncorrectNumberOfArticlesError(Exception):
-    """Number of articles is wrong"""
+    """
+    Number of articles is wrong
+    """
 
 
 class IncorrectHeadersError(Exception):
-    """Headers are not in a dictionary"""
+    """
+    Headers are not in a dictionary
+    """
 
 
 class IncorrectEncodingError(Exception):
-    """Encoding is wrong"""
+    """
+    Encoding is wrong
+    """
 
 
 class IncorrectTimeoutError(Exception):
-    """Timeout value incorrect"""
+    """
+    Timeout value incorrect
+    """
 
 
 class IncorrectVerifyError(Exception):
-    """Verify certificate is wrong"""
+    """
+    Verify certificate is wrong
+    """
 
 
 class Config:
@@ -181,9 +196,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    # time.sleep(5)
-    response = requests.get(url, headers=config.get_headers(), verify=config.get_verify_certificate(),
-                        timeout=config.get_timeout())
+    # sleep(5)
+    response = requests.get(url, headers=config.get_headers(), verify=config.get_verify_certificate())
     response.encoding = config.get_encoding()
     return response
 
@@ -216,14 +230,11 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        news_tab = article_bs.find('div', {'class': 'volga-news-line'})
-        urls = news_tab.find_all("a", href=True)
-        for url in urls:
-            if not url:
-                continue
-            article = url['href']
-            real_article = f'https://www.volga-tv.ru{article}'
-            return real_article
+        link = article_bs.find("a", class_="prw")
+        href = link.get('href')
+        if isinstance(href, str):
+            real_link = f'https://www.volga-tv.ru{href}'
+            return real_link
         return ''
 
     def find_articles(self) -> None:
@@ -232,15 +243,19 @@ class Crawler:
         """
         urls = self.get_search_urls()
         for url in urls:
-            if len(self.urls) > self.config.get_num_articles():
-                return None
+            if len(self.urls) >= self.config.get_num_articles():
+                break
             response = make_request(url, self.config)
             if not response.ok:
                 continue
             bs = BeautifulSoup(response.text, 'lxml')
-            extracted_url = self._extract_url(bs)
-            if extracted_url not in self.urls:
-                self.urls.append(extracted_url)
+            news = bs.find_all('div', class_="item news")
+            for article in news:
+                if len(self.urls) >= self.config.get_num_articles():
+                    break
+                extracted_url = self._extract_url(article)
+                if extracted_url and extracted_url not in self.urls:
+                    self.urls.append(extracted_url)
 
 
     def get_search_urls(self) -> list:
@@ -286,10 +301,11 @@ class HTMLParser:
         news = article_soup.find("div", class_="news-detail hyphenate")
         text = []
         for i in news:
-            if i.get_text().strip():
+            if i.get_text().strip() and not (i.get_text().strip().startswith('Служба информации:')
+                                             or i.get_text().strip() == 'Поделитесь этой новостью с друзьями в соцсетях:'\
+                    or i.get_text().strip() == 'Все новости раздела «Новости дня»' or str(i).startswith('<time class=')):
                 text.append(i.get_text(strip=True, separator="\n"))
         self.article.text = '\n'.join(text)
-
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -298,6 +314,18 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        self.article.title = article_soup.find('h1').text
+        date = article_soup.find('time', class_="news-date-time").attrs['datetime']
+        self.article.date = self.unify_date_format(date)
+        self.article.topics = ['Новости дня']
+
+        full_text = article_soup.find("div", class_="news-detail hyphenate")
+        self.article.author = ['NOT FOUND']
+        for i in full_text:
+            if i.get_text().strip().startswith('Служба информации:'):
+                authors = i.get_text().strip().replace('Служба информации: ', '')[:-1:]
+                authors_list = authors.split(', ')
+                self.article.author = authors_list
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -309,6 +337,8 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        nice_date = date_str.split("T")
+        return datetime.datetime.strptime(" ".join(nice_date), "%Y-%m-%d %H:%M:%S%z")
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -321,6 +351,7 @@ class HTMLParser:
         if response.ok:
             bs = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(bs)
+            self._fill_article_with_meta_information(bs)
         return self.article
 
 
@@ -331,15 +362,27 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if pathlib.Path(base_path).exists():
+    if base_path.exists():
         shutil.rmtree(base_path)
-    pathlib.Path(base_path).mkdir()
+    base_path.mkdir()
 
 
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    config = Config(CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
+    crawler = Crawler(config)
+    crawler.find_articles()
+    for article_id, url in enumerate(crawler.urls, 1):
+        parser = HTMLParser(url, article_id=article_id, config=config)
+        article = parser.parse()
+        if not article:
+            continue
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
