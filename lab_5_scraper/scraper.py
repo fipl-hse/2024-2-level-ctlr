@@ -318,7 +318,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        div = article_soup.find('font', size="2")
+        div = article_soup.find('div', class_="fullnews_content")
         text = []
         if div is not None:
             for block in div:

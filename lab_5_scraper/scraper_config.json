@@ -1,12 +1,12 @@
 {
-    "seed_urls": ["http://www.znamyatrud.ru/news.html", "http://www.znamyatrud.ru/news.html?page=2",
-        "http://www.znamyatrud.ru/news.html?page=3", "http://www.znamyatrud.ru/news.html?page=4",
-        "http://www.znamyatrud.ru/news.html?page=5", "http://www.znamyatrud.ru/news.html?page=6",
-        "http://www.znamyatrud.ru/news.html?page=7", "http://www.znamyatrud.ru/news.html?page=8",
-        "http://www.znamyatrud.ru/news.html?page=9", "http://www.znamyatrud.ru/news.html?page=10"],
+    "seed_urls": ["http://www.elista.org/economy/", "http://www.elista.org/economy/?p=2/",
+        "http://www.elista.org/economy/?p=3/", "http://www.elista.org/economy/?p=4/",
+        "http://www.elista.org/economy/?p=5/", "http://www.elista.org/economy/?p=6/",
+        "http://www.elista.org/economy/?p=7/", "http://www.elista.org/economy/?p=8/",
+        "http://www.elista.org/economy/?p=9/", "http://www.elista.org/economy/?p=10/"],
     "headers": {},
     "total_articles_to_find_and_parse": 30,
-    "encoding": "windows-1251",
+    "encoding": "utf-8",
     "timeout": 30,
     "should_verify_certificate": true,
     "headless_mode": true
