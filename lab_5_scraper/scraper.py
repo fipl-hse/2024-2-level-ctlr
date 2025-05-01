@@ -7,7 +7,7 @@ import datetime
 import json
 import pathlib
 import shutil
-from random import uniform
+from random import uniform, choice
 from time import sleep
 from typing import Pattern, Union
 
@@ -76,14 +76,14 @@ class Config:
         """
         self.path_to_config = path_to_config
         self._validate_config_content()
-        self.config_dto = self._extract_config_content()
-        self._seed_urls = self.config_dto.seed_urls
-        self._num_articles = self.config_dto.total_articles
-        self._headers = self.config_dto.headers
-        self._encoding = self.config_dto.encoding
-        self._timeout = self.config_dto.timeout
-        self._should_verify_certificate = self.config_dto.should_verify_certificate
-        self._headless_mode = self.config_dto.headless_mode
+        self.config = self._extract_config_content()
+        self._seed_urls = self.config.seed_urls
+        self._num_articles = self.config.total_articles
+        self._headers = self.config.headers
+        self._encoding = self.config.encoding
+        self._timeout = self.config.timeout
+        self._should_verify_certificate = self.config.should_verify_certificate
+        self._headless_mode = self.config.headless_mode
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -111,7 +111,7 @@ class Config:
         if config.total_articles >= 150:
             raise NumberOfArticlesOutOfRangeError('Number of articles is out of range (1-150).')
         if not config.encoding or not isinstance(config.encoding, str):
-            raise IncorrectEncodingError('Encoding is corrupt.')
+            raise IncorrectEncodingError('Encoding value is corrupt.')
         if not config.headers or not isinstance(config.headers, dict):
             raise IncorrectHeadersError('Headers value is corrupt.')
         if (not isinstance(config.timeout, int) or isinstance(config.timeout, bool)
@@ -200,7 +200,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(),
                             verify=config.get_verify_certificate(), timeout=config.get_timeout())
     response.encoding = config.get_encoding()
-    sleep(uniform(0.1, 1.3))
+    sleep(uniform(0.1, 2.2))
     return response
 
 
@@ -233,10 +233,12 @@ class Crawler:
             str: Url from HTML
         """
         post_class = article_bs.find_all('a', class_='post-thumbnail')
+        article_urls = []
         for post in post_class:
-            url = post.get('href')
-            return str(url)
-        return ''
+            url = post['href']
+            if url and url not in article_urls:
+                article_urls.append(url)
+        return str(choice(article_urls))
 
     def find_articles(self) -> None:
         """
@@ -247,10 +249,10 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            post_class = soup.find_all('a', class_='post-thumbnail')
-            for post in post_class:
-                url = post['href']
-                if url and len(self.urls) < self.config.get_num_articles() and url not in self.urls:
+            num_articles = self.config.get_num_articles()
+            for _ in range(num_articles):
+                url = self._extract_url(soup)
+                if url and url not in self.urls and len(self.urls) < num_articles:
                     self.urls.append(url)
 
     def get_search_urls(self) -> list:
