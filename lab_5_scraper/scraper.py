@@ -322,7 +322,7 @@ class HTMLParser:
         self.article.url = self.full_url
         self.article.author = ["No information"]
         self.article.title = article_soup.find("h1").text
-        tmt = article_soup.find("span").text
+        tmt = article_soup.find("div", class_="claer public_data").find_all("span")
         self.article.date = tmt
         tpt = article_soup.find("div", class_="claer public_data").find_all("a")
         self.article.topics = [t.text.strip() for t in tpt]
@@ -339,6 +339,32 @@ class HTMLParser:
         """
         dt, tm = date_str.split(", ")
         d, m, y = map(str, dt.split(" "))
+        d = int(d)
+        y = int(y)
+        if m == 'января':
+            m = 1
+        if m == 'февраля':
+            m = 2
+        if m == 'марта':
+            m = 3
+        if m == 'апреля':
+            m = 4
+        if m == 'мая':
+            m = 5
+        if m == 'июня':
+            m = 6
+        if m == 'июля':
+            m = 7
+        if m == 'августа':
+            m = 8
+        if m == 'сентября':
+            m = 9
+        if m == 'октября':
+            m = 10
+        if m == 'ноября':
+            m = 11
+        if m == 'декабря':
+            m = 12
         hr, mnt = map(int, tm.split(":"))
         return datetime.datetime(y, m, d, hr, mnt)
 
