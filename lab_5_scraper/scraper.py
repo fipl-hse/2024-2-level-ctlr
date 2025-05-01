@@ -338,10 +338,17 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        response = make_request(self._full_url, self._config)
-        main_bs = BeautifulSoup(response.text, "lxml")
-        self._fill_article_with_text(main_bs)
-        return self.article
+        title = article_soup.find('h1', class_='entry-title')
+        if title:
+            self.article.title = title.get_text(strip=True)
+
+        date = article_soup.find('time', class_='entry-date published')
+        if date:
+            self.article.date = self.unify_date_format(date.get_text(strip=True))
+
+        author = article_soup.find('span', class_='author vcard')
+        if author:
+            self.article.author = author.get_text(strip=True)
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unify date format.
@@ -352,7 +359,10 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-
+        try:
+            return datetime.datetime.strptime(date_str, "%d.%m.%Y")
+        except ValueError:
+            return datetime.datetime.now()
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -364,8 +374,8 @@ class HTMLParser:
         response = make_request(self._full_url, self._config)
         main_bs = BeautifulSoup(response.text, "lxml")
         self._fill_article_with_text(main_bs)
+        self._fill_article_with_meta_information(main_bs)
         return self.article
-
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
