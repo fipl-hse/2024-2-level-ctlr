@@ -8,8 +8,8 @@ import unittest
 
 import pytest
 
-from core_utils.article.article import Article
-from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils import Article
+from core_utils import CRAWLER_CONFIG_PATH
 from lab_5_scraper.scraper import Config, Crawler, HTMLParser
 
 

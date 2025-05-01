@@ -1,5 +1,3 @@
-from typing import Callable
-
 from core_utils.pipeline import AbstractCoNLLUAnalyzer
 
 # class UDPipeAnalysisResult

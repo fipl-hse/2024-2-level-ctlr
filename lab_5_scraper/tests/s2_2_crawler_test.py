@@ -8,7 +8,7 @@ import unittest
 import pytest
 
 from admin_utils.test_params import TEST_PATH
-from core_utils.constants import CRAWLER_CONFIG_PATH
+from core_utils import CRAWLER_CONFIG_PATH
 from lab_5_scraper.scraper import Config, Crawler, make_request, prepare_environment
 
 

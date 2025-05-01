@@ -1,9 +1,18 @@
 {
-    "seed_urls": [],
-    "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
-    "timeout": 0,
+    "seed_urls": [
+        "https://express-kamchatka1.ru/sobytiya/33060-period-poluraspada.html",
+        "https://express-kamchatka1.ru/novosti-korotko/33111-monogoroda-poluchayut-podderzhku-veb-rf.html"
+    ],
+    "headers": {"Date": "Thu, 01 May 2025 09:52:26 GMT",
+        "Content-Type": "text/html; charset=utf-8",
+        "Connection": "close",
+        "Vary": "Accept-Encoding",
+        "X-Powered-By": "PHP/8.2.25",
+        "Last-Modified": "Wed, 05 Oct 2022 06:40:11 6OctGMT"
+    },
+    "total_articles_to_find_and_parse": 10,
+    "encoding": "utf-8",
+    "timeout": 15,
     "should_verify_certificate": true,
     "headless_mode": true
 }

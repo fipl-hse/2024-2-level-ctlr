@@ -1,6 +1,5 @@
 from typing import Protocol, runtime_checkable
 
-from core_utils.pipeline import AbstractCoNLLUAnalyzer
 
 @runtime_checkable
 class Language(Protocol):
