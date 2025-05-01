@@ -532,4 +532,4 @@ jobs:
     steps:
       - name: Congratulations
         run: |
-          echo "You have completed the assignment!
+          echo "You have completed the assignment!"
