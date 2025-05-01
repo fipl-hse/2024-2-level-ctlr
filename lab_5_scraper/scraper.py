@@ -377,6 +377,7 @@ class HTMLParser:
         soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(soup)
         if not self.article.text:
+            self.article.text = 'NOT FOUND'
             return self.article
         self._fill_article_with_meta_information(soup)
         return self.article
