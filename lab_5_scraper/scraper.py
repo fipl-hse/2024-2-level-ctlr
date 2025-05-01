@@ -309,7 +309,7 @@ class HTMLParser:
         self._full_url = full_url
         self._article_id = article_id
         self._config = config
-        self._article = Article(full_url, article_id)
+        self.article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -324,7 +324,7 @@ class HTMLParser:
             for block in div:
                 if block.get_text():
                     text.append(block.get_text(strip=True))
-            self._article.text = '\n'.join(text)
+            self.article.text = '\n'.join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -356,7 +356,7 @@ class HTMLParser:
         if response.ok:
             soup = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(soup)
-        return self._article
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
