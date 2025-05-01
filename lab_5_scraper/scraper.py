@@ -26,49 +26,42 @@ class IncorrectSeedURLError(Exception):
     """
         Raises when seed URL does not match standard pattern
         """
-    pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """
         Raises when total number of articles is out of range from 1 to 150
         """
-    pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """
         Raises when total number of articles to parse is not integer or less than 0
         """
-    pass
 
 
 class IncorrectHeadersError(Exception):
     """
         Raises when headers are not in a form of dictionary
         """
-    pass
 
 
 class IncorrectEncodingError(Exception):
     """
         Raises when encoding is not specified as a string
         """
-    pass
 
 
 class IncorrectTimeoutError(Exception):
     """
         Raises when timeout value is not a positive integer less than 60
         """
-    pass
 
 
 class IncorrectVerifyError(Exception):
     """
         Raises when verify certificate value is not either True or False
         """
-    pass
 
 
 class Config:
