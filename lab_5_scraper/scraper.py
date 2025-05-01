@@ -318,7 +318,8 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        div = article_soup.find('div', class_='onemidnew')
+        div = article_soup.find('div', style='box-sizing: border-box; color: #464646; font-family: circe, '
+                                             '"helvetica neue", arial, sans-serif; font-size: 17px;')
         text = []
         if div is not None:
             for block in div:
