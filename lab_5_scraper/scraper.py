@@ -289,7 +289,10 @@ class Crawler:
 
         finally:
             driver.quit()
-            shutil.rmtree(data_dir)
+            try:
+                shutil.rmtree(data_dir)
+            except FileNotFoundError:
+                pass
 
 
     def get_search_urls(self) -> list:
