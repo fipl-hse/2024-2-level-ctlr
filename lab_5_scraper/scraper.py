@@ -235,8 +235,7 @@ class Crawler:
         post_class = article_bs.find_all('a', class_='post-thumbnail')
         for post in post_class:
             url = post.get('href')
-            if url:
-                return url
+            return url if url else ''
         return ''
 
     def find_articles(self) -> None:
