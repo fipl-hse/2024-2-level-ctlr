@@ -1,5 +1,5 @@
-requests==2.32.3
+beautifulsoup4==4.12.3
 ghapi==0.1.19
 pydantic==2.9.2
 pytest==6.2.5
-beautifulsoup4==4.12.3
+requests==2.32.3
