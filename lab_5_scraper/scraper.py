@@ -199,6 +199,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(),
                             verify=config.get_verify_certificate())
     response.encoding = config.get_encoding()
+    sleep(randint(1, 10))
     return response
 
 
@@ -370,7 +371,6 @@ def main() -> None:
     for index, url in enumerate(crawler.urls):
         parser = HTMLParser(url, index + 1, configuration)
         article = parser.parse()
-        sleep(randint(1, 10))
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
