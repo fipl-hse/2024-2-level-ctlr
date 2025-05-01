@@ -216,7 +216,8 @@ class Crawler:
         self.config = config
         self.urls = []
 
-    def _extract_url(self, article_bs: BeautifulSoup) -> str:
+    @staticmethod
+    def _extract_url(article_bs: BeautifulSoup) -> str:
         """
         Find and retrieve url from HTML.
 
@@ -320,7 +321,8 @@ class HTMLParser:
         else:
             self.article.date = datetime.datetime.now()
 
-    def unify_date_format(self, date_str: str) -> datetime.datetime:
+    @staticmethod
+    def unify_date_format(date_str: str) -> datetime.datetime:
         """
         Unify date format.
 
