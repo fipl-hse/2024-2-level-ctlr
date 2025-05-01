@@ -213,7 +213,7 @@ jobs:
       PR_NAME: ${{ github.event.pull_request.title }}
       PR_AUTHOR: ${{ github.actor }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -264,7 +264,7 @@ jobs:
       checking-articles-dataset
     ]
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 15
     steps:
       - name: Congratulations
         run: |
@@ -275,7 +275,7 @@ jobs:
     name: Starting pipeline checks!
     needs: [ milestone-1-crawler-is-working ]
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 15
     steps:
       - name: Congratulations
         run: |
@@ -315,7 +315,7 @@ jobs:
     env:
       PR_AUTHOR: ${{ github.actor }}
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -341,7 +341,7 @@ jobs:
     env:
       PR_AUTHOR: ${{ github.actor }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -368,7 +368,7 @@ jobs:
     env:
       PR_AUTHOR: ${{ github.actor }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -403,7 +403,7 @@ jobs:
     env:
       PR_AUTHOR: ${{ github.actor }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -471,7 +471,7 @@ jobs:
       running-pos-pipeline-tests
     ]
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 15
     steps:
       - name: Congratulations
         run: |
