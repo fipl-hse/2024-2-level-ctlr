@@ -262,7 +262,7 @@ class Crawler:
                 continue
 
             full_url = "https://www.baikal-daily.ru" + str(href)
-            if full_url and full_url not in self.urls:
+            if full_url not in self.urls:
                 return full_url
 
         return ""
@@ -272,22 +272,19 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.config.get_seed_urls():
-            if len(self.urls) == self.config.get_num_articles():
-                break
-
             try:
                 response = make_request(url=seed_url, config=self.config)
                 response.raise_for_status()
             except requests.HTTPError:
                 continue
 
-            page_bs = BeautifulSoup(response.text, 'html.parser')
+            page_bs = BeautifulSoup(response.text, 'lxml')
 
             extracted_url = self._extract_url(page_bs)
             while extracted_url:
                 self.urls.append(extracted_url)
                 if len(self.urls) == self.config.get_num_articles():
-                    break
+                    return
                 extracted_url = self._extract_url(page_bs)
 
     def get_search_urls(self) -> list:
@@ -375,10 +372,11 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         response = make_request(self.full_url, self.config)
-        if response.ok:
-            article_bs = BeautifulSoup(response.text, 'html.parser')
-            self._fill_article_with_text(article_bs)
-            self._fill_article_with_meta_information(article_bs)
+        if not response.ok:
+            return False
+        article_bs = BeautifulSoup(response.text, 'lxml')
+        self._fill_article_with_text(article_bs)
+        self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
