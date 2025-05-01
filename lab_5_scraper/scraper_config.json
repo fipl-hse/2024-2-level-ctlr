@@ -1,7 +1,8 @@
 {
     "seed_urls": [
-        "https://tuvapravda.ru/news",
-        "https://tuvapravda.ru/articles"
+        "https://tuvapravda.ru/novosti/",
+        "https://tuvapravda.ru/natsionalnye-proekty/",
+        "https://tuvapravda.ru/fotofakt/"
     ],
     "headers": {
         "Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -9,9 +10,9 @@
         "Accept-language" : "ru,en;q=0.9,es;q=0.8",
         "Cookie" : "_ga_DMM69SRWJZ=GS1.1.1746103112.1.0.1746103112.60.0.0; _ga=GA1.1.1992805500.1746103113"
     },
-    "total_articles_to_find_and_parse": 10,
+    "total_articles_to_find_and_parse": 50,
     "encoding": "utf-8",
-    "timeout": 5,
+    "timeout": 10,
     "should_verify_certificate": true,
     "headless_mode": true
 }
