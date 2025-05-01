@@ -228,13 +228,13 @@ def make_request(url: str, config: Config) -> requests.models.Response:
             timeout=config.get_timeout(),
             verify=config.get_verify_certificate()
         )
-        request.raise_for_status()
         request.encoding = config.get_encoding()
         return request
-
-    except requests.RequestException as e:
-        print(f"Request failed for {url}: {e}")
-        raise
+    except requests.RequestException:
+        # Возвращаем пустой response в случае ошибки
+        response = requests.models.Response()
+        response.status_code = 404  # Или другой код ошибки
+        return response
 class Crawler:
     """
     Crawler implementation.
@@ -250,7 +250,6 @@ class Crawler:
         self._config = config
         self._seed_urls = self._config.get_seed_urls()
         self.urls = []
-        self._seen_urls = set()
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -266,23 +265,31 @@ class Crawler:
         href = article_bs.find("a").get('href')
         return href if href and href.startswith("https://livennov.ru/") else ""
 
+
     def find_articles(self) -> None:
         """
         Find articles.
         """
         for seed_url in self._seed_urls:
-            res = make_request(seed_url, self._config)
+            try:
+                res = make_request(seed_url, self._config)
 
-            soup = BeautifulSoup(res.content, "lxml")
+                # Пропускаем несуществующие страницы
+                if res.status_code != 200:
+                    continue
 
-            for paragraph in soup.find_all('h1', class_='entry-title'):
-                if len(self.urls) >= self._config.get_num_articles():
-                    return None
+                soup = BeautifulSoup(res.content, "lxml")
 
-                url = self._extract_url(paragraph)
+                for paragraph in soup.find_all('h1', class_='entry-title'):
+                    if len(self.urls) >= self._config.get_num_articles():
+                        return
 
-                if url and url not in self.urls:
-                    self.urls.append(url)
+                    url = self._extract_url(paragraph)
+
+                    if url and url not in self.urls:
+                        self.urls.append(url)
+            except Exception:
+                continue
 
     def get_search_urls(self) -> list:
         """
