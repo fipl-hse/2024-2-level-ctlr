@@ -231,9 +231,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         request.encoding = config.get_encoding()
         return request
     except requests.RequestException:
-        # Возвращаем пустой response в случае ошибки
         response = requests.models.Response()
-        response.status_code = 404  # Или другой код ошибки
+        response.status_code = 404
         return response
 class Crawler:
     """
@@ -283,7 +282,7 @@ class Crawler:
                 response = make_request(seed_url, self._config)
 
                 if response.status_code != 200:
-                    continue  # Пропускаем недоступные страницы
+                    continue
 
                 soup = BeautifulSoup(response.text, "lxml")
 
@@ -293,9 +292,8 @@ class Crawler:
 
                 for article in articles:
                     if len(self.urls) >= self._config.get_num_articles():
-                        return  # Прекращаем при достижении лимита
+                        return
 
-                    # Ищем ссылку в заголовке статьи
                     title_block = article.find("h2", class_="entry-title")
                     if not title_block:
                         continue
@@ -306,19 +304,16 @@ class Crawler:
 
                     url = link["href"]
 
-                    # Фильтруем некорректные ссылки
                     if (not url.startswith("http") and
                             not url.startswith("/")):
-                        continue  # Пропускаем mailto:, javascript: и т.д.
+                        continue
 
-                    # Делаем URL абсолютным
                     if url.startswith("/"):
                         base_url = seed_url.rstrip("/")
                         url = f"{base_url}{url}"
                     elif not url.startswith("http"):
                         url = f"{seed_url.rstrip('/')}/{url.lstrip('/')}"
 
-                    # Проверяем, что URL ведет на livennov.ru
                     if ("livennov.ru" in url and
                             not url.startswith(("mailto:", "tel:", "javascript:")) and
                             url not in self.urls):
@@ -335,9 +330,6 @@ class Crawler:
             list: seed_urls param
         """
         return self._seed_urls
-
-# 10
-# 4, 6, 8, 10
 
 
 class HTMLParser:
