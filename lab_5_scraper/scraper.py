@@ -230,8 +230,7 @@ class Crawler:
         all_stuff = article_bs.find_all('a', {'class': 'lsd-arch-link'})
         for el in all_stuff:
             one_whole_link = el.get('href', '')
-            if isinstance(one_whole_link, str) and one_whole_link not in self.urls:
-                return one_whole_link
+            return one_whole_link
         return 'stop'
 
     def find_articles(self) -> None:
@@ -243,12 +242,14 @@ class Crawler:
                 break
             response = make_request(seed_url, self.config)
             if response.ok:
-                for _ in range(10):
-                    url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
-                    if url == 'stop':
+                soup = BeautifulSoup(response.text, 'lxml')
+                while True:
+                    url = self._extract_url(soup)
+                    if url == 'stop' or url in self.urls:
                         break
-                    if url not in self.urls:
-                        self.urls.append(url)
+                    self.urls.append(url)
+                    if len(self.urls) >= self.config.get_num_articles():
+                        return
 
     def get_search_urls(self) -> list:
         """
@@ -336,10 +337,11 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         response = make_request(self.full_url, self.config)
-        if response.ok:
-            article_bs = BeautifulSoup(response.text, 'lxml')
-            self._fill_article_with_text(article_bs)
-            self._fill_article_with_meta_information(article_bs)
+        if not response.ok:
+            return self.article
+        article_bs = BeautifulSoup(response.text, 'lxml')
+        self._fill_article_with_text(article_bs)
+        self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
@@ -364,7 +366,7 @@ def main() -> None:
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     for i, full_url in enumerate(crawler.urls):
-        parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
+        parser = HTMLParser(full_url=full_url, article_id=i+1, config=configuration)
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
