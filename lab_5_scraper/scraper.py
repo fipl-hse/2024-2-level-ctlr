@@ -195,7 +195,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    #time.sleep(random.randint(1, 10))
+    #time.sleep(random.randint(1, 5))
     req = requests.get(url, headers= config.get_headers(),
                             timeout= config.get_timeout(),
                             verify= config.get_verify_certificate())
@@ -231,11 +231,9 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        all_links = article_bs.find_all('a', class_='img_box')
-        for link in all_links:
-            href_link = link.get('href')
-            if isinstance(href_link, str) and href_link not in self.urls:
-                return href_link
+        href_link = article_bs.get('href')
+        if isinstance(href_link, str):
+            return href_link
         return ''
 
     def find_articles(self) -> None:
@@ -247,10 +245,13 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            url = self._extract_url(soup)
-            while url and len(self.urls) <= self.config.get_num_articles():
-                self.urls.append(url)
-                url = self._extract_url(soup)
+            for block in soup.find_all('a', class_='img_box'):
+                url = self._extract_url(block)
+                if url and url not in self.urls and \
+                        len(self.urls) <= self.config.get_num_articles():
+                    self.urls.append(url)
+                else:
+                    break
 
     def get_search_urls(self) -> list:
         """
