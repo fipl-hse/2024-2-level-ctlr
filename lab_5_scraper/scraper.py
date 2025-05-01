@@ -198,9 +198,15 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    request = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(),
-                           verify=config.get_verify_certificate())
-    return request
+    try:
+        return requests.get(
+            url,
+            headers=config.get_headers(),
+            timeout=config.get_timeout(),
+            verify=config.get_verify_certificate()
+        )
+    except (requests.RequestException, ConnectionError):
+        return None
 
 
 class Crawler:
@@ -233,34 +239,39 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        link = article_bs.find('a', href=True)
-        if not link:
-            return ""
-        href = link['href']
+        href = article_bs.get('href', '')
         if not href:
             return ""
 
         if href.startswith('/'):
-            return f"https://tuvapravda.ru{href}"
-        return href if href.startswith('http') else ""
+            return f'https://tuvapravda.ru{href}'
+        return href if 'tuvapravda.ru' in href else ""
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
         for seed_url in self._seed_urls:
-            res = make_request(seed_url, self._config)
+            try:
+                response = make_request(seed_url, self._config)
+                if not response.ok:
+                    continue
 
-            soup = BeautifulSoup(res.content, "lxml")
+                soup = BeautifulSoup(response.text, 'lxml')
 
-            for paragraph in soup.find_all('h1', class_='entry-title'):
-                if len(self.urls) >= self._config.get_num_articles():
-                    return None
+                links = []
+                for selector in ['h1 a', 'h2 a', 'h3 a', '.title a', '.article a']:
+                    links.extend(soup.select(selector))
 
-                url = self._extract_url(paragraph)
+                for link in links:
+                    if len(self.urls) >= self._config.get_num_articles():
+                        return
+                    url = self._extract_url(link)
+                    if url and url not in self.urls:
+                        self.urls.append(url)
 
-                if url and url not in self.urls:
-                    self.urls.append(url)
+            except Exception:
+                continue
 
     def get_search_urls(self) -> list:
         """
@@ -365,10 +376,16 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
     base_path = pathlib.Path(base_path)
-    assets_path = base_path / 'ASSETS_PATH'
-    if assets_path.exists() and assets_path.is_dir():
-        shutil.rmtree(assets_path)
-    assets_path.mkdir(parents=True, exist_ok=True)
+    if base_path.exists():
+        if not any(base_path.iterdir()):
+            shutil.rmtree(base_path)
+        else:
+            for item in base_path.iterdir():
+                if item.is_file():
+                    item.unlink()
+                else:
+                    shutil.rmtree(item)
+    base_path.mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
