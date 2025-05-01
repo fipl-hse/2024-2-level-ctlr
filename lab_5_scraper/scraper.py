@@ -2,13 +2,13 @@
 Crawler implementation.
 """
 
+# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import datetime
 import json
 import pathlib
 import re
 import shutil
 
-# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 from pathlib import Path
 from random import randint
 from time import sleep
@@ -208,6 +208,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    sleep(randint(1, 5))
     timeout = config.get_timeout()
     headers = config.get_headers()
     verify = config.get_verify_certificate()
@@ -247,13 +248,12 @@ class Crawler:
         """
         extracted_hrefs = {link['href'] for link in article_bs.find_all('a', href=True)}
         url_pattern = r'^(https?://(www\.)?zvezdaaltaya\.ru/\d{4}/\d{2}/.*)$'
-        for url_href in extracted_hrefs:
-            if isinstance(url_href, str):
-                full_url = url_href if url_href.startswith('http')\
-                    else f"https://zvezdaaltaya.ru{url_href}"
-                if re.match(url_pattern, full_url) and full_url not in self.urls:
-                    return full_url
-        return ""
+
+        valid_urls = [url_href if url_href.startswith('http') else f"https://zvezdaaltaya.ru{url_href}" for
+                      url_href in extracted_hrefs if isinstance(url_href, str) and
+                      re.match(url_pattern, url_href) and url_href not in self.urls]
+
+        return valid_urls[0] if valid_urls else ""
 
     def find_articles(self) -> None:
         """
@@ -265,22 +265,18 @@ class Crawler:
         for url in seed_urls:
             try:
                 response = make_request(url, self.config)
-                if not response.ok:
-                    continue
-
-                article_bs = BeautifulSoup(response.text, 'lxml')
-                extracted_count = 0
-                while extracted_count < max_extract_attempts and len(self.urls) < max_articles:
-                    article_url = self._extract_url(article_bs)
-                    if not article_url:
-                        break
-
-                    if article_url not in self.urls:
-                        self.urls.append(article_url)
-                        extracted_count += 1
-
             except requests.exceptions.RequestException:
                 continue
+
+            article_bs = BeautifulSoup(response.text, 'lxml')
+            extracted_count = 0
+            while extracted_count < max_extract_attempts and len(self.urls) < max_articles:
+                article_url = self._extract_url(article_bs)
+                if not article_url:
+                    break
+                if article_url not in self.urls:
+                    self.urls.append(article_url)
+                    extracted_count += 1
 
     def get_search_urls(self) -> list:
         """
@@ -289,8 +285,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-        seed_urls = self.config.get_seed_urls()
-        return seed_urls
+        return self.config.get_seed_urls()
 
 # 10
 # 4, 6, 8, 10
@@ -335,40 +330,38 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        try:
-            title_element = article_soup.find("h1", class_="entry-title")
-            self.article.title = (title_element.get_text
+        title_element = article_soup.find("h1", class_="entry-title")
+        self.article.title = (title_element.get_text
                                   (strip=True)) if title_element else "NOT FOUND"
 
-            authors = []
+        authors = []
 
-            spans_author = article_soup.find_all('span', style="color: #808080; font-size: 10pt;")
-            text_author = article_soup.find_all('strong', attrs={"original-font-size": "15px"})
-            left_author = article_soup.find_all('p', attrs={"style":"text-align: right;"})
+        spans_author = article_soup.find_all('span', style="color: #808080; font-size: 10pt;")
+        text_author = article_soup.find_all('strong', attrs={"original-font-size": "15px"})
+        left_author = article_soup.find_all('p', attrs={"style":"text-align: right;"})
 
-            if spans_author:
-                authors.append(spans_author[0].get_text(strip=True))
-            if text_author:
-                authors.append(text_author[0].get_text(strip=True))
-            if left_author:
-                authors.append(left_author[0].get_text(strip=True))
+        if spans_author:
+            authors.append(spans_author[0].get_text(strip=True))
+        if text_author:
+            authors.append(text_author[0].get_text(strip=True))
+        if left_author:
+            authors.append(left_author[0].get_text(strip=True))
 
-            self.article.author = authors if authors else ["NOT FOUND"]
+        self.article.author = authors if authors else ["NOT FOUND"]
 
+        try:
             published_time_meta = article_soup.find('meta', property='article:published_time')
             time = published_time_meta.get('content')
             self.article.date = self.unify_date_format(str(time)) if (
                 time) else datetime.datetime.min
-
-            self.article.topics = []
-            categories = article_soup.find_all('ul', class_="td-tags td-post-small-box clearfix")
-            for category in categories:
-                for a in category.find_all('a'):
-                    self.article.topics.append(a.get_text(strip=True))
-
         except AttributeError:
-            print('Something has gone wrong with url:', self.full_url)
             self.article.date = datetime.datetime.min
+
+        self.article.topics = []
+        categories = article_soup.find_all('ul', class_="td-tags td-post-small-box clearfix")
+        for category in categories:
+            for a in category.find_all('a'):
+                self.article.topics.append(a.get_text(strip=True))
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -424,10 +417,8 @@ def main() -> None:
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
     prepare_environment(ASSETS_PATH)
-    sleep(randint(1, 5))
     crawler.find_articles()
     for identifier, url in enumerate(crawler.urls, start=1):
-        sleep(randint(1, 5))
         parser = HTMLParser(url, identifier, config)
         article = parser.parse()
         if isinstance(article, Article):
