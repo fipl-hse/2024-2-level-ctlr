@@ -8,6 +8,7 @@ import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 from typing import Pattern, Union
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -224,7 +225,7 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
-        self.config = config
+        self._config = config
         self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
@@ -239,26 +240,40 @@ class Crawler:
         """
         links = article_bs.find_all('a')
         for link in links:
-            href = link.find('href')
-            if isinstance(href, str) and href not in self.urls:
-                return href
-        return 'problems with extract url'
+            href = link.get('href')
+            if not href:
+                continue
 
+            if href.startswith(('http://', 'https://')):
+                if href not in self.urls:
+                    return href
+                continue
+            seed_urls = self._config.get_seed_urls()
+            if not seed_urls:
+                continue
+
+            base_url = seed_urls[0]
+            if '://' in base_url:
+                base_url = base_url.split('/')[0] + '//' + base_url.split('/')[2]
+
+            full_url = urljoin(base_url, href)
+            if full_url not in self.urls:
+                return full_url
+
+        return ''
     def find_articles(self) -> None:
         """
         Find articles.
         """
         for seedurl in self.get_search_urls():
-            response = make_request(seedurl, self.config)
+            response = make_request(seedurl, self._config)
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            i = 0
-            while i < 10:
+            url = self._extract_url(soup)
+            while url and len(self.urls) <= self._config.get_num_articles():
+                self.urls.append(url)
                 url = self._extract_url(soup)
-                if url not in self.urls and len(self.urls) < self.config.get_num_articles():
-                    self.urls.append(url)
-                i += 1
 
     def get_search_urls(self) -> list:
         """
@@ -267,7 +282,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-        return self.config.get_seed_urls()
+        return self._config.get_seed_urls()
 
 
 # 10
