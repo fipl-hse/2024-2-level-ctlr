@@ -2,10 +2,11 @@
 Crawler implementation.
 """
 
-import datetime
-import json
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import datetime
+import json
+import math
 import pathlib
 import random
 import shutil
@@ -16,7 +17,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw
+from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -198,10 +199,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    requests.get(url=url, headers=config.get_headers(), timeout=config.get_timeout(),
-                 verify=config.get_verify_certificate())
-    a = random.randint(1, 10)
-    time.sleep(a)
+    # a = random.randint(1, 10)
+    # time.sleep(a)
     return requests.get(url=url, headers=config.get_headers(), timeout=config.get_timeout(),
                         verify=config.get_verify_certificate())
 
@@ -223,7 +222,6 @@ class Crawler:
         """
         self.config = config
         self.urls = []
-        self.seed_urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -246,17 +244,19 @@ class Crawler:
         """
         Find articles.
         """
-        self.seed_urls = self.get_search_urls()
-        for seed_url in self.seed_urls:
+        num_urls = math.ceil(self.config.get_num_articles() / len(self.config.get_seed_urls()))
+        for seed_url in self.get_search_urls():
             response = make_request(seed_url, self.config)
-            if response.status_code != 200:
+            if not response.ok:
                 continue
             bs = BeautifulSoup(response.content, 'html.parser')
-            for article_bs in bs.find_all('a', class_='content', href=True):
-                url = self._extract_url(article_bs)
-                if not url or make_request(url, self.config).status_code != 200:
+            for article_bs in bs.find_all('a', class_='content', href=True, limit=num_urls):
+                extracted_url = self._extract_url(article_bs)
+                if extracted_url == '' or not make_request(extracted_url, self.config).ok:
                     continue
-                self.urls.append(url)
+                self.urls.append(extracted_url)
+            if len(self.urls) >= self.config.get_num_articles():
+                break
 
     def get_search_urls(self) -> list:
         """
@@ -298,10 +298,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        articles_html = article_soup.find_all(class_="vc_row wpb_row vc_row-fluid")
-        for article_html in articles_html:
-            self.article.text = '\n'.join([p.text for p in article_html.find_all('p')
-                                           if p.text != ''])
+        articles_text = article_soup.find_all(class_="wpb_text_column wpb_content_element")
+        text = []
+        for article_text in articles_text:
+            text += [p.text for p in article_text.find_all(['p', 'li', 'h2']) if p.text != '']
+        self.article.text = '\n'.join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -310,6 +311,16 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        self.article.article_id = self.article_id
+        title = article_soup.find('meta', property="og:title").get('content')
+        if isinstance(title, str):
+            self.article.title = title
+        self.article.author = [author.text for author in article_soup.find_all(rel_='author')]
+        if not self.article.author:
+            self.article.author = ["NOT FOUND"]
+        self.article.topics = (article_soup.find(class_="articles-tags__wrapper nx-flex-row")
+                               .get_text(separator=', ', strip=True).split(', '))
+        self.article.date = self.unify_date_format(article_soup.find(class_="date").get_text())
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -321,6 +332,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        return datetime.datetime.strptime(date_str, '%H:%M, %d.%m.%Y')
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -330,9 +342,9 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         response = make_request(self.full_url, self.config)
-        article_bs = BeautifulSoup(response.text, 'html.parser')
+        article_bs = BeautifulSoup(response.content, 'html.parser')
         self._fill_article_with_text(article_bs)
-        # self._fill_article_with_meta_information(article_bs)
+        self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
@@ -343,7 +355,7 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if base_path.exists() and base_path.is_dir():
+    if base_path.exists():
         if any(base_path.iterdir()):
             shutil.rmtree(base_path)
     base_path.mkdir(parents=True, exist_ok=True)
@@ -356,11 +368,14 @@ def main() -> None:
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
+    crawler.find_articles()
     for i, full_url in enumerate(crawler.urls, 1):
         parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
         article = parser.parse()
+        print(article.url, '\n', article.topics)
         if isinstance(article, Article):
             to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
