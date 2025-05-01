@@ -23,49 +23,42 @@ class IncorrectSeedURLError(Exception):
     """
     Raises when seed URL does not match standard pattern
     """
-    pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """
         Raises when total number of articles is out of range from 1 to 150
         """
-    pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """
         Raises when total number of articles to parse is not integer or less than 0
         """
-    pass
 
 
 class IncorrectHeadersError(Exception):
     """
         Raises when headers are not in a form of dictionary
         """
-    pass
 
 
 class IncorrectEncodingError(Exception):
     """
         Raises when encoding is not specified as a string
         """
-    pass
 
 
 class IncorrectTimeoutError(Exception):
     """
         Raises when timeout value is not a positive integer less than 60
         """
-    pass
 
 
 class IncorrectVerifyError(Exception):
     """
         Raises when verify certificate value is not either True or False
         """
-    pass
 
 
 class Config:
@@ -347,6 +340,28 @@ class HTMLParser:
         else:
             self.article.author = ["NOT FOUND"]
 
+        date = article_soup.find('time', class_=lambda
+            class_name: (class_name and 'Typography_size__11' in class_name and
+                                       'Typography_text__WDByQ' in class_name)
+        )
+        if date and date.get('datetime'):
+            date_str = date['datetime']
+            self.article.date = self.unify_date_format(date_str)
+            #print('OK')
+        else:
+            self.article.date = datetime.datetime.now().replace(microsecond=0)
+            #print('AAAAAAA')
+
+        topic = article_soup.find(
+            'p',
+            class_=('Typography_text__WDByQ Typography_size__13__yGx1X Typography_'
+                    'none__FajqV Typography_primary__29LdH Typography_bold__JQYIc'))
+        if topic:
+            topic = topic.get_text(strip=True)
+            self.article.topics = [topic]
+        else:
+            self.article.topics = []
+
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unify date format.
@@ -357,6 +372,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        return datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
 
     def parse(self) -> Union[Article, bool, list]:
         """
