@@ -7,7 +7,7 @@ import datetime
 import json
 import pathlib
 import shutil
-from random import uniform, choice
+from random import choice, uniform
 from time import sleep
 from typing import Pattern, Union
 
