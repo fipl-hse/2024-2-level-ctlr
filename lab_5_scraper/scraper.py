@@ -228,7 +228,8 @@ class Crawler:
             if link_tag and 'href' in link_tag.attrs:
                 link = "https://www.iguides.ru/" + link_tag.get("href")
                 if link not in self.urls:
-                    return link
+                    return str(link)
+
         return "EXTRACTION ERROR"
 
     def find_articles(self) -> None:
