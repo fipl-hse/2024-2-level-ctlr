@@ -275,28 +275,58 @@ class Crawler:
 
     def find_articles(self) -> None:
         """
-        Find and collect article URLs from seed pages.
+    Find articles from seed URLs.
         """
 
-        seed_urls = self.get_search_urls()
-        targets_needed = self._config.get_num_articles()
+        for seed_url in self._seed_urls:
+            try:
+                response = make_request(seed_url, self._config)
 
-        for url in seed_urls:
-            if len(self.urls) >= targets_needed:
-                break
+                if response.status_code != 200:
+                    continue  # Пропускаем недоступные страницы
 
-            response = make_request(url, self._config)
-            if not response.ok:
+                soup = BeautifulSoup(response.text, "lxml")
+
+                # Ищем все статьи (пример для livennov.ru)
+                articles = soup.find_all("article", class_="post") or \
+                           soup.find_all("div", class_="post")
+
+                for article in articles:
+                    if len(self.urls) >= self._config.get_num_articles():
+                        return  # Прекращаем при достижении лимита
+
+                    # Ищем ссылку в заголовке статьи
+                    title_block = article.find("h2", class_="entry-title")
+                    if not title_block:
+                        continue
+
+                    link = title_block.find("a", href=True)
+                    if not link:
+                        continue
+
+                    url = link["href"]
+
+                    # Фильтруем некорректные ссылки
+                    if (not url.startswith("http") and
+                            not url.startswith("/")):
+                        continue  # Пропускаем mailto:, javascript: и т.д.
+
+                    # Делаем URL абсолютным
+                    if url.startswith("/"):
+                        base_url = seed_url.rstrip("/")
+                        url = f"{base_url}{url}"
+                    elif not url.startswith("http"):
+                        url = f"{seed_url.rstrip('/')}/{url.lstrip('/')}"
+
+                    # Проверяем, что URL ведет на livennov.ru
+                    if ("livennov.ru" in url and
+                            not url.startswith(("mailto:", "tel:", "javascript:")) and
+                            url not in self.urls):
+                        self.urls.append(url)
+
+            except Exception as e:
+                print(f"⚠️ Ошибка при обработке {seed_url}: {str(e)}")
                 continue
-
-            soup = BeautifulSoup(response.text, 'lxml')
-            extracted_url = self._extract_url(soup)
-
-            while extracted_url and len(self.urls) < targets_needed:
-                if "problematic_article_id=3" not in extracted_url:
-                    self.urls.append(extracted_url)
-                extracted_url = self._extract_url(soup)
-
     def get_search_urls(self) -> list:
         """
         Get seed_urls param.
@@ -355,17 +385,23 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title = article_soup.find('h1', class_='entry-title')
-        if title:
-            self.article.title = title.get_text(strip=True)
+        title = article_soup.find('h1', class_='entry-title') or \
+                article_soup.find('h1') or \
+                article_soup.find('title')
+        self.article.title = title.get_text(strip=True) if title else "Без названия"
 
-        date = article_soup.find('time', class_='entry-date published')
-        if date:
-            self.article.date = self.unify_date_format(date.get_text(strip=True))
+        # Дата
+        date = article_soup.find('time', class_='entry-date') or \
+               article_soup.find('time') or \
+               article_soup.find('span', class_='date')
+        self.article.date = self.unify_date_format(date.get_text(strip=True)) if date else datetime.datetime.now()
 
-        author = article_soup.find('span', class_='author vcard')
-        if author:
-            self.article.author = author.get_text(strip=True)
+        # Автор
+        author = article_soup.find('span', class_='author') or \
+                 article_soup.find('a', class_='author') or \
+                 article_soup.find('span', class_='byline')
+        self.article.author = author.get_text(strip=True) if author else "Неизвестный автор"
+
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unify date format.
@@ -377,9 +413,16 @@ class HTMLParser:
             datetime.datetime: Datetime object
         """
         try:
-            return datetime.datetime.strptime(date_str, "%d.%m.%Y")
-        except ValueError:
+            # Пробуем разные форматы даты
+            for fmt in ('%d.%m.%Y', '%Y-%m-%d', '%d %B %Y', '%B %d, %Y'):
+                try:
+                    return datetime.datetime.strptime(date_str, fmt)
+                except ValueError:
+                    continue
             return datetime.datetime.now()
+        except:
+            return datetime.datetime.now()
+
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -388,12 +431,18 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
-        response = make_request(self._full_url, self._config)
-        main_bs = BeautifulSoup(response.text, "lxml")
-        self._fill_article_with_text(main_bs)
-        self._fill_article_with_meta_information(main_bs)
-        return self.article
+        try:
+            response = make_request(self._full_url, self._config)
+            if response.status_code != 200:
+                return False
 
+            soup = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(soup)
+            self._fill_article_with_meta_information(soup)
+            return self.article
+        except Exception as e:
+            print(f"Error parsing article: {str(e)}")
+            return False
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
     Create ASSETS_PATH folder if no created and remove existing folder.
