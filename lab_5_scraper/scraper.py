@@ -350,8 +350,7 @@ class HTMLParser:
         )
         if date:
             date_str = date.get('datetime')
-            if date_str:
-                self.article.date = self.unify_date_format(date_str)
+            self.article.date = self.unify_date_format(date_str)
             #print('OK')
         else:
             self.article.date = datetime.datetime.now().replace(microsecond=0)
@@ -377,6 +376,8 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        if not isinstance(date_str, str):
+            date_str = str(date_str).strip()
         return datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
 
     def parse(self) -> Union[Article, bool, list]:
