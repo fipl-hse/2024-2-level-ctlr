@@ -2,19 +2,31 @@
 Crawler implementation.
 """
 
-# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-import json, re, requests, datetime, time
+import datetime
 
-from bs4 import BeautifulSoup
+# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import json
+import re
+import time
 from pathlib import Path
 from random import randint
 from typing import Pattern, Union
 from urllib.parse import urlparse
-from core_utils.article.article import Article
+
+import requests
+from bs4 import BeautifulSoup
+
 from core_utils.article import io
+from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import (ASSETS_PATH, CRAWLER_CONFIG_PATH, NUM_ARTICLES_UPPER_LIMIT,
-                                  TIMEOUT_UPPER_LIMIT, TIMEOUT_LOWER_LIMIT)
+from core_utils.constants import (
+    ASSETS_PATH,
+    CRAWLER_CONFIG_PATH,
+    NUM_ARTICLES_UPPER_LIMIT,
+    TIMEOUT_LOWER_LIMIT,
+    TIMEOUT_UPPER_LIMIT,
+)
+
 
 class IncorrectSeedURLError(Exception):
     """
