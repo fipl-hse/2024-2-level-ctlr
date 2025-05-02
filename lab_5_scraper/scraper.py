@@ -310,6 +310,7 @@ class HTMLParser:
         self._article_id = article_id
         self._config = config
         self.article = Article(full_url, article_id)
+        self.date = datetime.datetime(1970, 1, 1, 0, 0, 0)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
