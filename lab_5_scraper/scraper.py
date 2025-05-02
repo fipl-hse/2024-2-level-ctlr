@@ -109,14 +109,14 @@ class Config:
             if not re.match(r'https?://(www\.)?', seed_url):
                 raise IncorrectSeedURLError('Seed URL does not match standard pattern')
 
-        if config_data['total_articles_to_find_and_parse'] > 150:
-            raise NumberOfArticlesOutOfRangeError('Total number of articles '
-                                                  'is out of range from 1 to 150')
-
         if (not isinstance(config_data['total_articles_to_find_and_parse'], int) or
                 config_data['total_articles_to_find_and_parse'] <= 0):
             raise IncorrectNumberOfArticlesError('Total number of articles '
                                                  'to parse is not integer or less than 0')
+
+        if config_data['total_articles_to_find_and_parse'] > 150:
+            raise NumberOfArticlesOutOfRangeError('Total number of articles '
+                                                  'is out of range from 1 to 150')
 
         if not isinstance(config_data['headers'], dict):
             raise IncorrectHeadersError('Headers are not in a form of dictionary')
@@ -258,7 +258,7 @@ class Crawler:
         Find articles.
         """
         required_articles = self.config.get_num_articles()
-        articles_collected = 0
+        articles_collected = 1
 
         for seed_url in self.get_search_urls():
             response = make_request(seed_url, self.config)
@@ -272,15 +272,16 @@ class Crawler:
                 href = link['href']
                 if re.match(self.url_pattern, href) and href not in self.urls:
                     url = "https://v-life.ru/" + href
-                    self.urls.append(url)
-                    articles_collected += 1
                     article = HTMLParser(url, articles_collected, self.config).parse()
-                    if isinstance(article, Article):
+                    if isinstance(article, Article) and len(article.text) > 50:
+                        self.urls.append(url)
+                        articles_collected += 1
+
                         to_raw(article)
                         to_meta(article)
 
-                if articles_collected >= required_articles:
-                    print(f'Articles number achieved: {articles_collected}')
+                if articles_collected >= required_articles + 1:
+                    print(f'Articles number achieved: {articles_collected - 1}')
                     return
 
     def get_search_urls(self) -> list:
