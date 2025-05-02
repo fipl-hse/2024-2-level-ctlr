@@ -353,12 +353,16 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find("h1").text
+        self.article.date = "NOT FOUND"
         author = article_soup.find("a", class_="italic")
         if author:
             self.article.author.append(author.text)
-        lower_author = article_soup.find("p", style=re.compile("text-align: ?right"))
-        if lower_author:
-            self.article.author.append(lower_author.text)
+        else:
+            lower_author = article_soup.find("p", style=re.compile("text-align: ?right"))
+            if lower_author:
+                self.article.author.append(lower_author.text)
+            else:
+                self.article.author.append("NOT FOUND")
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
