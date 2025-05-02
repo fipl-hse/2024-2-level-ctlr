@@ -297,15 +297,6 @@ class HTMLParser:
             config (Config): Configuration
         """
         self.config = config
-        """
-        self.seed_urls = config.get_seed_urls()
-        self.num_articles = config.get_num_articles()
-        self.headers = config.get_headers()
-        self.encoding = config.get_encoding()
-        self.timeout = config.get_timeout()
-        self.should_verify_certificate = config.get_verify_certificate()
-        self.headless_mode = config.get_headless_mode()
-        """
         self.article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
@@ -315,7 +306,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        text_blocks = article_soup.find_all("p")
+        text_blocks = article_soup.find_all("p", style=re.compile("text-align: ?justify"))
         self.article.text = " ".join([block.text for block in text_blocks])
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
@@ -325,6 +316,13 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        self.article.title = article_soup.find("h1").text
+        author = article_soup.find("a", class_="italic")
+        if author:
+            self.article.author.append(author.text)
+        lower_author = article_soup.find("p", style=re.compile("text-align: ?right"))
+        if lower_author:
+            self.article.author.append(lower_author.text)
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -336,6 +334,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        return datetime.datetime.strptime(date_str, "%d/%m/%y %H:%M")
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -347,6 +346,7 @@ class HTMLParser:
         loaded_html = make_request(self.article.url, self.config)
         article_bs = BeautifulSoup(loaded_html.text, "html.parser")
         self._fill_article_with_text(article_bs)
+        self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
@@ -372,13 +372,11 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=config)
     crawler.find_articles()
-    print(crawler.urls)
-    parser = HTMLParser(full_url="https://krassever.ru/news/koleso-obozreniya-zvezda-cherepovtsa-vnov-prinimayet-gostey",
-                        article_id=1,
-                        config=config)
-    particle = parser.parse()
-    print(particle.text)
-    io.to_raw(particle)
+    for art_id, art_url in enumerate(crawler.urls):
+        parser = HTMLParser(full_url=art_url, article_id=art_id, config=config)
+        parsed_article = parser.parse()
+        io.to_raw(parsed_article)
+        io.to_meta(parsed_article)
 
 
 if __name__ == "__main__":
