@@ -262,11 +262,9 @@ class Crawler:
 
         base_domain = "https://tuvapravda.ru"
         if href.startswith(('http://', 'https://')):
-            if 'tuvapravda.ru' in href:
-                return href
+            return href if 'tuvapravda.ru' in href else ""
         elif href.startswith('/'):
             return f"{base_domain}{href}"
-
         return ""
 
     def find_articles(self) -> None:
@@ -283,28 +281,22 @@ class Crawler:
 
                 soup = BeautifulSoup(response.text, 'lxml')
 
-                # Find all links that look like articles
                 for link in soup.find_all('a', href=True):
                     if len(self.urls) >= self._config.get_num_articles():
                         return
 
                     href = link['href'].strip()
 
-                    # Handle relative URLs
                     if href.startswith('/'):
                         href = f"{base_domain}{href}"
 
-                    # Skip if not from our domain or not an article
-                    if not href.startswith(base_domain):
-                        continue
-                    if '/article/' not in href and '/news/' not in href:
-                        continue
-
-                    # Add to URLs if not already present
-                    if href not in self.urls:
+                    if (href.startswith(base_domain) and
+                            ('/article/' in href or '/news/' in href) and
+                            href not in self.urls):
                         self.urls.append(href)
 
-            except Exception:
+            except Exception as e:
+                print(f"Error processing {seed_url}: {str(e)}")
                 continue
 
 
