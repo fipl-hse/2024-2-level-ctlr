@@ -374,7 +374,7 @@ def prepare_environment(base_path: Union[Path, str]) -> None:
         for f in base_path.iterdir():
             f.unlink()
         base_path.rmdir()
-    base_path.mkdir()
+    base_path.mkdir(parents=True)
 
 
 def main() -> None:
