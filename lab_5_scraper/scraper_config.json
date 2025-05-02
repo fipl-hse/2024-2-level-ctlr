@@ -1,12 +1,6 @@
 {
     "seed_urls":
     [
-        "https://sovsakh.ru/",
-        "https://sovsakh.ru/category/politika/page/2/",
-        "https://sovsakh.ru/category/politika/page/3/",
-        "https://sovsakh.ru/category/politika/page/4/",
-        "https://sovsakh.ru/category/politika/page/5/",
-        "https://sovsakh.ru/category/ekonomika/",
         "https://sovsakh.ru/category/obshhestvo/",
         "https://sovsakh.ru/category/obshhestvo/page/2/",
         "https://sovsakh.ru/category/obshhestvo/page/3/",
@@ -17,6 +11,12 @@
         "https://sovsakh.ru/category/obshhestvo/page/8/",
         "https://sovsakh.ru/category/obshhestvo/page/9/",
         "https://sovsakh.ru/category/obshhestvo/page/10/",
+        "https://sovsakh.ru/",
+        "https://sovsakh.ru/category/politika/page/2/",
+        "https://sovsakh.ru/category/politika/page/3/",
+        "https://sovsakh.ru/category/politika/page/4/",
+        "https://sovsakh.ru/category/politika/page/5/",
+        "https://sovsakh.ru/category/ekonomika/",
         "https://sovsakh.ru/category/proisshestviya/",
         "https://sovsakh.ru/category/project/"
     ],
