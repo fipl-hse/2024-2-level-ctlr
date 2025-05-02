@@ -239,7 +239,7 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        link = article_bs.find("a", class_="more-link")
+        link = article_bs.find("a", class_="url fn n")
         href = link.get("href")
         if isinstance(href, str):
             real_link = f"{href}"
@@ -258,7 +258,7 @@ class Crawler:
             if not response.ok:
                 continue
             bs = BeautifulSoup(response.text, "lxml")
-            news = bs.find_all("div", class_="article-content clearfix")
+            news = bs.find_all("div", class_="article-content")
             for article in news:
                 if len(self.urls) >= self.config.get_num_articles():
                     break
@@ -306,7 +306,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        news = article_soup.find("p", class_="")
+        news = article_soup.find("div", class_="below-entry-meta")
         text = []
         for new in news:
             if new.get_text().strip() and not (
