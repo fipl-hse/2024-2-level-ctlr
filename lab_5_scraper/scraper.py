@@ -3,13 +3,15 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-import json, re, requests, datetime
+import json, re, requests, datetime, time
 
 from bs4 import BeautifulSoup
 from pathlib import Path
+from random import randint
 from typing import Pattern, Union
 from urllib.parse import urlparse
 from core_utils.article.article import Article
+from core_utils.article import io
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import (ASSETS_PATH, CRAWLER_CONFIG_PATH, NUM_ARTICLES_UPPER_LIMIT,
                                   TIMEOUT_UPPER_LIMIT, TIMEOUT_LOWER_LIMIT)
@@ -204,6 +206,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    time.sleep(randint(1, 3))
     response = requests.get(
         url,
         headers=config.get_headers(),
@@ -254,15 +257,16 @@ class Crawler:
             soup = BeautifulSoup(loaded_html.text, "html.parser")
             links = soup.find_all("a", href=True)
             for link in links:
-                if any(fake_url in link["href"] for fake_url in ("javascript:", "mailto:", "tel:", "#")):
+                if not any(art_prefix in link["href"] for art_prefix in ("news/", "article/")):
                     continue
                 link_soup = BeautifulSoup(str(link), "html.parser")
-                link_str = self._extract_url(link_soup)
-                if not "http" in link_str:
-                    link_str = (str(urlparse(seed_url).scheme) + "://" +
-                                str(urlparse(seed_url).netloc) +
-                                link_str)
-                self.urls.append(link_str)
+                link_str = (str(urlparse(seed_url).scheme) + "://" +
+                            str(urlparse(seed_url).netloc) +
+                            self._extract_url(link_soup))
+                if not link_str in self.urls:
+                    self.urls.append(link_str)
+                    if len(self.urls) == self.config.get_num_articles():
+                        return
 
     def get_search_urls(self) -> list:
         """
@@ -292,6 +296,17 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+        self.config = config
+        """
+        self.seed_urls = config.get_seed_urls()
+        self.num_articles = config.get_num_articles()
+        self.headers = config.get_headers()
+        self.encoding = config.get_encoding()
+        self.timeout = config.get_timeout()
+        self.should_verify_certificate = config.get_verify_certificate()
+        self.headless_mode = config.get_headless_mode()
+        """
+        self.article = Article(full_url, article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -300,6 +315,8 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        text_blocks = article_soup.find_all("p")
+        self.article.text = " ".join([block.text for block in text_blocks])
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -327,6 +344,10 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        loaded_html = make_request(self.article.url, self.config)
+        article_bs = BeautifulSoup(loaded_html.text, "html.parser")
+        self._fill_article_with_text(article_bs)
+        return self.article
 
 
 def prepare_environment(base_path: Union[Path, str]) -> None:
@@ -352,6 +373,12 @@ def main() -> None:
     crawler = Crawler(config=config)
     crawler.find_articles()
     print(crawler.urls)
+    parser = HTMLParser(full_url="https://krassever.ru/news/koleso-obozreniya-zvezda-cherepovtsa-vnov-prinimayet-gostey",
+                        article_id=1,
+                        config=config)
+    particle = parser.parse()
+    print(particle.text)
+    io.to_raw(particle)
 
 
 if __name__ == "__main__":
