@@ -353,7 +353,7 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find("h1").text
-        self.article.date = "NOT FOUND"
+        self.article.date = self.unify_date_format("01.01.1000 00:00")
         author = article_soup.find("a", class_="italic")
         if author:
             self.article.author.append(author.text)
@@ -374,7 +374,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        return datetime.datetime.strptime(date_str, "%d/%m/%y %H:%M")
+        return datetime.datetime.strptime(date_str, "%d.%m.%Y %H:%M")
 
     def parse(self) -> Union[Article, bool, list]:
         """
