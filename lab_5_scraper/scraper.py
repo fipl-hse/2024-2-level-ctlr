@@ -321,8 +321,6 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find('h1', {'class': 'entry-title'}).text
-        if not self.article.title:
-            self.article.title = 'NOT FOUND'
         block = article_soup.find('div', {'class': 'td-ss-main-content'})
         texts = block.find_all('p')
         self.article.author = ['NOT FOUND']
@@ -333,14 +331,9 @@ class HTMLParser:
         self.article.date = self.unify_date_format(article_soup.find(
             'time',
             {'class': 'entry-date updated td-module-date'}).text
-            )
-        if not self.article.date:
-            self.article.date = datetime.datetime(3333, 1, 31, 23, 59, 59)
+                                                   )
         topics = article_soup.find_all('li', {'class': 'entry-category'})
-        if not topics:
-            self.article.topics = ['NOT FOUND']
-        else:
-            self.article.topics = [topic.text for topic in topics]
+        self.article.topics = [topic.text for topic in topics]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -380,9 +373,9 @@ class HTMLParser:
         if not self.article.url:
             return False
         soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
-        if not self.article.text:
-            self.article.text = 'NOT FOUND'
         self._fill_article_with_text(soup)
+        if not self.article.text:
+            return False
         self._fill_article_with_meta_information(soup)
         return self.article
 
