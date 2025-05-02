@@ -348,9 +348,12 @@ class HTMLParser:
             class_name: (class_name and 'Typography_size__11' in class_name and
                                        'Typography_text__WDByQ' in class_name)
         )
-        if date and date.get('datetime'):
-            date_str = date['datetime']
-            self.article.date = self.unify_date_format(date_str)
+        if date and:
+            date_str = date.get('datetime')
+            if isinstance(date_str, str):
+                self.article.date = self.unify_date_format(date_str)
+            else:
+                self.article.date = datetime.datetime.now().replace(microsecond=0)
             #print('OK')
         else:
             self.article.date = datetime.datetime.now().replace(microsecond=0)
