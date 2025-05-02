@@ -142,6 +142,8 @@ class Config:
             raise IncorrectTimeoutError("Timeout is incorrect or out of range in the config")
         if not isinstance(self.config_dict["should_verify_certificate"], bool):
             raise IncorrectVerifyError("Verify Certificate value should be True of False in the config")
+        if not isinstance(self.config_dict["headless_mode"], bool):
+            raise IncorrectVerifyError("Headless mode should be True of False in the config")
 
     def get_seed_urls(self) -> list[str]:
         """
