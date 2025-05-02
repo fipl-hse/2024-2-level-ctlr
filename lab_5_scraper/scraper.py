@@ -266,31 +266,23 @@ class Crawler:
             try:
                 response = make_request(seed_url, self._config)
                 if not response or not response.ok:
-                    print(f"Failed to fetch {seed_url}, status: {response.status_code if response else 'No response'}")
                     continue
 
                 soup = BeautifulSoup(response.text, 'lxml')
 
+                # Look for article links in common locations
                 article_links = []
-                for selector in [
-                    'a[href*="/article/"]',
-                    'h1 a, h2 a, h3 a',
-                    '.article a',
-                    '.news-item a',
-                    'a.more-link'
-                ]:
-                    article_links.extend(soup.select(selector))
+                for link in soup.find_all('a', href=True):
+                    href = link['href']
+                    if '/article/' in href or '/news/' in href:
+                        article_links.append(href)
 
+                # Process found links
                 for link in article_links:
                     if len(self.urls) >= self._config.get_num_articles():
                         return
-                    url = self._normalize_url(link.get('href'))
-                    if url and url not in self.urls:
-                        self.urls.append(url)
-                        print(f"Found article: {url}")
 
-            except Exception as e:
-                print(f"Error processing {seed_url}: {str(e)}")
+            except Exception:
                 continue
 
     def get_search_urls(self) -> list:
