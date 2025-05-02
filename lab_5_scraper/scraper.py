@@ -336,7 +336,7 @@ class HTMLParser:
             )
         if not self.article.date:
             self.article.date = datetime.datetime(3333, 1, 31, 23, 59, 59)
-        topics = article_soup.find_all('ul', {'class': 'td-category'})
+        topics = article_soup.find_all('li', {'class': 'entry-category'})
         if not topics:
             self.article.topics = ['NOT FOUND']
         else:
