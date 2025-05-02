@@ -350,7 +350,8 @@ class HTMLParser:
         )
         if date:
             date_str = date.get('datetime')
-            self.article.date = self.unify_date_format(date_str)
+            if date_str:
+                self.article.date = self.unify_date_format(date_str)
             #print('OK')
         else:
             self.article.date = datetime.datetime.now().replace(microsecond=0)
