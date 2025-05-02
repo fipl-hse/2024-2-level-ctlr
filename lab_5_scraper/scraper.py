@@ -3,18 +3,18 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-
+import datetime
 import json
-import re
-import requests
 import pathlib
 import shutil
-import datetime
-from urllib.parse import urljoin
-from typing import Union, Pattern
+from time import sleep
+from typing import Pattern, Union
+
+import requests
 from bs4 import BeautifulSoup
+
 from core_utils.article.article import Article
-from core_utils.article.io import to_raw, to_meta
+from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -107,7 +107,7 @@ class Config:
 
         if (not isinstance(self._seed_urls, list)
                 or not all(isinstance(url, str) for url in self._seed_urls)
-                or not all(url.startswith('https://www.gorno-altaisk.info/') for url in self._seed_urls)):
+                or not all(url.startswith('https://astralist.info/') for url in self._seed_urls)):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern "https?://(www.)?"')
         if (not isinstance(self._num_articles, int) or isinstance(self._num_articles, bool)
                 or self._num_articles < 0):
@@ -200,10 +200,15 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    headers = config.get_headers()
-    timeout = config.get_timeout()
-    verify = config.get_verify_certificate()
-    return requests.get(url, headers=headers, timeout=timeout, verify=verify)
+    sleep(15)
+    response = requests.get(
+        url,
+        headers=config.get_headers(),
+        verify=config.get_verify_certificate(),
+        timeout=120,
+    )
+    response.encoding = config.get_encoding()
+    return response
 
 
 class Crawler:
@@ -221,8 +226,8 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
-        self.urls = []
         self.config = config
+        self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -234,45 +239,32 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        base_url = 'https://www.gorno-altaisk.info/'
-        url_pattern = re.compile(r'^https://www\.gorno-altaisk\.info(/.*)?$')
-        extracted_urls = []
-        for link in article_bs.find_all('a', href=True):
-            href = link['href'].strip()
-            if not href:
-                continue
-            extracted_urls.append(href)
-        for url in extracted_urls:
-            if isinstance(url, str):
-                if not url.startswith('http'):
-                    url = urljoin(base_url, url)
-                if url_pattern.fullmatch(url) and url not in self.urls:
-                    return url
-        return ''
+        link = article_bs.find("a", class_="more-link")
+        href = link.get("href")
+        if isinstance(href, str):
+            real_link = f"{href}"
+            return real_link
+        return ""
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        seed_urls = self.config.get_seed_urls()
-        max_num_articles = self.config.get_num_articles()
-        for url in seed_urls:
-            try:
-                response = make_request(url, self.config)
-                if not response.ok:
-                    continue
-                article_bs = BeautifulSoup(response.text, 'lxml')
-                if len(self.urls) < max_num_articles:
-                    for _ in range(20):
-                        article_url = self._extract_url(article_bs)
-                        if article_url == '':
-                            break
-                        if article_url not in self.urls:
-                            self.urls.append(article_url)
-                else:
-                    break
-            except requests.exceptions.RequestException:
+        urls = self.get_search_urls()
+        for url in urls:
+            if len(self.urls) >= self.config.get_num_articles():
+                break
+            response = make_request(url, self.config)
+            if not response.ok:
                 continue
+            bs = BeautifulSoup(response.text, "lxml")
+            news = bs.find_all("div", class_="article-content clearfix")
+            for article in news:
+                if len(self.urls) >= self.config.get_num_articles():
+                    break
+                extracted_url = self._extract_url(article)
+                if extracted_url and extracted_url not in self.urls:
+                    self.urls.append(extracted_url)
 
     def get_search_urls(self) -> list:
         """
@@ -281,8 +273,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-        seed_urls = self.config.get_seed_urls()
-        return seed_urls
+        return self.config.get_seed_urls()
 
 
 # 10
@@ -306,7 +297,7 @@ class HTMLParser:
         self.full_url = full_url
         self.article_id = article_id
         self.config = config
-        self.article = Article(full_url, article_id)
+        self.article = Article(url=full_url, article_id=article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -315,10 +306,16 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        block = article_soup.find('div', {'class': 'itemFullText'})
-        article_texts = block.find_all('p')
-        article_texts = [el.text for el in article_texts]
-        self.article.text = '\n'.join(article_texts)
+        news = article_soup.find("div", class_="above-entry-meta")
+        text = []
+        for new in news:
+            if new.get_text().strip() and not (
+                new.get_text().strip().startswith("Информация")
+                or new.get_text().strip() == "Поделиться"
+                or str(new).startswith("<time class=")
+            ):
+                text.append(new.get_text(strip=True, separator="\n"))
+        self.article.text = "\n".join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -346,11 +343,10 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
-        if not self.article.url:
-            return False
-        soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
-        self._fill_article_with_text(soup)
-        self._fill_article_with_meta_information(soup)
+        response = make_request(self.full_url, self.config)
+        if response.ok:
+            bs = BeautifulSoup(response.text, "lxml")
+            self._fill_article_with_text(bs)
         return self.article
 
 
@@ -361,28 +357,24 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    path = pathlib.Path(base_path)
-    if path.exists() and path.is_dir():
+    if pathlib.Path(base_path).exists():
         shutil.rmtree(base_path)
-    path.mkdir(parents=True, exist_ok=True)
+    pathlib.Path(base_path).mkdir(parents=True)
 
 
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    configuration = Config(CRAWLER_CONFIG_PATH)
-    crawler = Crawler(config=configuration)
+    config = Config(CRAWLER_CONFIG_PATH)
     prepare_environment(ASSETS_PATH)
+    crawler = Crawler(config)
     crawler.find_articles()
-
-    article_id = 1
-    for url in crawler.urls:
-        parser = HTMLParser(url, article_id, configuration)
+    for article_id, url in enumerate(crawler.urls, 1):
+        parser = HTMLParser(url, article_id=article_id, config=config)
         article = parser.parse()
-        if len(article.text) <= 100 or not article.text:
+        if not article:
             continue
-        article_id += 1
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)

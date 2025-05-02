@@ -1,17 +1,16 @@
 {
     "seed_urls": [
-        "https://www.gorno-altaisk.info/",
-        "https://www.gorno-altaisk.info/r/news",
-        "https://www.gorno-altaisk.info/r/analitics",
-        "https://www.gorno-altaisk.info/news/178337",
-        "https://www.gorno-altaisk.info/news/178303"
+        "https://astralist.info/"
     ],
     "headers": {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36",
-        "cookie": "PHPSESSID=af6ef86a2bc26629444eaf4f7b31954c; _ga=GA1.1.553533973.1746173509; tmr_lvid=be66b0df53a4a331f65f3102b20c5ac4; tmr_lvidTS=1746173515488; _ym_uid=1746173523933470292; _ym_d=1746173523; domain_sid=BJh-213XW33QRt2oX99km%3A1746173535289; _ym_isad=2; adrdel=1746173556507; adrdel=1746173556507; adrcid=Ac39ffiaWxds8zV3T21we7w; adrcid=Ac39ffiaWxds8zV3T21we7w; acs_3=%7B%22hash%22%3A%221aa3f9523ee6c2690cb34fc702d4143056487c0d%22%2C%22nst%22%3A1746259958083%2C%22sl%22%3A%7B%22224%22%3A1746173558083%2C%221228%22%3A1746173558083%7D%7D; acs_3=%7B%22hash%22%3A%221aa3f9523ee6c2690cb34fc702d4143056487c0d%22%2C%22nst%22%3A1746259958083%2C%22sl%22%3A%7B%22224%22%3A1746173558083%2C%221228%22%3A1746173558083%7D%7D; ma_id=6799194991746173587238; __ai_fp_uuid=8c5cc9f603f38672%3A1; __upin=E1Tn2b5G8TeKT5GxNU2cXg; _buzz_aidata=JTdCJTIydWZwJTIyJTNBJTIyRTFUbjJiNUc4VGVLVDVHeE5VMmNYZyUyMiUyQyUyMmJyb3dzZXJWZXJzaW9uJTIyJTNBJTIyMjUuMiUyMiUyQyUyMnRzQ3JlYXRlZCUyMiUzQTE3NDYxNzM2MDM0NjclN0Q=; _buzz_mtsa=JTdCJTIydWZwJTIyJTNBJTIyNmNhODM3MzVjNWQzY2VhNjA5MTU3NmYyZjU2ZGYyYzYlMjIlMkMlMjJicm93c2VyVmVyc2lvbiUyMiUzQSUyMjI1LjIlMjIlMkMlMjJ0c0NyZWF0ZWQlMjIlM0ExNzQ2MTczNjIxOTQ1JTdE; _ym_visorc=w; chash=i7AV7YAzgP; _ga_51FR2YGNSD=GS1.1.1746178264.2.1.1746178516.59.0.0; tmr_detect=0%7C1746178536546",
-        "accept-language": "ru,en;q=0.9"
+        "User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36",
+        "Cookie": "PHPSESSID=af6ef86a2bc26629444eaf4f7b31954c; _ga=GA1.1.553533973.1746173509; tmr_lvid=be66b0df53a4a331f65f3102b20c5ac4; tmr_lvidTS=1746173515488; _ym_uid=1746173523933470292; _ym_d=1746173523; domain_sid=BJh-213XW33QRt2oX99km%3A1746173535289; _ym_isad=2; adrdel=1746173556507; adrdel=1746173556507; adrcid=Ac39ffiaWxds8zV3T21we7w; adrcid=Ac39ffiaWxds8zV3T21we7w; acs_3=%7B%22hash%22%3A%221aa3f9523ee6c2690cb34fc702d4143056487c0d%22%2C%22nst%22%3A1746259958083%2C%22sl%22%3A%7B%22224%22%3A1746173558083%2C%221228%22%3A1746173558083%7D%7D; acs_3=%7B%22hash%22%3A%221aa3f9523ee6c2690cb34fc702d4143056487c0d%22%2C%22nst%22%3A1746259958083%2C%22sl%22%3A%7B%22224%22%3A1746173558083%2C%221228%22%3A1746173558083%7D%7D; ma_id=6799194991746173587238; __ai_fp_uuid=8c5cc9f603f38672%3A1; __upin=E1Tn2b5G8TeKT5GxNU2cXg; _buzz_aidata=JTdCJTIydWZwJTIyJTNBJTIyRTFUbjJiNUc4VGVLVDVHeE5VMmNYZyUyMiUyQyUyMmJyb3dzZXJWZXJzaW9uJTIyJTNBJTIyMjUuMiUyMiUyQyUyMnRzQ3JlYXRlZCUyMiUzQTE3NDYxNzM2MDM0NjclN0Q=; _buzz_mtsa=JTdCJTIydWZwJTIyJTNBJTIyNmNhODM3MzVjNWQzY2VhNjA5MTU3NmYyZjU2ZGYyYzYlMjIlMkMlMjJicm93c2VyVmVyc2lvbiUyMiUzQSUyMjI1LjIlMjIlMkMlMjJ0c0NyZWF0ZWQlMjIlM0ExNzQ2MTczNjIxOTQ1JTdE; _ym_visorc=w; chash=i7AV7YAzgP; _ga_51FR2YGNSD=GS1.1.1746178264.2.1.1746178516.59.0.0; tmr_detect=0%7C1746178536546",
+        "Accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+        "Sec-Fetch-Mode": "navigate"
     },
-    "total_articles_to_find_and_parse": 10,
+    "total_articles_to_find_and_parse": 3,
     "encoding": "utf-8",
     "timeout": 10,
     "should_verify_certificate": true,
