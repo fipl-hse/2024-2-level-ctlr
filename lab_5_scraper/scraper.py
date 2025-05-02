@@ -342,9 +342,8 @@ class HTMLParser:
                                        if article_author else ["NOT FOUND"])
 
             date_meta = div.find('meta', {'property': 'article:published_time'})
-            if date_meta and hasattr(date_meta, 'get') and date_meta.get('content'):
-                content = str(date_meta['content'])
-                self.article.date = self.unify_date_format(content)
+            if date_meta and isinstance(date_meta.get('content'), str):
+                self.article.date = self.unify_date_format(date_meta['content'])
             else:
                 self.article.date = datetime.datetime.now().replace(microsecond=0)
 
