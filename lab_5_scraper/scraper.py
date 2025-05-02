@@ -267,15 +267,18 @@ class Crawler:
                 continue
 
             soup = BeautifulSoup(response.text, 'lxml')
-            article_links = soup.find_all('a', href=True)
+            article_divs = soup.find_all('div')
 
-            for link in article_links:
-                href = link['href']
+            for div in article_divs:
+                div_soup = BeautifulSoup(str(div), 'lxml')
+                href = self._extract_url(div_soup)
                 if re.match(self.url_pattern, href) and href not in self.urls:
                     self.urls.append(href)
                     if len(self.urls) >= required_articles:
                         print(f'Articles number achieved: {len(self.urls)}')
                         return
+
+        print(f'Total: {len(self.urls)} articles (required: {required_articles})')
 
     def get_search_urls(self) -> list:
         """
@@ -327,9 +330,12 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title = article_soup.find('h1') or article_soup.find('title')
+        title_tag = article_soup.find('h1')
+        title = title_tag.find('a') if title_tag else None
         self.article.title = title.get_text().strip() if title else "NO TITLE"
-        self.article.author = ["NOT FOUND"]
+
+        author = article_soup.find('a', class_='red')
+        self.article.author = author.get_text().strip() if author else "NOT FOUND"
 
         time_tag = article_soup.find('time', id=re.compile
                                      (r'^MainMasterContentPlaceHolder_.*_articleTime$'))
@@ -393,13 +399,11 @@ def main() -> None:
     crawler = Crawler(config)
     crawler.find_articles()
 
-    article_id = 1
-    for url in crawler.urls:
+    for article_id, url in enumerate(crawler.urls, start=1):
         parser = HTMLParser(url, article_id, config)
         article = parser.parse()
-        if not article or len(article.text) <= 100 or not article.text:
+        if not article:
             continue
-        article_id += 1
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
