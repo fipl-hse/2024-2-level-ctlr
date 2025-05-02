@@ -247,12 +247,12 @@ class Crawler:
             str: Url from HTML
         """
         link = article_bs.find('a', class_='lsd-arch-link')
-        if link:
-            url = link.get('href', '')
-            link.decompose()
-            if isinstance(url, str):
-                return url
-        return 'stop'
+        if not link:
+            return ''
+        url = link.get('href', '')
+        link.decompose()
+        if isinstance(url, str):
+            return url
 
     def find_articles(self) -> None:
         """
@@ -266,7 +266,7 @@ class Crawler:
                 soup = BeautifulSoup(response.text, 'lxml')
                 while True:
                     url = self._extract_url(soup)
-                    if url == 'stop':
+                    if url == '':
                         break
                     if url not in self.urls:
                         self.urls.append(url)
