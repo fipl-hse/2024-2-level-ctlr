@@ -97,9 +97,17 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open(self.path_to_config, 'r', encoding='utf-8') as config_file:
-            config_data = json.load(config_file)
-        return ConfigDTO(**config_data)
+        with self.path_to_config.open('r', encoding='utf-8') as file:
+            data = json.load(file)
+            return ConfigDTO(
+                seed_urls=data.get('seed_urls', []),
+                total_articles_to_find_and_parse=data.get('total_articles_to_find_and_parse', 0),
+                headers=data.get('headers', {}),
+                encoding=data.get('encoding', 'utf-8'),
+                timeout=data.get('timeout', 30),
+                should_verify_certificate=data.get('should_verify_certificate', True),
+                headless_mode=data.get('headless_mode', True)
+            )
 
     def _validate_config_content(self) -> None:
         """
@@ -203,15 +211,18 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    try:
-        return requests.get(
-            url,
-            headers=config.get_headers(),
-            timeout=config.get_timeout(),
-            verify=config.get_verify_certificate()
-        )
-    except (requests.RequestException, ConnectionError):
-        return None
+    sleep_time = randint(1, 3)
+    sleep(sleep_time)
+
+    request = requests.get(
+        url,
+        headers=config.get_headers(),
+        timeout=config.get_timeout(),
+        verify=config.get_verify_certificate()
+    )
+
+    request.encoding = config.get_encoding()
+    return request
 
 
 class Crawler:
