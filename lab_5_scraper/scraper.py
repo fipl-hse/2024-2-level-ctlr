@@ -249,10 +249,10 @@ class Crawler:
         link = article_bs.find('a', class_='lsd-arch-link')
         if not link:
             return ''
+
         url = link.get('href', '')
         link.decompose()
-        if isinstance(url, str):
-            return url
+        return url if isinstance(url, str) else ''
 
     def find_articles(self) -> None:
         """
