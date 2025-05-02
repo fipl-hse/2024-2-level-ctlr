@@ -8,7 +8,6 @@ import json
 import pathlib
 import re
 import shutil
-
 from pathlib import Path
 from random import randint
 from time import sleep
@@ -208,8 +207,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    sleep(randint(1, 5))
     timeout = config.get_timeout()
+    sleep(randint(1, timeout))
     headers = config.get_headers()
     verify = config.get_verify_certificate()
     response = requests.get(url, headers=headers, timeout=timeout, verify=verify)
@@ -249,7 +248,8 @@ class Crawler:
         extracted_hrefs = {link['href'] for link in article_bs.find_all('a', href=True)}
         url_pattern = r'^(https?://(www\.)?zvezdaaltaya\.ru/\d{4}/\d{2}/.*)$'
 
-        valid_urls = [url_href if url_href.startswith('http') else f"https://zvezdaaltaya.ru{url_href}" for
+        valid_urls = [url_href if url_href.startswith('http') else
+                      f"https://zvezdaaltaya.ru{url_href}" for
                       url_href in extracted_hrefs if isinstance(url_href, str) and
                       re.match(url_pattern, url_href) and url_href not in self.urls]
 
