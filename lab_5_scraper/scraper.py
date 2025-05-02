@@ -208,7 +208,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         requests.models.Response: A response from a request
     """
     timeout = config.get_timeout()
-    sleep(randint(1, timeout))
+    #sleep(randint(1, timeout))
     headers = config.get_headers()
     verify = config.get_verify_certificate()
     response = requests.get(url, headers=headers, timeout=timeout, verify=verify)
