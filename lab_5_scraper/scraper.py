@@ -199,8 +199,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    # a = random.randint(1, 10)
-    # time.sleep(a)
+    a = random.randint(1, 10)
+    time.sleep(a)
     return requests.get(url=url, headers=config.get_headers(), timeout=config.get_timeout(),
                         verify=config.get_verify_certificate())
 
@@ -256,7 +256,7 @@ class Crawler:
                     continue
                 self.urls.append(extracted_url)
             if len(self.urls) >= self.config.get_num_articles():
-                break
+                return
 
     def get_search_urls(self) -> list:
         """
@@ -348,6 +348,39 @@ class HTMLParser:
         return self.article
 
 
+class CrawlerRecursive(Crawler):
+    """
+    Find articles using recursive function.
+    """
+    def __init__(self, config: Config) -> None:
+        super().__init__(config)
+        self.start_url = self.get_search_urls()[0]
+        self.urls = [self.start_url]
+        self.visited_urls = []
+
+    def find_articles(self) -> None:
+        for base_url in self.urls:
+            response = make_request(base_url, self.config)
+            if not response.ok:
+                continue
+            bs = BeautifulSoup(response.content, 'html.parser')
+            for article_bs in bs.find_all('a',
+                                          class_=["content", "article-news__wrapper nx-flex-col",
+                                                  "nx-flex-row-btw"], href=True):
+                extracted_url = self._extract_url(article_bs)
+                if (extracted_url == '' or extracted_url in self.visited_urls
+                        or not make_request(extracted_url, self.config).ok):
+                    continue
+                self.urls.append(extracted_url)
+            self.visited_urls.append(base_url)
+            if len(self.urls) - 1 >= self.config.get_num_articles():
+                self.urls = self.urls[1::]
+                return None
+        if len(self.urls) - 1 < self.config.get_num_articles():
+            self.find_articles()
+        return None
+
+
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
     Create ASSETS_PATH folder if no created and remove existing folder.
@@ -367,12 +400,11 @@ def main() -> None:
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
     prepare_environment(ASSETS_PATH)
-    crawler = Crawler(config=configuration)
-    crawler.find_articles()
-    for i, full_url in enumerate(crawler.urls, 1):
+    crawler_recursive = CrawlerRecursive(config=configuration)
+    crawler_recursive.find_articles()
+    for i, full_url in enumerate(crawler_recursive.urls, 1):
         parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
         article = parser.parse()
-        print(article.url, '\n', article.topics)
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
