@@ -306,7 +306,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        news = article_soup.find("div", class_="above-entry-meta")
+        news = article_soup.find("p", class_="")
         text = []
         for new in news:
             if new.get_text().strip() and not (
