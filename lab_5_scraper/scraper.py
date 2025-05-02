@@ -273,6 +273,8 @@ class Crawler:
         """
         Find articles.
         """
+        base_domain = "https://tuvapravda.ru"
+
         for seed_url in self._seed_urls:
             try:
                 response = make_request(seed_url, self._config)
@@ -281,29 +283,29 @@ class Crawler:
 
                 soup = BeautifulSoup(response.text, 'lxml')
 
-                # Look for article links in common locations
-                article_links = []
+                # Find all links that look like articles
                 for link in soup.find_all('a', href=True):
-                    href = link['href']
-                    if '/article/' in href or '/news/' in href:
-                        article_links.append(href)
-
-                # Process found links
-                for link in article_links:
                     if len(self.urls) >= self._config.get_num_articles():
                         return
 
+                    href = link['href'].strip()
+
+                    # Handle relative URLs
+                    if href.startswith('/'):
+                        href = f"{base_domain}{href}"
+
+                    # Skip if not from our domain or not an article
+                    if not href.startswith(base_domain):
+                        continue
+                    if '/article/' not in href and '/news/' not in href:
+                        continue
+
+                    # Add to URLs if not already present
+                    if href not in self.urls:
+                        self.urls.append(href)
+
             except Exception:
                 continue
-
-    def get_search_urls(self) -> list:
-        """
-        Get seed_urls param.
-
-        Returns:
-            list: seed_urls param
-        """
-        return self._seed_urls
 
 
 # 10
@@ -419,8 +421,6 @@ class HTMLParser:
             title = soup.find('h1')
             self.article.title = title.get_text(strip=True) if title else "NO TITLE"
 
-
-            # Main content extraction
             content_blocks = soup.find_all(['article', 'div'], class_=re.compile(r'content|entry|article|post'))
             if not content_blocks:
                 content_blocks = [soup]
@@ -450,9 +450,11 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if base_path.exists():
+    try:
         shutil.rmtree(base_path)
-    base_path.mkdir(parents=True)
+    except FileNotFoundError:
+        pass
+    pathlib.Path(base_path).mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
@@ -478,4 +480,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
