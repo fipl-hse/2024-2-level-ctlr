@@ -1,9 +1,7 @@
 {
     "seed_urls": [
         "https://tuvapravda.ru/novosti/",
-        "https://tuvapravda.ru/novosti/?page=2",
-        "https://tuvapravda.ru/novosti/?page=3",
-        "https://tuvapravda.ru/novosti/?page=4"
+        "https://tuvapravda.ru/natsionalnye-proekty/"
     ],
     "headers": {
         "Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -13,7 +11,7 @@
     },
     "total_articles_to_find_and_parse": 50,
     "encoding": "utf-8",
-    "timeout": 30,
+    "timeout": 15,
     "should_verify_certificate": true,
     "headless_mode": true
 }

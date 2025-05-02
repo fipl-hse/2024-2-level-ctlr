@@ -264,27 +264,29 @@ class Crawler:
         for seed_url in self._seed_urls:
             try:
                 response = make_request(seed_url, self._config)
-                if not response.ok:
+                if not response or not response.ok:
+                    print(f"Failed to fetch {seed_url}, status: {response.status_code if response else 'No response'}")
                     continue
 
                 soup = BeautifulSoup(response.text, 'lxml')
 
-                article_candidates = []
+                article_links = []
                 for selector in [
-                    'a[href*="article"]',
-                    'h2 a', 'h3 a',
+                    'a[href*="/article/"]',
+                    'h1 a, h2 a, h3 a',
+                    '.article a',
                     '.news-item a',
-                    '.article-title a',
                     'a.more-link'
                 ]:
-                    article_candidates.extend(soup.select(selector))
+                    article_links.extend(soup.select(selector))
 
-                for candidate in article_candidates:
+                for link in article_links:
                     if len(self.urls) >= self._config.get_num_articles():
                         return
-                    url = self._extract_url(candidate)
+                    url = self._normalize_url(link.get('href'))
                     if url and url not in self.urls:
                         self.urls.append(url)
+                        print(f"Found article: {url}")
 
             except Exception as e:
                 print(f"Error processing {seed_url}: {str(e)}")
