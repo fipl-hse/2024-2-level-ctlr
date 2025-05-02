@@ -8,8 +8,8 @@ import json
 import pathlib
 import re
 from typing import Pattern, Union
-import requests
 
+import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
