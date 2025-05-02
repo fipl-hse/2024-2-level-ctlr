@@ -298,7 +298,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        articles_text = article_soup.find_all(class_="wpb_text_column wpb_content_element")
+        articles_text = article_soup.find_all(class_="article-content__wrapper")
         text = []
         for article_text in articles_text:
             text += [p.text for p in article_text.find_all(['p', 'li', 'h2']) if p.text != '']
@@ -361,7 +361,7 @@ class CrawlerRecursive(Crawler):
         super().__init__(config)
         self.start_url = self.get_search_urls()[0]
         self.urls = [self.start_url]
-        self.visited_urls = []
+        self.visited_urls = set()
 
     def find_articles(self) -> None:
         for base_url in self.urls:
@@ -377,13 +377,12 @@ class CrawlerRecursive(Crawler):
                         or not make_request(extracted_url, self.config).ok):
                     continue
                 self.urls.append(extracted_url)
-            self.visited_urls.append(base_url)
+            self.visited_urls.add(base_url)
             if len(self.urls) - 1 >= self.config.get_num_articles():
                 self.urls = self.urls[1::]
-                return None
+                return
         if len(self.urls) - 1 < self.config.get_num_articles():
             self.find_articles()
-        return None
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -405,9 +404,9 @@ def main() -> None:
     """
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
     prepare_environment(ASSETS_PATH)
-    crawler_recursive = CrawlerRecursive(config=configuration)
-    crawler_recursive.find_articles()
-    for i, full_url in enumerate(crawler_recursive.urls, 1):
+    crawler = Crawler(config=configuration)
+    crawler.find_articles()
+    for i, full_url in enumerate(crawler.urls, 1):
         parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
         article = parser.parse()
         if isinstance(article, Article):
