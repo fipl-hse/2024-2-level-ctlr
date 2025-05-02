@@ -339,8 +339,8 @@ class HTMLParser:
         self.article.author = [a.get_text(strip=True) for author in authors for a in author.find_all('a')] \
             if authors else ['NOT FOUND']
 
-        date = article_soup.find('span', {'class': 'itemDateCreated'}).text
-        self.article.date = self.unify_date_format(date)
+        date = article_soup.find('span', {'class': 'itemDateCreated'})
+        self.article.date = self.unify_date_format(date.text.strip())
 
         topics = article_soup.find_all('span', {'class': 'itemCategory'})
         self.article.topics = [a.get_text(strip=True) for topic in topics for a in topic.find_all('a')] \
@@ -356,6 +356,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        return datetime.datetime.strptime(date_str, "%d.%m.%Y %H:%M")
 
     def parse(self) -> Union[Article, bool, list]:
         """
