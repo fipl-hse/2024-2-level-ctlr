@@ -253,15 +253,15 @@ class Crawler:
         """
         Find articles.
         """
-        for seed_url in self._seed_urls:
-            res = make_request(seed_url, self._config)
-            bs = BeautifulSoup(res.content, "lxml")
-            for header in bs.find_all('h1', class_='entry-title'):
-                if self._config.get_num_articles() <= len(self.urls):
-                    return None
-                url = self._extract_url(header)
-                if url and url not in self.urls:
-                    self.urls.append(url)
+        seed_urls = self._seed_urls
+        for seed in seed_urls:
+            response = make_request(seed, self._config)
+            if response is None or response.status_code != 200:
+                continue
+            soup = BeautifulSoup(response.content.decode(self._config.get_encoding()), 'html.parser')
+            article_url = self._extract_url(soup)
+            if article_url and article_url not in self.urls:
+                self.urls.append(article_url)
 
     def get_search_urls(self) -> list:
         """
