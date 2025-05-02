@@ -124,7 +124,7 @@ class Config:
         Ensure configuration parameters are not corrupt.
         """
         if not (isinstance(self.config_dict["seed_urls"], list)):
-            raise ValueError("Seed URLs should be a list of strings")
+            raise IncorrectSeedURLError("Seed URLs should be a list of strings")
         for url in self.config_dict["seed_urls"]:
             if not re.match("https?://(www.)?", url):
                 raise IncorrectSeedURLError("Incorrect seed URL format in the config")
@@ -219,8 +219,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         requests.models.Response: A response from a request
     """
     time.sleep(randint(1, 3))
-    response = requests.get(
-        url,
+    response = requests.get(url,
         headers=config.get_headers(),
         timeout=config.get_timeout())
     response.encoding = config.get_encoding()
