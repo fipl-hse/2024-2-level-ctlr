@@ -232,6 +232,7 @@ class Crawler:
         self._config = config
         self.urls = []
         self._seed_urls = self._config.get_seed_urls()
+        self._visited_urls = set()
         prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
@@ -394,21 +395,9 @@ class HTMLParser:
             datetime.datetime: Datetime object
         """
         try:
-            response = make_request(self._full_url, self._config)
-            if response.ok:
-                soup = BeautifulSoup(response.text, 'lxml')
-                self._fill_article_with_text(soup)
-            else:
-                self.article.text = f"Failed to fetch article (HTTP {response.status_code}). " \
-                                    f"Minimum required placeholder text."
-        except Exception as e:
-            self.article.text = f"Error parsing article: {str(e)}. " \
-                                f"Minimum required placeholder text."
-
-        if len(self.article.text) < 50:
-            self.article.text += " " * (50 - len(self.article.text))
-
-        return self.article
+            return datetime.datetime.strptime(date_str, "%d.%m.%Y")
+        except ValueError:
+            return datetime.datetime.now()
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -417,13 +406,38 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
-        response = make_request(self.full_url, self.config)
-        if not response.ok:
-            return False
+        try:
+            response = make_request(self.full_url, self.config)
+            if not response or not response.ok:
+                return False
 
-        soup = BeautifulSoup(response.text, 'lxml')
-        self._fill_article_with_meta_information(soup)
-        return self.article
+            soup = BeautifulSoup(response.text, 'lxml')
+
+            title = soup.find('h1')
+            self.article.title = title.get_text(strip=True) if title else "NO TITLE"
+
+
+            # Main content extraction
+            content_blocks = soup.find_all(['article', 'div'], class_=re.compile(r'content|entry|article|post'))
+            if not content_blocks:
+                content_blocks = [soup]
+
+            text_parts = []
+            for block in content_blocks:
+                for element in block.find_all(['script', 'style', 'nav', 'footer', 'aside']):
+                    element.decompose()
+
+                paragraphs = block.find_all('p') or [block]
+                text_parts.extend(p.get_text(' ', strip=True)
+                                  for p in paragraphs if p.get_text(strip=True))
+
+            self.article.text = '\n'.join(text_parts) or "NO CONTENT"
+
+            return self.article
+
+        except Exception as e:
+            print(f"Error parsing {self.full_url}: {str(e)}")
+            return False
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
