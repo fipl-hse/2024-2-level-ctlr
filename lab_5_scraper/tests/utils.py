@@ -9,8 +9,8 @@ import random
 from admin_utils.test_params import TEST_PATH
 from core_utils.article import article
 from core_utils.article.io import to_meta, to_raw
-from core_utils import ASSETS_PATH, CRAWLER_CONFIG_PATH
-from core_utils import copy_student_data
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+from core_utils.tests.utils import copy_student_data
 from lab_5_scraper.scraper import Config, Crawler, HTMLParser
 
 

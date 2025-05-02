@@ -32,7 +32,7 @@ class NumberOfArticlesOutOfRangeError(Exception):
     """Number of articles to find and parse must be between 1 and 150"""
 
 
-class NumberOfArticlesError(Exception):
+class IncorrectNumberOfArticlesError(Exception):
     """Total articles to find and parse must be an integer"""
 
 
@@ -112,7 +112,7 @@ class Config:
                 or config_dto.total_articles < 1
                 or isinstance(config_dto.total_articles, bool)
         ):
-            raise NumberOfArticlesError
+            raise IncorrectNumberOfArticlesError
         if config_dto.total_articles > NUM_ARTICLES_UPPER_LIMIT:
             raise NumberOfArticlesOutOfRangeError
         if not isinstance(config_dto.headers, dict):
