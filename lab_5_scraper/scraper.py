@@ -107,12 +107,15 @@ class Config:
         if (not isinstance(self._seed_urls, list)
                 or not all(isinstance(url, str) for url in self._seed_urls)
                 or not all(url.startswith('https://kgd.ru/news/biz') for url in self._seed_urls)):
-            raise IncorrectSeedURLError('Seed URL does not match standard pattern "https?://(www.)?"')
+            raise (IncorrectSeedURLError
+                   ('Seed URL does not match standard pattern "https?://(www.)?"'))
         if (not isinstance(self._num_articles, int) or isinstance(self._num_articles, bool)
                 or self._num_articles < 0):
-            raise IncorrectNumberOfArticlesError('Total number of articles to parse is not integer or less than 0')
+            raise (IncorrectNumberOfArticlesError
+                   ('Total number of articles to parse is not integer or less than 0'))
         if not 1 <= self._num_articles <= 150:
-            raise NumberOfArticlesOutOfRangeError('Total number of articles is out of range from 1 to 150')
+            raise (NumberOfArticlesOutOfRangeError
+                   ('Total number of articles is out of range from 1 to 150'))
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers are not in a form of dictionary')
         if not isinstance(self._encoding, str):
@@ -336,15 +339,15 @@ class HTMLParser:
         self.article.title = title.text if title else 'NOT FOUND'
 
         authors = article_soup.find_all('div', {'class': 'itemAuthorName'})
-        self.article.author = [a.get_text(strip=True) for author in authors for a in author.find_all('a')] \
-            if authors else ['NOT FOUND']
+        self.article.author = [a.get_text(strip=True) for author in authors
+                               for a in author.find_all('a')] if authors else ['NOT FOUND']
 
         date = article_soup.find('span', {'class': 'itemDateCreated'})
         self.article.date = self.unify_date_format(date.text.strip())
 
         topics = article_soup.find_all('span', {'class': 'itemCategory'})
-        self.article.topics = [a.get_text(strip=True) for topic in topics for a in topic.find_all('a')] \
-            if topics else []
+        self.article.topics = [a.get_text(strip=True) for topic in topics
+                               for a in topic.find_all('a')] if topics else []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
