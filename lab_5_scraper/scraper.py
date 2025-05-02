@@ -7,11 +7,13 @@ import datetime
 import json
 import pathlib
 import shutil
-import requests
 from random import randint
 from time import sleep
-from bs4 import BeautifulSoup
 from typing import Pattern, Union
+
+import requests
+from bs4 import BeautifulSoup
+
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
