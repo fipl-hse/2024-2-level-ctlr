@@ -119,11 +119,11 @@ class Config:
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('Encoding is not an instance of str')
         if self._timeout not in range(1, 61):
-            raise IncorrectTimeoutError('Timeout out of range')
+            raise IncorrectTimeoutError('Timeout is out of range')
         if not isinstance(self._should_verify_certificate, bool):
             raise IncorrectVerifyError('should_verify_certificate is not an instance of bool')
         if not isinstance(self._headless_mode, bool):
-            raise IncorrectVerifyError('headless_mode value should be an instance of bool')
+            raise IncorrectVerifyError('headless_mode is not an instance of bool')
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -203,6 +203,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     request = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(),
                            verify=config.get_verify_certificate())
     request.encoding = config.get_encoding()
+    sleep(randint(1, 10))
     return request
 
 
@@ -252,7 +253,7 @@ class Crawler:
             response = make_request(seed_url, self.config)
             if not response.ok:
                 continue
-            for _ in range(10):
+            while True:
                 url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
                 if url == 'STOP_SEED_URL_ITERATION':
                     break
@@ -297,7 +298,7 @@ class CrawlerRecursive(Crawler):
         if not pathlib.Path(self._cache_path).exists():
             with open(self._cache_path, 'w', encoding='utf-8') as file:
                 json.dump({"urls_collected": [],
-                           "urls_visited": []}, file)
+                           "urls_visited": []}, file, indent=4)
         else:
             with open(self._cache_path, encoding='utf-8') as file:
                 cache = json.load(file)
@@ -354,7 +355,7 @@ class CrawlerRecursive(Crawler):
         self._extract_urls(soup)
         with open(self._cache_path, 'w', encoding='utf-8') as file:
             json.dump({"urls_collected": self.urls,
-                       "urls_visited": self.visited_urls}, file)
+                       "urls_visited": self.visited_urls}, file, indent=4)
         self.find_articles()
 
 
@@ -406,8 +407,8 @@ class HTMLParser:
             self.article.author = ['NOT FOUND']
         date = article_soup.find('span', {'class': 'author-news__info-text'}).text
         self.article.date = self.unify_date_format(date)
-        topic = article_soup.find('a', {'class': 'tags min yellow'}).text.strip()
-        self.article.topics = [topic]
+        topics = article_soup.find_all('a', {'class': 'tags photo-report-detail-share-tags__item'})
+        self.article.topics = [tag.text.strip('\n').strip() for tag in topics]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -425,7 +426,7 @@ class HTMLParser:
             year = int(year_)
         else:
             day, month, time = datetime_items
-            year = 2025
+            year = int(datetime.datetime.today().strftime('%Y'))
         hour, minute = time.split(':')
         months_list = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
                        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
@@ -456,9 +457,10 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if pathlib.Path(base_path).is_dir():
+    path = pathlib.Path(base_path)
+    if path.is_dir():
         shutil.rmtree(base_path)
-    pathlib.Path(base_path).mkdir(parents=True)
+    path.mkdir(parents=True)
 
 
 def main() -> None:
@@ -470,7 +472,6 @@ def main() -> None:
     crawler = Crawler(config)
     crawler.find_articles()
     for idx, url in enumerate(crawler.urls, 1):
-        sleep(randint(1, 10))
         parser = HTMLParser(url, idx, config)
         article = parser.parse()
         if isinstance(article, Article):
@@ -482,11 +483,20 @@ def main_recursive_crawler() -> None:
     """
     Recursive crawler showcase.
     """
+    prepare_environment(ASSETS_PATH)
     config = Config(CRAWLER_CONFIG_PATH)
     recursive_crawler = CrawlerRecursive(config)
     recursive_crawler.find_articles()
+    with open('tmp/recursive_crawler_cache.json', 'r') as file:
+        cache = json.load(file)
+    urls = cache["urls_collected"]
+    for idx, url in enumerate(urls, 1):
+        parser = HTMLParser(url, idx, config)
+        article = parser.parse()
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
     main()
-    main_recursive_crawler()
