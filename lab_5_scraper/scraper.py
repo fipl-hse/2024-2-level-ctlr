@@ -379,6 +379,8 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        if not isinstance(self.article.url, str):
+            raise ValueError("The article URL is not a string")
         loaded_html = make_request(self.article.url, self.config)
         article_bs = BeautifulSoup(loaded_html.text, "html.parser")
         self._fill_article_with_text(article_bs)
@@ -411,6 +413,8 @@ def main() -> None:
     for art_id, art_url in enumerate(crawler.urls):
         parser = HTMLParser(full_url=art_url, article_id=art_id+1, config=config)
         parsed_article = parser.parse()
+        if not isinstance(parsed_article, Article):
+            raise ValueError("Parsing failed")
         io.to_raw(parsed_article)
         io.to_meta(parsed_article)
 
