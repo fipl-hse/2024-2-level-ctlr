@@ -1,9 +1,7 @@
 {
     "seed_urls": [
-        "https://govoritnn.ru/category/news/",
-        "https://govoritnn.ru/category/polls/",
-        "https://govoritnn.ru/category/say/",
-        "https://govoritnn.ru/category/analytics/"
+        "https://www.gorno-altaisk.info/r/news",
+        "https://www.gorno-altaisk.info/r/analitics"
     ],
     "headers": {
         "Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",

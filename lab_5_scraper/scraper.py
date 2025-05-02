@@ -115,7 +115,7 @@ class Config:
         """
         if not isinstance(self._seed_urls, list) or \
                 not all(isinstance(url, str) for url in self._seed_urls) or \
-                not all(url.startswith("https://govoritnn.ru/") for url in self._seed_urls):
+                not all(url.startswith("https://www.gorno-altaisk.info/") for url in self._seed_urls):
             raise IncorrectSeedURLError("Seed URL is not a valid URL")
         if not isinstance(self._num_articles, int) or \
                 isinstance(self._num_articles, bool) or \
@@ -260,9 +260,9 @@ class Crawler:
         if not href:
             return ""
 
-        base_domain = "https://govoritnn.ru/"
+        base_domain = "https://www.gorno-altaisk.info/"
         if href.startswith(('http://', 'https://')):
-            return href if 'govoritnn.ru' in href else ""
+            return href if 'gorno-altaisk.info' in href else ""
         elif href.startswith('/'):
             return f"{base_domain}{href}"
         return ""
@@ -271,7 +271,7 @@ class Crawler:
         """
         Find articles.
         """
-        base_domain = "https://govoritnn.ru/"
+        base_domain = "https://www.gorno-altaisk.info/"
 
         for seed_url in self._seed_urls:
             try:
