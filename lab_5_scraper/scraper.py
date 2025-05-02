@@ -118,11 +118,6 @@ class Config:
         if not isinstance(self._timeout, int) or not self._timeout in range(0, 61):
             raise IncorrectTimeoutError("Timeout has wrong format ot timeout is out of range")
 
-        # if not isinstance(self.headless_mode, bool):
-        #     raise IncorrectVerifyError("Headless mode has wrong format")
-        # if not isinstance(self._should_verify_certificate, bool):
-        #     raise IncorrectVerifyError("Verifying has wrong format")
-
         if (not isinstance(self.config.should_verify_certificate, bool)
                 or not isinstance(self.config.headless_mode, bool)):
             raise IncorrectVerifyError('Verify certificate value must either be True or False')
@@ -393,10 +388,11 @@ class HTMLParser:
         """
         response = make_request(self.full_url, self.config)
         response.encoding = "utf-8"
-        if response.ok:
-            soup = BeautifulSoup(response.text, "lxml")
-            self._fill_article_with_text(soup)
-            self._fill_article_with_meta_information(soup)
+        if not response.ok:
+            raise RequestException("in parse")
+        soup = BeautifulSoup(response.text, "lxml")
+        self._fill_article_with_text(soup)
+        self._fill_article_with_meta_information(soup)
         return self.article
 
 
@@ -421,7 +417,6 @@ def main() -> None:
     crawler.find_articles()
 
     for index, url in enumerate(crawler.urls):
-        # time.sleep(random.randint(3, 8))
         parser = HTMLParser(full_url=url, article_id=index + 1, config=configuration)
         article_info = parser.parse()
 
