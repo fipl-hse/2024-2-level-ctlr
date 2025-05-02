@@ -243,7 +243,6 @@ class Crawler:
         self._config = config
         self.urls = []
         self._seed_urls = self._config.get_seed_urls()
-        self._visited_urls = set()
         prepare_environment(ASSETS_PATH)
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
@@ -271,7 +270,7 @@ class Crawler:
         """
         Find articles.
         """
-        base_domain = "https://www.gorno-altaisk.info/"
+        base_domain = "https://www.gorno-altaisk.info"
 
         for seed_url in self._seed_urls:
             try:
@@ -281,19 +280,23 @@ class Crawler:
 
                 soup = BeautifulSoup(response.text, 'lxml')
 
+                article_links = []
                 for link in soup.find_all('a', href=True):
-                    if len(self.urls) >= self._config.get_num_articles():
-                        return
-
                     href = link['href'].strip()
 
                     if href.startswith('/'):
                         href = f"{base_domain}{href}"
+                    elif not href.startswith(base_domain):
+                        continue
 
-                    if (href.startswith(base_domain) and
-                            ('/article/' in href or '/news/' in href) and
-                            href not in self.urls):
-                        self.urls.append(href)
+                    if '/news/' in href or '/article/' in href:
+                        article_links.append(href)
+
+                for url in article_links:
+                    if len(self.urls) >= self._config.get_num_articles():
+                        return
+                    if url not in self.urls:
+                        self.urls.append(url)
 
             except Exception as e:
                 print(f"Error processing {seed_url}: {str(e)}")
