@@ -4,17 +4,17 @@ Crawler implementation.
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 
-import re
-import datetime
 import json
 import pathlib
 import shutil
-import requests
-from bs4 import BeautifulSoup
 from typing import Pattern, Union
 from core_utils.config_dto import ConfigDTO
 from core_utils.article.io import to_raw
+import re
+import datetime
 from core_utils.article.article import Article
+import requests
+from bs4 import BeautifulSoup
 from core_utils.constants import (
     ASSETS_PATH,
     CRAWLER_CONFIG_PATH,
@@ -25,31 +25,31 @@ from core_utils.constants import (
 
 
 class IncorrectSeedURLError(Exception):
-    pass
+    """URL list cannot be empty"""
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
-    pass
+    """Number of articles to find and parse must be between 1 and 150"""
 
 
 class NumberOfArticlesError(Exception):
-    pass
+    """Total articles to find and parse must be an integer"""
 
 
 class IncorrectHeadersError(Exception):
-    pass
+    """Headers must be a valid dictionary"""
 
 
 class IncorrectEncodingError(Exception):
-    pass
+    """Encoding must be a string"""
 
 
 class IncorrectTimeoutError(Exception):
-    pass
+    """"Timeout must be an integer between 1 and 60"""
 
 
 class IncorrectVerifyError(Exception):
-    pass
+    """Verify certificate must be a boolean"""
 
 
 class Config:
@@ -86,7 +86,10 @@ class Config:
             data_from_json = json.load(f)
             return ConfigDTO(
                 seed_urls=data_from_json.get('seed_urls', []),
-                total_articles_to_find_and_parse=data_from_json.get('total_articles_to_find_and_parse', 0),
+                total_articles_to_find_and_parse=data_from_json.get(
+                    'total_articles_to_find_and_parse',
+                    0
+                ),
                 headers=data_from_json.get('headers', {}),
                 encoding=data_from_json.get('encoding', 'utf-8'),
                 timeout=data_from_json.get('timeout', 15),

@@ -9,7 +9,7 @@ import sys
 from admin_utils.test_params import PROJECT_ROOT
 from config.collect_coverage.run_coverage import get_target_score
 from config.console_logging import get_child_logger
-from core_utils import ASSETS_PATH
+from core_utils.constants import ASSETS_PATH
 
 logger = get_child_logger(__file__)
 
