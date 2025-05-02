@@ -14,7 +14,7 @@ from time import sleep
 from typing import Pattern, Union
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
@@ -331,21 +331,21 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         div = article_soup.find('div', class_='col-md-6 col-md-push-3')
+        if isinstance(div, Tag):
+            entry_header = div.find('h1', {'class': 'entry-title'})
+            if entry_header:
+                self.article.title = entry_header.get_text(strip=True)
 
-        entry_header = div.find('h1', {'class': 'entry-title'})
-        if entry_header:
-            self.article.title = entry_header.get_text(strip=True)
+            article_author = div.find('h3', class_='user-name')
+            if article_author:
+                self.article.author = ([article_author.get_text(strip=True)]
+                                       if article_author else ["NOT FOUND"])
 
-        article_author = div.find('h3', class_='user-name')
-        if article_author:
-            self.article.author = ([article_author.get_text(strip=True)]
-                                   if article_author else ["NOT FOUND"])
+            date = div.find('meta', {'property': 'article:published_time'})
+            self.article.date = (self.unify_date_format(date['content'])
+                                 if date else datetime.datetime.now().replace(microsecond=0))
 
-        date = div.find('meta', {'property': 'article:published_time'})
-        self.article.date = (self.unify_date_format(date['content'])
-                             if date else datetime.datetime.now().replace(microsecond=0))
-
-        self.article.topics = []
+            self.article.topics = []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
