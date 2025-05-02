@@ -9,11 +9,14 @@ import pathlib
 import re
 from typing import Pattern, Union
 import requests
+
 from bs4 import BeautifulSoup
+
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+
 
 class IncorrectSeedURLError(Exception):
     """
@@ -107,11 +110,13 @@ class Config:
                 raise IncorrectSeedURLError('Seed URL does not match standard pattern')
 
         if config_data['total_articles_to_find_and_parse'] > 150:
-            raise NumberOfArticlesOutOfRangeError('Total number of articles is out of range from 1 to 150')
+            raise NumberOfArticlesOutOfRangeError('Total number of articles '
+                                                  'is out of range from 1 to 150')
 
         if (not isinstance(config_data['total_articles_to_find_and_parse'], int) or
                 config_data['total_articles_to_find_and_parse'] <= 0):
-            raise IncorrectNumberOfArticlesError('Total number of articles to parse is not integer or less than 0')
+            raise IncorrectNumberOfArticlesError('Total number of articles '
+                                                 'to parse is not integer or less than 0')
 
         if not isinstance(config_data['headers'], dict):
             raise IncorrectHeadersError('Headers are not in a form of dictionary')
@@ -339,7 +344,8 @@ class HTMLParser:
 
         publish_date = news_post.find("td", {"class": "small"})
         if publish_date and publish_date.get_text():
-            self.article.date = self.unify_date_format(publish_date.get_text().split(":")[1].strip())
+            self.article.date = self.unify_date_format(
+                publish_date.get_text().split(":")[1].strip())
 
         topics = news_post.find("td", {"style": "FONT-SIZE: 11px;"})
         self.article.topics = topics.get_text().split(":")[1].split(",") if topics else None
