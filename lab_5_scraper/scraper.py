@@ -32,7 +32,7 @@ class IncorrectSeedURLError(Exception):
     """
     Raised when the seed URL is not written correctly in the configuration file.
     """
-    def __init__(self, msg):
+    def __init__(self, msg: str):
         super().__init__(msg)
 
 
@@ -40,7 +40,7 @@ class NumberOfArticlesOutOfRangeError(Exception):
     """
     Raised when the number of articles is too large in the configuration file.
     """
-    def __init__(self, msg):
+    def __init__(self, msg: str):
         super().__init__(msg)
 
 
@@ -48,7 +48,7 @@ class IncorrectNumberOfArticlesError(Exception):
     """
     Raised when the number of articles is too small or not an integer in the configuration file.
     """
-    def __init__(self, msg):
+    def __init__(self, msg: str):
         super().__init__(msg)
 
 
@@ -56,7 +56,7 @@ class IncorrectHeadersError(Exception):
     """
     Raised when the headers are not in a form of dictionary in the configuration file.
     """
-    def __init__(self, msg):
+    def __init__(self, msg: str):
         super().__init__(msg)
 
 
@@ -64,7 +64,7 @@ class IncorrectEncodingError(Exception):
     """
     Raised when the encoding is not specified as a string in the configuration file.
     """
-    def __init__(self, msg):
+    def __init__(self, msg: str):
         super().__init__(msg)
 
 
@@ -72,7 +72,7 @@ class IncorrectTimeoutError(Exception):
     """
     Raised when the timeout is too large or not a positive integer in the configuration file.
     """
-    def __init__(self, msg):
+    def __init__(self, msg: str):
         super().__init__(msg)
 
 
@@ -80,7 +80,7 @@ class IncorrectVerifyError(Exception):
     """
     Raised when the verify certificate value is neither True nor False in the configuration file.
     """
-    def __init__(self, msg):
+    def __init__(self, msg: str):
         super().__init__(msg)
 
 
@@ -274,7 +274,12 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        return article_bs.a["href"]
+        if article_bs.a is None:
+            raise ValueError("Failed to reach the tag containing a link")
+        link_text = article_bs.a["href"]
+        if not isinstance(link_text, str):
+            raise ValueError("The link is not a string")
+        return link_text
 
     def find_articles(self) -> None:
         """
