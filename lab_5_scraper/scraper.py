@@ -373,9 +373,9 @@ class HTMLParser:
         if not self.article.url:
             return False
         soup = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
-        self._fill_article_with_text(soup)
         if not self.article.text:
-            return False
+            self.article.text = 'NOT FOUND'
+        self._fill_article_with_text(soup)
         self._fill_article_with_meta_information(soup)
         return self.article
 
