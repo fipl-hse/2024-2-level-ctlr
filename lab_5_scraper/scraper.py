@@ -123,27 +123,45 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not (isinstance(self.config_dict["seed_urls"], list)):
-            raise IncorrectSeedURLError("Seed URLs should be a list of strings")
+        if not isinstance(self.config_dict["seed_urls"], list):
+            raise IncorrectSeedURLError(
+                "Seed URLs should be a list of strings"
+            )
         for url in self.config_dict["seed_urls"]:
             if not re.match("https?://(www.)?", url):
-                raise IncorrectSeedURLError("Incorrect seed URL format in the config")
+                raise IncorrectSeedURLError(
+                    "Incorrect seed URL format in the config"
+                )
         if not (isinstance(self.config_dict["total_articles_to_find_and_parse"], int) and
                 self.config_dict["total_articles_to_find_and_parse"] > 0):
-            raise IncorrectNumberOfArticlesError("Number of articles in the config is out of range")
+            raise IncorrectNumberOfArticlesError(
+                "Number of articles in the config is out of range"
+            )
         if self.config_dict["total_articles_to_find_and_parse"] > NUM_ARTICLES_UPPER_LIMIT:
-            raise NumberOfArticlesOutOfRangeError("Number of articles in the config is not an int or less than 0")
+            raise NumberOfArticlesOutOfRangeError(
+                "Number of articles in the config is not an int or less than 0"
+            )
         if not isinstance(self.config_dict["headers"], dict):
-            raise IncorrectHeadersError("Headers need to be specified as a dictionary in the config")
+            raise IncorrectHeadersError(
+                "Headers need to be specified as a dictionary in the config"
+            )
         if not isinstance(self.config_dict["encoding"], str):
-            raise IncorrectEncodingError("Encoding should be a string in the config")
+            raise IncorrectEncodingError(
+                "Encoding should be a string in the config"
+            )
         if not (isinstance(self.config_dict["timeout"], int) and
                 TIMEOUT_LOWER_LIMIT < self.config_dict["timeout"] < TIMEOUT_UPPER_LIMIT):
-            raise IncorrectTimeoutError("Timeout is incorrect or out of range in the config")
+            raise IncorrectTimeoutError(
+                "Timeout is incorrect or out of range in the config"
+            )
         if not isinstance(self.config_dict["should_verify_certificate"], bool):
-            raise IncorrectVerifyError("Verify Certificate value should be True of False in the config")
+            raise IncorrectVerifyError(
+                "Verify Certificate value should be True of False in the config"
+            )
         if not isinstance(self.config_dict["headless_mode"], bool):
-            raise IncorrectVerifyError("Headless mode should be True of False in the config")
+            raise IncorrectVerifyError(
+                "Headless mode should be True of False in the config"
+            )
 
     def get_seed_urls(self) -> list[str]:
         """
