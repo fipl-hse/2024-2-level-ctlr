@@ -487,7 +487,7 @@ def main_recursive_crawler() -> None:
     config = Config(CRAWLER_CONFIG_PATH)
     recursive_crawler = CrawlerRecursive(config)
     recursive_crawler.find_articles()
-    with open('tmp/recursive_crawler_cache.json', 'r') as file:
+    with open('tmp/recursive_crawler_cache.json', 'r', encoding='utf-8') as file:
         cache = json.load(file)
     urls = cache["urls_collected"]
     for idx, url in enumerate(urls, 1):
