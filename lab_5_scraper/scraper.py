@@ -386,7 +386,7 @@ def main() -> None:
     crawler = Crawler(config=config)
     crawler.find_articles()
     for art_id, art_url in enumerate(crawler.urls):
-        parser = HTMLParser(full_url=art_url, article_id=art_id, config=config)
+        parser = HTMLParser(full_url=art_url, article_id=art_id+1, config=config)
         parsed_article = parser.parse()
         io.to_raw(parsed_article)
         io.to_meta(parsed_article)
