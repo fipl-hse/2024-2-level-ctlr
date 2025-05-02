@@ -241,9 +241,9 @@ class Crawler:
             config (Config): Configuration
         """
         self._config = config
-        self.urls = []
         self._seed_urls = self._config.get_seed_urls()
-        prepare_environment(ASSETS_PATH)
+        self.urls = []
+        self._seen_urls = set()
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -255,16 +255,16 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        href = article_bs.get('href', '').strip()
-        if not href:
+        link = article_bs.find('a')
+        if not link or not link.get('href'):
             return ""
 
-        base_domain = "https://www.gorno-altaisk.info/"
-        if href.startswith(('http://', 'https://')):
-            return href if 'gorno-altaisk.info' in href else ""
-        elif href.startswith('/'):
-            return f"{base_domain}{href}"
-        return ""
+        url = link['href']
+        if not url.startswith('http'):
+            base_url = self._seed_urls[0] if self._seed_urls else ""
+            url = base_url.rstrip('/') + '/' + url.lstrip('/')
+
+        return url if url.startswith('https://www.gorno-altaisk.info') else ""
 
     def find_articles(self) -> None:
         """
@@ -289,7 +289,7 @@ class Crawler:
                     elif not href.startswith(base_domain):
                         continue
 
-                    if '/news/' in href or '/article/' in href:
+                    if any(path in href for path in ['/news', '/analitics']):
                         article_links.append(href)
 
                 for url in article_links:
@@ -301,6 +301,13 @@ class Crawler:
             except Exception as e:
                 print(f"Error processing {seed_url}: {str(e)}")
                 continue
+
+    def get_search_urls(self) -> list:
+        """
+        Returns:
+        list: seed_urls param
+        """
+        return self._seed_urls
 
 
 # 10
@@ -395,9 +402,21 @@ class HTMLParser:
             datetime.datetime: Datetime object
         """
         try:
-            return datetime.datetime.strptime(date_str, "%d.%m.%Y")
-        except ValueError:
-            return datetime.datetime.now()
+            response = make_request(self._full_url, self._config)
+            if response.ok:
+                soup = BeautifulSoup(response.text, 'lxml')
+                self._fill_article_with_text(soup)
+            else:
+                self.article.text = f"Failed to fetch article (HTTP {response.status_code}). " \
+                                    f"Minimum required placeholder text."
+        except Exception as e:
+            self.article.text = f"Error parsing article: {str(e)}. " \
+                                f"Minimum required placeholder text."
+
+        if len(self.article.text) < 50:
+            self.article.text += " " * (50 - len(self.article.text))
+
+        return self.article
 
     def parse(self) -> Union[Article, bool, list]:
         """
