@@ -1,10 +1,9 @@
 {
     "seed_urls": [
-        "https://tuvapravda.ru/novosti/?page=1",
-        "https://tuvapravda.ru/novosti/?page=2",
-        "https://tuvapravda.ru/novosti/?page=3",
-        "https://tuvapravda.ru/novosti/?page=4",
-        "https://tuvapravda.ru/novosti/?page=5"
+        "https://govoritnn.ru/category/news/",
+        "https://govoritnn.ru/category/polls/",
+        "https://govoritnn.ru/category/say/",
+        "https://govoritnn.ru/category/analytics/"
     ],
     "headers": {
         "Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
