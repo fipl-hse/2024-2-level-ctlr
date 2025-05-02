@@ -361,8 +361,7 @@ class HTMLParser:
             class_=('Typography_text__WDByQ Typography_size__13__yGx1X Typography_'
                     'none__FajqV Typography_primary__29LdH Typography_bold__JQYIc'))
         if topic:
-            topic = topic.get_text(strip=True)
-            self.article.topics = [topic]
+            self.article.topics = [topic.get_text(strip=True)]
         else:
             self.article.topics = []
 
