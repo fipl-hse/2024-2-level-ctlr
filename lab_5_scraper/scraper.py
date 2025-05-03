@@ -256,11 +256,6 @@ class Crawler:
                 self.urls.append(url)
                 if len(self.urls) == self.config.get_num_articles():
                     break
-            '''while True:
-                url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
-                if not url:
-                    break
-                self.urls.append(url)'''
 
     def get_search_urls(self) -> list:
         """
