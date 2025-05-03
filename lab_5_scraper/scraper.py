@@ -100,8 +100,7 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if (not isinstance(self._seed_urls, list) or
-                not all(isinstance(url, str) for url in self._seed_urls)):
+        if not (isinstance(self._seed_urls, list) and all(isinstance(url, str) for url in self._seed_urls)):
             raise IncorrectSeedURLError('Seed URLs must be a list of strings')
         if not all(url.startswith('https://www.universalinternetlibrary.ru/') for url in
                    self._seed_urls):
@@ -225,7 +224,7 @@ class Crawler:
         Args:
             config (Config): Configuration
         """
-        self.config = config
+        self._config = config
         self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
@@ -255,11 +254,11 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.get_search_urls():
-            if len(self.urls) >= self.config.get_num_articles():
+            if len(self.urls) >= self._config.get_num_articles():
                 break
 
             try:
-                response = make_request(seed_url, self.config)
+                response = make_request(seed_url, self._config)
                 if not response.ok:
                     print(f"Request failed for URL: {seed_url} - Status code: {response.status_code}")
                     continue
@@ -270,7 +269,7 @@ class Crawler:
             articles_blocks = soup.find_all('div', class_='post-card__thumbnail')
 
             for block in articles_blocks:
-                if len(self.urls) >= self.config.get_num_articles():
+                if len(self.urls) >= self._config.get_num_articles():
                     return
 
                 link = block.find('a', href=True)
@@ -288,7 +287,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-        return self.config.get_seed_urls()
+        return self._config.get_seed_urls()
 
 
 # 10
@@ -361,9 +360,10 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         response = make_request(self.full_url, self.config)
-        if response.status_code == 200:
-            article_bs = BeautifulSoup(response.text, 'lxml')
-            self._fill_article_with_text(article_bs)
+        if not response.ok:
+            return False
+        article_bs = BeautifulSoup(response.text, 'lxml')
+        self._fill_article_with_text(article_bs)
         return self.article
 
 
