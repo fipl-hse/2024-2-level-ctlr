@@ -199,7 +199,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(),
                             verify=config.get_verify_certificate())
     response.encoding = config.get_encoding()
-    sleep(randint(1, 10))
+    sleep(randint(5, 12))
     return response
 
 
@@ -247,11 +247,20 @@ class Crawler:
             response = make_request(seed_url, self.config)
             if not response.ok:
                 continue
-            while True:
+            soup = BeautifulSoup(response.text, 'lxml')
+            divs = soup.find_all('div')
+            for div in divs:
+                url = self._extract_url(div)
+                if not url:
+                    continue
+                self.urls.append(url)
+                if len(self.urls) == self.config.get_num_articles():
+                    break
+            '''while True:
                 url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
                 if not url:
                     break
-                self.urls.append(url)
+                self.urls.append(url)'''
 
     def get_search_urls(self) -> list:
         """
@@ -368,8 +377,8 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    for index, url in enumerate(crawler.urls):
-        parser = HTMLParser(url, index + 1, configuration)
+    for index, url in enumerate(crawler.urls, start=1):
+        parser = HTMLParser(url, index, configuration)
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
