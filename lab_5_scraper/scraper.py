@@ -335,8 +335,8 @@ class CrawlerRecursive(Crawler):
         """
         Finds articles doing recursive crawling.
         """
-        # if len(self.urls) >= self.config.get_num_articles():
-        #     return
+        if len(self.urls) >= self.config.get_num_articles():
+            return
         if len(self.visited_urls) == 0:
             current_url = self.start_url
         else:
@@ -497,4 +497,3 @@ def main_recursive_crawler() -> None:
 
 if __name__ == "__main__":
     main()
-    # main_recursive_crawler()
