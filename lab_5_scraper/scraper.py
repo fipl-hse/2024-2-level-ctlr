@@ -32,56 +32,42 @@ class IncorrectSeedURLError(Exception):
     """
     Raised when the seed URL is not written correctly in the configuration file.
     """
-    def __init__(self, msg: str):
-        super().__init__(msg)
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """
     Raised when the number of articles is too large in the configuration file.
     """
-    def __init__(self, msg: str):
-        super().__init__(msg)
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """
     Raised when the number of articles is too small or not an integer in the configuration file.
     """
-    def __init__(self, msg: str):
-        super().__init__(msg)
 
 
 class IncorrectHeadersError(Exception):
     """
     Raised when the headers are not in a form of dictionary in the configuration file.
     """
-    def __init__(self, msg: str):
-        super().__init__(msg)
 
 
 class IncorrectEncodingError(Exception):
     """
     Raised when the encoding is not specified as a string in the configuration file.
     """
-    def __init__(self, msg: str):
-        super().__init__(msg)
 
 
 class IncorrectTimeoutError(Exception):
     """
     Raised when the timeout is too large or not a positive integer in the configuration file.
     """
-    def __init__(self, msg: str):
-        super().__init__(msg)
 
 
 class IncorrectVerifyError(Exception):
     """
     Raised when the verify certificate value is neither True nor False in the configuration file.
     """
-    def __init__(self, msg: str):
-        super().__init__(msg)
 
 
 class Config:
@@ -98,17 +84,15 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        with open(self.path_to_config, "r", encoding="utf-8") as file:
-            self.config_dict = json.load(file)
+        self.dto = self._extract_config_content()
         self._validate_config_content()
-        dto = self._extract_config_content()
-        self._seed_urls = dto.seed_urls
-        self._num_articles = dto.total_articles
-        self._headers = dto.headers
-        self._encoding = dto.encoding
-        self._timeout = dto.timeout
-        self._should_verify_certificate = dto.should_verify_certificate
-        self._headless_mode = dto.headless_mode
+        self._seed_urls = self.dto.seed_urls
+        self._num_articles = self.dto.total_articles
+        self._headers = self.dto.headers
+        self._encoding = self.dto.encoding
+        self._timeout = self.dto.timeout
+        self._should_verify_certificate = self.dto.should_verify_certificate
+        self._headless_mode = self.dto.headless_mode
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -117,48 +101,49 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        return ConfigDTO(**self.config_dict)
+        with open(self.path_to_config, "r", encoding="utf-8") as file:
+            config_dict = json.load(file)
+        return ConfigDTO(**config_dict)
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self.config_dict["seed_urls"], list):
+        if not isinstance(self.dto.seed_urls, list):
             raise IncorrectSeedURLError(
                 "Seed URLs should be a list of strings"
             )
-        for url in self.config_dict["seed_urls"]:
+        for url in self.dto.seed_urls:
             if not re.match("https?://(www.)?", url):
                 raise IncorrectSeedURLError(
                     "Incorrect seed URL format in the config"
                 )
-        if not (isinstance(self.config_dict["total_articles_to_find_and_parse"], int) and
-                self.config_dict["total_articles_to_find_and_parse"] > 0):
+        if not (isinstance(self.dto.total_articles, int) and self.dto.total_articles > 0):
             raise IncorrectNumberOfArticlesError(
+                "Number of articles in the config is not an int or less than 1"
+            )
+        if self.dto.total_articles > NUM_ARTICLES_UPPER_LIMIT:
+            raise NumberOfArticlesOutOfRangeError(
                 "Number of articles in the config is out of range"
             )
-        if self.config_dict["total_articles_to_find_and_parse"] > NUM_ARTICLES_UPPER_LIMIT:
-            raise NumberOfArticlesOutOfRangeError(
-                "Number of articles in the config is not an int or less than 0"
-            )
-        if not isinstance(self.config_dict["headers"], dict):
+        if not isinstance(self.dto.headers, dict):
             raise IncorrectHeadersError(
                 "Headers need to be specified as a dictionary in the config"
             )
-        if not isinstance(self.config_dict["encoding"], str):
+        if not isinstance(self.dto.encoding, str):
             raise IncorrectEncodingError(
                 "Encoding should be a string in the config"
             )
-        if not (isinstance(self.config_dict["timeout"], int) and
-                TIMEOUT_LOWER_LIMIT < self.config_dict["timeout"] < TIMEOUT_UPPER_LIMIT):
+        if not (isinstance(self.dto.timeout, int) and
+                TIMEOUT_LOWER_LIMIT < self.dto.timeout < TIMEOUT_UPPER_LIMIT):
             raise IncorrectTimeoutError(
                 "Timeout is incorrect or out of range in the config"
             )
-        if not isinstance(self.config_dict["should_verify_certificate"], bool):
+        if not isinstance(self.dto.should_verify_certificate, bool):
             raise IncorrectVerifyError(
                 "Verify Certificate value should be True of False in the config"
             )
-        if not isinstance(self.config_dict["headless_mode"], bool):
+        if not isinstance(self.dto.headless_mode, bool):
             raise IncorrectVerifyError(
                 "Headless mode should be True of False in the config"
             )
