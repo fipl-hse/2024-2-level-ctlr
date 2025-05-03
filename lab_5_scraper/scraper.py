@@ -235,28 +235,22 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        all_a_links = article_bs.find_all('a', {'class': 'news-card photo'})
-        for a_elem in all_a_links:
-            href = a_elem['href']
-            full_link = WEBSITE + href
-            if full_link not in self.urls and isinstance(full_link, str):
-                return full_link
-        return 'STOP_SEED_URL_ITERATION'
+        return WEBSITE + article_bs['href']
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
         for seed_url in self.get_search_urls():
-            if len(self.urls) >= self.config.get_num_articles():
-                break
             response = make_request(seed_url, self.config)
             if not response.ok:
                 continue
-            while True:
-                url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
-                if url == 'STOP_SEED_URL_ITERATION':
+            bs_text = BeautifulSoup(response.text, 'lxml')
+            all_a_links = bs_text.find_all('a', {'class': 'news-card photo'})
+            for a_elem in all_a_links:
+                if len(self.urls) >= self.config.get_num_articles():
                     break
+                url = self._extract_url(a_elem)
                 if url not in self.urls:
                     self.urls.append(url)
 
@@ -341,12 +335,15 @@ class CrawlerRecursive(Crawler):
         """
         Finds articles doing recursive crawling.
         """
-        if len(self.urls) >= self.config.get_num_articles():
-            return
+        # if len(self.urls) >= self.config.get_num_articles():
+        #     return
         if len(self.visited_urls) == 0:
             current_url = self.start_url
         else:
-            current_url = list(set(self.urls) - set(self.visited_urls))[0]
+            urls_not_visited = set(self.urls) - set(self.visited_urls)
+            if len(urls_not_visited) == 0:
+                return
+            current_url = list(urls_not_visited)[0]
         self.visited_urls.append(current_url)
         response = make_request(current_url, self.config)
         if not response.ok:
@@ -354,7 +351,7 @@ class CrawlerRecursive(Crawler):
         soup = BeautifulSoup(response.text, 'lxml')
         self._extract_urls(soup)
         with open(self._cache_path, 'w', encoding='utf-8') as file:
-            json.dump({"urls_collected": self.urls,
+            json.dump({"urls_collected": list(set(self.urls)),
                        "urls_visited": self.visited_urls}, file, indent=4)
         self.find_articles()
 
@@ -397,8 +394,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        # news_details = article_soup.find('div', {'class': 'news-detail'})
-        title = article_soup.find_all('h1', {'class': 'title'})[1].text
+        title = article_soup.find_all('h1', {'class': 'title'})[-1].text
         self.article.title = title
         author = article_soup.find('div', {'class': 'author-news__info-authors'})
         if author:
@@ -487,7 +483,8 @@ def main_recursive_crawler() -> None:
     config = Config(CRAWLER_CONFIG_PATH)
     recursive_crawler = CrawlerRecursive(config)
     recursive_crawler.find_articles()
-    with open('tmp/recursive_crawler_cache.json', 'r', encoding='utf-8') as file:
+    path_to_cache = pathlib.Path(__file__).parent.parent / "tmp" / "recursive_crawler_cache.json"
+    with open(path_to_cache, 'r', encoding='utf-8') as file:
         cache = json.load(file)
     urls = cache["urls_collected"]
     for idx, url in enumerate(urls, 1):
@@ -500,3 +497,4 @@ def main_recursive_crawler() -> None:
 
 if __name__ == "__main__":
     main()
+    # main_recursive_crawler()
