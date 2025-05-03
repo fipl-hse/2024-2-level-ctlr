@@ -331,11 +331,10 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         title_tag = article_soup.find('h1')
-        title = title_tag.find('a') if title_tag else None
-        self.article.title = title.get_text().strip() if title else "NO TITLE"
+        self.article.title = title_tag.get_text().strip() if title_tag else "NO TITLE"
 
-        author = article_soup.find('a', class_='red')
-        self.article.author = author.get_text().strip() if author else "NOT FOUND"
+        author = article_soup.find('a', class_='red', id=re.compile(r'.*_authorName$'))
+        self.article.author = [author.get_text().strip()] if author else ["NOT FOUND"]
 
         time_tag = article_soup.find('time', id=re.compile
                                      (r'^MainMasterContentPlaceHolder_.*_articleTime$'))
