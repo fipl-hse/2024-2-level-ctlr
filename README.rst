@@ -53,7 +53,7 @@ Project Timeline
    1. Short summary: Your code can automatically process raw texts from
       previous step, make point-of-speech tagging and basic
       morphological analysis.
-   2. Deadline: **May, TBD**.
+   2. Deadline: **May, 23**.
    3. Format: each student works in their own PR.
    4. Dataset volume: 5-7 articles.
    5. Design document: :ref:`pipeline-label`.
@@ -71,6 +71,33 @@ Lectures history
 | 04.04.2024 | Seminar: Local      | N/A                                                          |
 |            | setup. Choose       |                                                              |
 |            | website.            |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 11.04.2024 | Lecture: 3rd party  | N/A                                                          |
+|            | libraries. Browser  |                                                              |
+|            | headers.            |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 11.04.2024 | Seminar:            | `Листинг <./seminars/seminar_04_08_2024/try_requests.py>`__. |
+|            | ``requests``:   .   |                                                              |
+|            | install, API.       |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 18.04.2024 | Lecture: HTML       | N/A                                                          |
+|            | structure. ``bs4``  |                                                              |
+|            | library.            |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 18.04.2024 | Seminar:            | `Листинг <./seminars/seminar_04_17_2024/try_bs.py>`__.       |
+|            | ``bs4``:   .        |                                                              |
+|            | install, API.       |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 25.04.2024 | Lecture: Filesystem | N/A                                                          |
+|            | with ``pathlib``.   |                                                              |
+|            | Dates.              |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 25.04.2024 | Seminar:            | `Листинг <./seminars/seminar_04_25_2024/try_paths.py>`__.    |
+|            | filesystem with     | `Листинг <./seminars/seminar_04_25_2024/try_json.py>`__.     |
+|            | ``pathlib``, dates. | `Листинг <./seminars/seminar_04_25_2024/try_dates.py>`__.    |
++------------+---------------------+--------------------------------------------------------------+
+| 02.05.2024 | Offline Lab 5       | N/A                                                          |
+|            | handover.           |                                                              |
 +------------+---------------------+--------------------------------------------------------------+
 
 You can find a more complete summary from lectures in :ref:`ctlr-lectures-label`.
