@@ -357,8 +357,7 @@ jobs:
           source venv/bin/activate
           export PYTHONPATH=$(pwd):$PYTHONPATH
           python admin_utils/unpack_archived_dataset.py lab_6_pipeline
-          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_6_pipeline --pytest-label stage_3_4_admin_data_processing
-          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_6_pipeline --pytest-label stage_3_6_advanced_morphological_processing
+          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_6_pipeline --pytest-label stage_3_3_admin_data_processing
 
   run-student-processing:
     name: Pipe processed student data
@@ -423,7 +422,7 @@ jobs:
           source venv/bin/activate
           export PYTHONPATH=$(pwd):$PYTHONPATH
           python admin_utils/unpack_archived_dataset.py lab_6_pipeline
-          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_6_pipeline --pytest-label stage_3_5_student_dataset_validation
+          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_6_pipeline --pytest-label stage_3_4_student_dataset_validation
 
   running-pos-pipeline-tests:
     name: POSFrequencyPipeline tests
@@ -465,10 +464,68 @@ jobs:
             tmp/articles
           retention-days: 5
 
+  running-pattern-search-pipeline-tests:
+    name: PatternSearchPipeline tests
+    needs: [
+      running-pos-pipeline-tests
+    ]
+    env:
+      PR_AUTHOR: ${{ github.actor }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup FIPL environment
+        uses: fipl-hse/setup-env-action@v0.11
+      - name: Download UDPipe model
+        run: |
+          mkdir -p "$MODEL_PATH" 
+          wget -O $MODEL_PATH/russian-syntagrus-ud-2.0-170801.udpipe $MODEL_URL
+      - name: Download previously collected dataset
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: processed-dataset
+      - name: Congratulations
+        run: |
+          source venv/bin/activate
+          export PYTHONPATH=$(pwd)
+          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_6_pipeline --pytest-label stage_5_pattern_search_pipeline_checks
+      - name: Archive processed dataset
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: processed-dataset
+          path: |
+            tmp/articles
+          retention-days: 5
+
+  checking-compatibility-with-advanced-analyzer:
+    name: Advanced processing with Stanza
+    needs: [
+      running-pattern-search-pipeline-tests
+    ]
+    env:
+      PR_AUTHOR: ${{ github.actor }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup FIPL environment
+        uses: fipl-hse/setup-env-action@v0.11
+      - name: Run data validation
+        run: |
+          source venv/bin/activate
+          export PYTHONPATH=$(pwd):$PYTHONPATH
+          python config/run_tests.py --pr-name "$PR_NAME" --pr-author "$PR_AUTHOR" --lab-path lab_6_pipeline --pytest-label stage_6_advanced_data_processing
+
+
   milestone-2-pipeline-is-working:
     name: Pipeline is accepted!
     needs: [
-      running-pos-pipeline-tests
+      checking-compatibility-with-advanced-analyzer
     ]
     runs-on: ubuntu-latest
     timeout-minutes: 2
