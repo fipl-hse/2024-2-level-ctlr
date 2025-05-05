@@ -199,7 +199,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(),
                             verify=config.get_verify_certificate())
     response.encoding = config.get_encoding()
-    sleep(randint(5, 12))
+    sleep(randint(3, 10))
     return response
 
 
@@ -244,8 +244,10 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.get_search_urls():
+            if len(self.urls) == self.config.get_num_articles():
+                break
             response = make_request(seed_url, self.config)
-            if not response.ok:
+            if not response or not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
             divs = soup.find_all('div')
@@ -300,7 +302,8 @@ class HTMLParser:
         full_text.append(extract)
         article_body = article_soup.find('div', class_='entry-content')
         for part in article_body.find_all(['p', 'ol', 'ul']):
-            if part.find('a'):
+            link = part.find('a')
+            if link and 'Читайте «Литературно»' in part.text:
                 break
             text = part.text
             if text:
