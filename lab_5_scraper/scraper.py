@@ -328,17 +328,17 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        div = article_soup.find('div', {'class': 'col-md-6 col-md-push-3'})
+        div = article_soup.find('div', class_='col-md-6 col-md-push-3')
         if isinstance(div, Tag):
             article = div.find('article')
             if article:
                 header = article.find('header', {'class': 'entry-header'})
                 if header:
-                    entry_title = header.find('h1', {'class': 'entry-title'})
+                    entry_title = header.find('h1', class_='entry-title')
                     if entry_title:
                         self.article.title = entry_title.get_text(strip=True)
                 else:
-                    entry_title = article.find('h1', {'class': 'entry-title'})
+                    entry_title = article.find('h1', class_='entry-title')
                     if entry_title:
                         self.article.title = entry_title.get_text(strip=True)
 
