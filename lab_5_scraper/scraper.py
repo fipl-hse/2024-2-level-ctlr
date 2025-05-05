@@ -246,13 +246,12 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        link = article_bs.find('a', class_='lsd-arch-link')
-        if not link:
-            return ''
-
-        url = link.get('href', '')
-        link.decompose()
-        return url if isinstance(url, str) else ''
+        link = article_bs.find('a', href=True)  # Find any <a> tag with href attribute
+        if link:
+            href = link.get("href")
+            if isinstance(href, str):
+                return href
+        return ""
 
     def find_articles(self) -> None:
         """
@@ -264,14 +263,13 @@ class Crawler:
             response = make_request(seed_url, self.config)
             if response.ok:
                 soup = BeautifulSoup(response.text, 'lxml')
-                while True:
-                    url = self._extract_url(soup)
-                    if url == '':
+                articles = soup.find_all('article', class_='blog-post-wrap')
+                for article in articles:
+                    if len(self.urls) >= self.config.get_num_articles():
                         break
-                    if url not in self.urls:
+                    url = self._extract_url(article)
+                    if url and url not in self.urls:
                         self.urls.append(url)
-                        if len(self.urls) >= self.config.get_num_articles():
-                            return
 
     def get_search_urls(self) -> list:
         """
@@ -332,9 +330,17 @@ class HTMLParser:
         """
         div = article_soup.find('div', class_='col-md-6 col-md-push-3')
         if isinstance(div, Tag):
-            entry_header = div.find('h1', {'class': 'entry-title'})
-            if entry_header:
-                self.article.title = entry_header.get_text(strip=True)
+            article = div.find('article')
+            if article:
+                header = article.find('header', class_='entry-header')
+                if header:
+                    entry_title = header.find('h1', class_='entry-title')
+                    if entry_title:
+                        self.article.title = entry_title.get_text(strip=True)
+                else:
+                    entry_title = article.find('h1', class_='entry-title')
+                    if entry_title:
+                        self.article.title = entry_title.get_text(strip=True)
 
             article_author = div.find('h3', class_='user-name')
             if article_author:
