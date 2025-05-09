@@ -329,17 +329,9 @@ class HTMLParser:
         """
         div = article_soup.find('div', class_='col-md-6 col-md-push-3')
         if isinstance(div, Tag):
-            article = div.find('article')
-            if article:
-                header = article.find('header', {'class': 'entry-header'})
-                if header:
-                    entry_title = header.find('h1', class_='entry-title')
-                    if entry_title:
-                        self.article.title = entry_title.get_text(strip=True)
-                else:
-                    entry_title = article.find('h1', class_='entry-title')
-                    if entry_title:
-                        self.article.title = entry_title.get_text(strip=True)
+            entry_title = div.find('h1', class_='entry-title')
+            if entry_title:
+                self.article.title = entry_title.get_text(strip=True)
 
             article_author = div.find('h3', class_='user-name')
             if article_author:
