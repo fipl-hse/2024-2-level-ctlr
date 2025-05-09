@@ -324,6 +324,18 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        self.article.title = article_soup.find("h1").text
+        self.article.author = ["NOT FOUND"]
+        date = article_soup.find("time", class_="entry-date published").attrs["datetime"]
+        self.article.date = date
+        self.article.topics = ["Последние новости"]
+        full_text = article_soup.find("div", class_="below-entry-meta")
+
+        for text in full_text:
+            if text.get_text().strip().startswith("Редакция -АЛ-"):
+                authors = text.get_text().strip().replace("Редакция -АЛ- ", "")[:-1:]
+                all_authors = authors.split(", ")
+                self.article.author = all_authors
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -347,6 +359,7 @@ class HTMLParser:
         if response.ok:
             bs = BeautifulSoup(response.text, "lxml")
             self._fill_article_with_text(bs)
+            self._fill_article_with_meta_information(bs)
         return self.article
 
 
