@@ -340,6 +340,12 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        title = article_soup.find('h1', {'class': 'entry-title'})
+        self.article.title = title.text.strip() if title else "NOT FOUND"
+        self.article.author = ['NOT FOUND']
+        date = article_soup.find('time', {'itemprop': 'dateModified'}).text
+        self.article.date = self.unify_date_format(date)
+        self.article.topics = []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -351,6 +357,30 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        eng = {
+            'января': 'Jan',
+            'февраля': 'Feb',
+            'марта': 'Mar',
+            'апреля': 'Apr',
+            'мая': 'May',
+            'июня': 'Jun',
+            'июля': 'Jul',
+            'августа': 'Aug',
+            'сентября': 'Sep',
+            'октября': 'Oct',
+            'ноября': 'Nov',
+            'декабря': 'Dec'
+        }
+
+        date_parts = date_str.split(' ')
+        month = date_parts[1].rstrip(',')
+        if month in eng:
+            date_parts[1] = eng[month]
+        else:
+            raise ValueError(f"Month '{month}' not recognized.")
+        new_date_str = ' '.join(date_parts)
+
+        return datetime.datetime.strptime(new_date_str, '%d %b %Y')
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -364,6 +394,7 @@ class HTMLParser:
             return False
         article_bs = BeautifulSoup(response.text, 'lxml')
         self._fill_article_with_text(article_bs)
+        self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
