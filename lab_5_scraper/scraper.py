@@ -4,7 +4,6 @@ Crawler implementation.
 
 import datetime
 import json
-import os
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
@@ -214,7 +213,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
                             verify=config.get_verify_certificate(),
                             )
     response.encoding = config.get_encoding()
-    #sleep(randint(1, 10))
+    sleep(randint(1, 10))
     return response
 
 
@@ -399,9 +398,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if os.path.exists(base_path):
+    if pathlib.Path(base_path).is_dir():
         shutil.rmtree(base_path)
-    pathlib.Path(base_path).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(base_path).mkdir(parents=True)
 
 
 def main() -> None:
