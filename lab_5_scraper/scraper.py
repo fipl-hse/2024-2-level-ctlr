@@ -324,7 +324,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        self.article.title = article_soup.find("h1").text
+        self.article.title = article_soup.find("title").text
         self.article.author = ["NOT FOUND"]
         date = article_soup.find("time", class_="entry-date published").attrs["datetime"]
         self.article.date = datetime.datetime.fromisoformat(date)
