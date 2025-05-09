@@ -327,7 +327,7 @@ class HTMLParser:
         self.article.title = article_soup.find("h1").text
         self.article.author = ["NOT FOUND"]
         date = article_soup.find("time", class_="entry-date published").attrs["datetime"]
-        self.article.date = date
+        self.article.date = datetime.datetime.fromisoformat(date)
         self.article.topics = ["Последние новости"]
         full_text = article_soup.find("div", class_="below-entry-meta")
 
