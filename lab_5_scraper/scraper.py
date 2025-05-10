@@ -339,19 +339,16 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         title_element = article_soup.find('h1')
-        if title_element:
-            self.article.title = title_element.get_text(strip=True)
-        else:
-            self.article.title = "NOT FOUND"
+        self.article.title = title_element.get_text(strip=True) if title_element else "NOT FOUND"
 
         self.article.article_id = self._article_id
         self.article.author = ["NOT FOUND"]
 
+        self.article.topics = []
         topic_element = article_soup.find('li', class_='selected')
         if topic_element and topic_element.find('a'):
-            self.article.topics = [topic_element.find('a').get_text(strip=True)]
-        else:
-            self.article.topics = []
+            self.article.topics.append(
+                topic_element.find('a').get_text(strip=True))
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unify date format.
