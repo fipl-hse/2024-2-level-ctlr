@@ -310,7 +310,6 @@ class HTMLParser:
         self._article_id = article_id
         self._config = config
         self.article = Article(full_url, article_id)
-        self.date = datetime.datetime(1970, 1, 1, 0, 0, 0)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -372,7 +371,7 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         response = make_request(self._full_url, self._config)
-        if response.ok:
+        if not response.ok:
             soup = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(soup)
             self._fill_article_with_meta_information(soup)
