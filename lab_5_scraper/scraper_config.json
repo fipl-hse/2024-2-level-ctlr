@@ -17,7 +17,6 @@
         "Cache-Control" :  "max-age=0",
         "Sec-Ch-Ua" : "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\", \"YaBrowser\";v=\"25.2\", \"Yowser\";v=\"2.5\"",
         "Sec-Ch-Ua-Platform" : "\"Windows\"",
-        "Upgrade-Insecure-Requests" : "1",
         "Priority" : "u=0, i"
     },
     "total_articles_to_find_and_parse": 10,
