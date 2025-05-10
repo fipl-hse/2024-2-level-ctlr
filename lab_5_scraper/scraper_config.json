@@ -17,7 +17,7 @@
         "Cache-Control" :  "max-age=0",
         "Sec-Ch-Ua" : "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\", \"YaBrowser\";v=\"25.2\", \"Yowser\";v=\"2.5\"",
         "Sec-Ch-Ua-Platform" : "\"Windows\"",
-        "Viewport-Width" : "1366"
+        "Upgrade-Insecure-Requests" : "1"
     },
     "total_articles_to_find_and_parse": 10,
     "encoding": "UTF-8",
