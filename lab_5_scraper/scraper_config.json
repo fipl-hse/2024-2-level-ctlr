@@ -4,7 +4,7 @@
         "http://www.elista.org/economy/?p=5/", "http://www.elista.org/economy/?p=6/",
         "http://www.elista.org/economy/?p=7/", "http://www.elista.org/economy/?p=8/",
         "http://www.elista.org/economy/?p=9/", "http://www.elista.org/economy/?p=10/"],
-    "headers": {"Accept-Encoding": "gzip, deflate, br"
+    "headers": {"Accept-Encoding": "gzip, deflate, br",
         "Cookie": "_ga_DMM69SRWJZ=GS1.1.1745072889.3.0.1745072889.60.0.0; _ga=GA1.1.714622522.1744356649",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
