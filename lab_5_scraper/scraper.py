@@ -259,7 +259,7 @@ class Crawler:
             if '://' in base_url:
                 base_url = base_url.split('/')[0] + '//' + base_url.split('/')[2]
 
-            full_url = urljoin(base_url, href)
+            full_url = base_url + href
             if full_url not in self.urls:
                 return full_url
 
