@@ -14,9 +14,10 @@
         "Accept-Language" : "ru,en;q=0.9",
         "Cookie" : "__gads=ID=8229df09a537d1d3:T=1744822154:RT=1744822154:S=ALNI_MYixoM_BCFJwgSNJtCV265iZVkt6w; __gpi=UID=000010905992dceb:T=1744822154:RT=1744822154:S=ALNI_MZWjLHXBR9XeeNOPWpC1I_z5JR9cw; __eoi=ID=8da5c565e30d6514:T=1744822154:RT=1744822154:S=AA-AfjaZEoFeZXEijE2pMA11Mkhi; FCNEC=%5B%5B%22AKsRol8gi0WK9E8nPjYwPq4IKTV3mcdMH_HAAAFC0EhiI-hL-XHZyqqLWrT-bezpdSczTQ-heqKnifRUKG_4HdZwXUSYaPuuNnC0Po--QVi3ZMK0d3HFJK3FBhmBLjPV8DfgHlr1o4qZhm9J3yhGrNTixGX3VcVPMA%3D%3D%22%5D%5D",
         "Accept-Encoding" : "gzip, deflate, br, zstd",
-        "Sec-Ch-Ua" : "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\", \"YaBrowser\";v=\"25.2\", \"Yowser\";v=\"2.5\"",
-        "Sec-Ch-Ua-Mobile" : "?0",
-        "Sec-Ch-Ua-Platform" : "\"Windows\""
+        "Sec-Fetch-Site" : "same-origin",
+        "Sec-Fetch-Mode" : "navigate",
+        "Sec-Fetch-Dest" : "document",
+        "Sec-Fetch-User" : "?1"
     },
     "total_articles_to_find_and_parse": 10,
     "encoding": "UTF-8",
