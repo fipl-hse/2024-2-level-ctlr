@@ -223,7 +223,6 @@ class Crawler:
             config (Config): Configuration
         """
         self.config = config
-        self.not_urls = []
         self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
@@ -236,36 +235,25 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        urls = article_bs.find_all('a', href=True)
-        for url in urls:
-            if not url:
-                continue
-            href = url['href']
-            if (href not in self.urls and href.startswith('https://sovsakh.ru/')
-                    and 'category' not in href and 'reklama' not in href
-                    and href.count('/') == 4):
-                return str(href)
-        return ''
+        url = article_bs.find('a', href=True)['href']
+        return url if url else ''
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        urls = self.get_search_urls()
-        for url in urls:
-            if len(self.urls) > self.config.get_num_articles():
-                return None
+        for url in self.get_search_urls():
             response = make_request(url, self.config)
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            got_url = self._extract_url(soup)
-            while got_url:
-                if not got_url or got_url in self.urls:
-                    break
-                self.urls.append(got_url)
-                got_url = self._extract_url(soup)
-        return None
+            blocks = soup.find_all('h3', {'class': 'entry-title td-module-title'})
+            for block in blocks:
+                got_url = self._extract_url(block)
+                if got_url and got_url not in self.urls and got_url.count('/') == 4:
+                    self.urls.append(got_url)
+                if len(self.urls) == self.config.get_num_articles():
+                    return None
 
     def get_search_urls(self) -> list:
         """
@@ -393,6 +381,18 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     base_path.mkdir(parents=True)
 
 
+def prepare_recursive_environment(base_path: Union[pathlib.Path, str]) -> None:
+    """
+    Create ASSETS_PATH folder if no created and remove existing folder.
+
+    Args:
+        base_path (Union[pathlib.Path, str]): Path where articles stores
+    """
+    base_path = pathlib.Path(base_path)
+    if not base_path.exists():
+        base_path.mkdir(parents=True)
+
+
 class CrawlerRecursive(Crawler):
     """
     Recursive Crawler implementation.
@@ -405,31 +405,52 @@ class CrawlerRecursive(Crawler):
         end = '-chetyre-medali-vserossijskih-sorevnovanij-voshod/'
         self.start_url = f'https://sovsakh.ru/sahalinskie-gimnastki-zavoevali{end}'
         self.recursive_path = ASSETS_PATH.parent / "recursive_articles.json"
-        self.urls = []
+        self.urls = [self.start_url]
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        if self.urls:
+        if pathlib.Path(self.recursive_path).stat().st_size > 0:
             with open(self.recursive_path, 'r', encoding=self.config.get_encoding()) as file:
                 self.urls = json.load(file)
-        if len(self.urls) < self.config.get_num_articles():
-            response = make_request(self.start_url, self.config)
-            if not response.ok:
-                return
-            soup = BeautifulSoup(response.text, 'lxml')
-            got_url = self._extract_url(soup)
-            if not got_url:
-                self.start_url = self.urls[self.urls.index(self.start_url) - 1]
-            while got_url:
-                if not got_url or got_url in self.urls:
-                    break
+        url = self.urls[-1]
+        response = make_request(url, self.config)
+        if not response.ok:
+            return
+        soup = BeautifulSoup(response.text, 'lxml')
+        blocks1 = soup.find_all('h3', {'class': 'entry-title td-module-title'})
+        blocks2 = soup.find_all('div', {'class': 'td-post-next-prev-content'})
+        blocks = blocks1 + blocks2
+        for block in blocks:
+            got_url = self._extract_url(block)
+            if got_url and got_url not in self.urls and got_url.count('/') == 4:
                 self.urls.append(got_url)
                 with open(self.recursive_path, 'w', encoding=self.config.get_encoding()) as file:
                     json.dump(self.urls, file, indent=4)
-                got_url = self._extract_url(soup)
-            self.find_articles()
+            if len(self.urls) > self.config.get_num_articles():
+                return None
+        self.find_articles()
+
+
+# def main() -> None:
+#     """
+#     Entrypoint for scrapper module.
+#     """
+#     config = Config(CRAWLER_CONFIG_PATH)
+#     crawler = CrawlerRecursive(config)
+#     prepare_environment(ASSETS_PATH)
+#     crawler.find_articles()
+#     article_id = 1
+#     for url in crawler.urls:
+#         parser = HTMLParser(url, article_id, config)
+#         article = parser.parse()
+#         if not article or not article.text or len(article.text) <= 50:
+#             continue
+#         article_id += 1
+#         if isinstance(article, Article):
+#             to_raw(article)
+#             to_meta(article)
 
 
 def main() -> None:
@@ -438,35 +459,13 @@ def main() -> None:
     """
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = Crawler(config)
-    prepare_environment(ASSETS_PATH)
+    prepare_recursive_environment(ASSETS_PATH)
     crawler.find_articles()
-    article_id = 1
-    for url in crawler.urls:
-        parser = HTMLParser(url, article_id, config)
+    for ind, url in enumerate(crawler.urls, 1):
+        parser = HTMLParser(url, ind, config)
         article = parser.parse()
-        if not article or not article.text or len(article.text) <= 50:
+        if not article or not article.text:
             continue
-        article_id += 1
-        if isinstance(article, Article):
-            to_raw(article)
-            to_meta(article)
-
-
-def main2() -> None:
-    """
-    Entrypoint for scrapper module.
-    """
-    config = Config(CRAWLER_CONFIG_PATH)
-    crawler = CrawlerRecursive(config)
-    prepare_environment(ASSETS_PATH)
-    crawler.find_articles()
-    article_id = 1
-    for url in crawler.urls:
-        parser = HTMLParser(url, article_id, config)
-        article = parser.parse()
-        if not article or not article.text or len(article.text) <= 50:
-            continue
-        article_id += 1
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
