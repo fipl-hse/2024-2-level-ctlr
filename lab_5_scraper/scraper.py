@@ -208,12 +208,12 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         requests.models.Response: A response from a request
     """
     timeout = config.get_timeout()
-    #sleep(randint(1, timeout))
     headers = config.get_headers()
     verify = config.get_verify_certificate()
     response = requests.get(url, headers=headers, timeout=timeout, verify=verify)
     requests.encoding = config.get_encoding()
     response.raise_for_status()
+    sleep(randint(1, timeout))
     return response
 
 
@@ -260,8 +260,6 @@ class Crawler:
         Find articles.
         """
         seed_urls = self.config.get_seed_urls()
-        max_articles = self.config.get_num_articles()
-        max_extract_attempts = 20
         for url in seed_urls:
             try:
                 response = make_request(url, self.config)
@@ -270,7 +268,7 @@ class Crawler:
 
             article_bs = BeautifulSoup(response.text, 'lxml')
             extracted_count = 0
-            while extracted_count < max_extract_attempts and len(self.urls) < max_articles:
+            while True:
                 article_url = self._extract_url(article_bs)
                 if not article_url:
                     break
@@ -357,11 +355,9 @@ class HTMLParser:
         except AttributeError:
             self.article.date = datetime.datetime.min
 
-        self.article.topics = []
         categories = article_soup.find_all('ul', class_="td-tags td-post-small-box clearfix")
-        for category in categories:
-            for a in category.find_all('a'):
-                self.article.topics.append(a.get_text(strip=True))
+        self.article.topics = [a.get_text(strip=True) for category
+                               in categories for a in category.find_all('a')]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """

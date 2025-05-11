@@ -8,10 +8,14 @@
     "https://zvezdaaltaya.ru/category/novosti/proisshestviya/",
     "https://zvezdaaltaya.ru/category/interview/"
   ],
-  "headers": {},
+  "headers": {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "*/*",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Cookie": "yandexuid=6247393551704349544; yuidss=6247393551704349544; my=YwA=; gdpr=0; _ym_uid=1704565314877766238; bh=EkAiTm90L0EpQnJhbmQiO3Y9IjgiLCAiQ2hyb21pdW0iO3Y9IjEyNiIsICJHb29nbGUgQ2hyb21lIjt2PSIxMjYiGgUieDg2IiIPIjEyNi4wLjY0NzguNjIiKgI/MDICIiI6CSJXaW5kb3dzIkIIIjE1LjAuMCJKBCI2NCJSWSJOb3QvQSlCcmFuZCI7dj0iOC4wLjAuMCIsIkNocm9taXVtIjt2PSIxMjYuMC42NDc4LjYyIiwiR29vZ2xlIENocm9tZSI7dj0iMTI2LjAuNjQ3OC42MiIiWgI/MA==; ymex=2051247228.yrts.1735887228; yashr=2658745901736444410; amcuid=4851074951736537468; yabs-sid=369176771739268102; _ym_d=1739268123; receive-cookie-deprecation=1; yabs-dsp=mts_banner.V1U4cGZ0dXdRMzJzam0taV80MnJNZw==; skid=7390152351745786240; yandex_login=ddmoreva@edu.hse.ru; yandex_gid=47; i=9krlLr5qpw1u0TCJgQTmzol2fdb+HlioI6M6jjg8iFqfniFxwTyvOZATKYHl5gnIIIHmOcFk7sbtuAyNlEG6crWiD8c=; Session_id=3:1746786061.5.1.1704566074321:jeAZXg:5.1.2:1|732973483.0.2.3:1704566074|1130000064872051.-1.0.2:102.3:1704566176|2042035324.28691547.2.2:28691547.3:1733257621|3:10307205.620254.JyIGr9UjKV8oIkyylWelgucDjTY; sessar=1.1201.CiDr1qqj61yT37eysYPPKB_Z-JOpW4-hhhdWEwH8PSzRUA.E1GGNragX8TDdM7ywEUrRrEO6heDxXRB2vGDJu_7Mvg; sessionid2=3:1746786061.5.1.1704566074321:jeAZXg:5.1.2:1|732973483.0.2.3:1704566074|1130000064872051.-1.0.2:102.3:1704566176|2042035324.28691547.2.2:28691547.3:1733257621|3:10307205.620254.fakesign0000000000000000000; yabs-vdrf=B4nzeR00eYii10; is_gdpr=0; is_gdpr_b=CM2BIhDSvwIoAg==; _ym_isad=2; cycada=ApUVJteKrBn2uvzdi8wIq0OrJsvSWtGyZ0GWMgNn//8=; ys=udn.cDpkZG1vcmV2YUBlZHUuaHNlLnJ1#wprid.1746988562047580-11394441919948646106-balancer-l7leveler-kubr-yp-vla-111-BAL#c_chck.2289023011; yp=1751055876.atds.1#1772700225.dc_neuro.10#1749100021.hdrc.0#2054549226.multib.1#2062348562.pcs.1#2057150184.skin.s#1778524562.swntab.0#2061232755.udn.cDpkZG1vcmV2YUBlZHUuaHNlLnJ1#1748759881.ygu.1#1747249641.szm.1_25%3A1536x960%3A1521x826%3A15#1747729116.dlp.1; bh=EkAiR29vZ2xlIENocm9tZSI7dj0iMTM1IiwgIk5vdC1BLkJyYW5kIjt2PSI4IiwgIkNocm9taXVtIjt2PSIxMzUiGgUieDg2IiIPIjEyNi4wLjY0NzguNjIiKgI/MDICIiI6CSJXaW5kb3dzIkIIIjE1LjAuMCJKBCI2NCJSWSJOb3QvQSlCcmFuZCI7dj0iOC4wLjAuMCIsIkNocm9taXVtIjt2PSIxMjYuMC42NDc4LjYyIiwiR29vZ2xlIENocm9tZSI7dj0iMTI2LjAuNjQ3OC42MiIiWgI/MGCz3IPBBmoe3Mrh/wiS2KGxA5/P4eoD+/rw5w3r//32D8TTz4cI"
+        },
   "total_articles_to_find_and_parse": 100,
   "encoding": "utf-8",
-  "timeout": 10,
+  "timeout": 4,
   "should_verify_certificate": true,
   "headless_mode": true
 }
