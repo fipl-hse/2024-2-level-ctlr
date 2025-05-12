@@ -91,9 +91,9 @@ The files contain the following information about the tags: ``ID``,
 .. attention:: Read more about the structure of such files
                in :ref:`ud-format-label` and look at the example files
                for `UDPipe model <https://github.com/fipl-hse/2023-2-level-ctlr/
-               blob/main/lab_6_pipeline/tests/test_files/reference_score_six_test.conllu>`__
+               blob/main/lab_6_pipeline/tests/test_files/reference_udpipe_test.conllu>`__
                and `Stanza model <https://github.com/fipl-hse/2023-2-level-ctlr/
-               blob/main/lab_6_pipeline/tests/test_files/reference_score_eight_test.conllu>`__.
+               blob/main/lab_6_pipeline/tests/test_files/reference_stanza_test.conllu>`__.
 
 Meta information
 ----------------
