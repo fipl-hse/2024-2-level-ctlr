@@ -1,8 +1,6 @@
 """
 Crawler implementation.
 """
-
-
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import datetime
 import json
@@ -235,8 +233,8 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        url = article_bs.find('a', href=True)['href']
-        return url if url else ''
+        url = article_bs.find('a', href=True).get('href')
+        return str(url) if url else ''
 
     def find_articles(self) -> None:
         """
