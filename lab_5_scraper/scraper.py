@@ -7,6 +7,7 @@ import datetime
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import json
 import re
+import shutil
 import time
 from pathlib import Path
 from random import randint
@@ -318,7 +319,9 @@ class HTMLParser:
             config (Config): Configuration
         """
         self.config = config
-        self.article = Article(full_url, article_id)
+        self.full_url = full_url
+        self.article_id = article_id
+        self.article = None
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -368,6 +371,7 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
+        self.article = Article(self.full_url, self.article_id)
         if not isinstance(self.article.url, str):
             raise ValueError("The article URL is not a string")
         loaded_html = make_request(self.article.url, self.config)
@@ -385,9 +389,7 @@ def prepare_environment(base_path: Union[Path, str]) -> None:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
     if base_path.exists():
-        for f in base_path.iterdir():
-            f.unlink()
-        base_path.rmdir()
+        shutil.rmtree(base_path)
     base_path.mkdir(parents=True)
 
 
