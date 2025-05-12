@@ -9,8 +9,6 @@ import pathlib
 import re
 import shutil
 from pathlib import Path
-from random import randint
-from time import sleep
 from typing import Pattern, Union
 
 import requests
@@ -213,7 +211,6 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=headers, timeout=timeout, verify=verify)
     requests.encoding = config.get_encoding()
     response.raise_for_status()
-    #sleep(randint(1, timeout))
     return response
 
 
@@ -270,6 +267,8 @@ class Crawler:
             extracted_count = 0
             while True:
                 article_url = self._extract_url(article_bs)
+                if extracted_count >= 100:
+                    break
                 if not article_url:
                     break
                 if article_url not in self.urls:

@@ -4,9 +4,11 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from pathlib import Path
 
 from networkx import DiGraph
 
+from core_utils.article.io import to_cleaned
 from core_utils.article.article import Article
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -18,6 +20,36 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+
+class EmptyDirectoryError(Exception):
+    """
+    This class checks directory is empty.
+    """
+
+
+class FileNotFoundError(Exception):
+    """
+    Check file does exist or not.
+    """
+
+
+class NotADirectoryError(Exception):
+    """
+    Check how path leads to directory
+    """
+
+
+class InconsistentDatasetError(Exception):
+    """
+    Check IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    Check when an article file is empty.
+    """
 
 
 class CorpusManager:
@@ -32,16 +64,42 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._corpus = {}
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        path = Path(self.path_to_raw_txt_data)
+        if not path.exists():
+            raise FileNotFoundError(f"The specified path does not exist: {path}")
+        if not path.is_dir():
+            raise NotADirectoryError(f"The specified path is not a directory: {path}")
+        checks = [str(file)[0].isdigit() for file in path.glob('**/*.txt')]
+        if not checks:
+            raise EmptyDirectoryError("No txt files found in the directory.")
+        ids = []
+        txt_files = list(path.glob('**/*.txt'))
+        for file in txt_files:
+            if not str(file.name)[0].isdigit():
+                raise InconsistentDatasetError(f"File ID is inconsistent: {file.name}")
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"File is empty: {file.name}")
+            ids.append(str(file.name).split('.')[0])
+        if len(ids) != len(set(ids)):
+            raise InconsistentDatasetError("IDs contain duplicates, indicating slips in the dataset.")
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        path = Path(self.path_to_raw_txt_data)
+        for file in path.rglob('*.txt'):
+            i = int(file.parts[-1].split('_')[0])
+            self._storage[i] = Article(url=None, article_id=i)
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +108,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,12 +126,18 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus_manager = corpus_manager
+        self.analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
-
+        articles = self.corpus_manager.get_articles()
+        for ind, art in articles.values():
+            cleaned_text = art.get_cleaned_text()
+            art.text = cleaned_text
+            to_cleaned(art)
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
