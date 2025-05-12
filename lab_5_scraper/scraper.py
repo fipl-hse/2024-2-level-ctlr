@@ -470,7 +470,7 @@ def recursive_main() -> None:
     for ind, url in enumerate(crawler.urls, 1):
         parser = HTMLParser(url, ind, config)
         article = parser.parse()
-        if not article or not article.text:
+        if not article or not article.text or len(article.text) < 50:
             continue
         if isinstance(article, Article):
             to_raw(article)
