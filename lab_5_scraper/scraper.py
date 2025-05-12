@@ -6,7 +6,7 @@ import datetime
 import json
 import pathlib
 import shutil
-from random import uniform
+from random import randint, uniform
 from time import sleep
 from typing import Pattern, Union
 
@@ -93,7 +93,7 @@ class Config:
         """
         with open(self.path_to_config, 'r', encoding='UTF-8') as file:
             data = json.load(file)
-            return ConfigDTO(**data)
+        return ConfigDTO(**data)
 
     def _validate_config_content(self) -> None:
         """
@@ -401,33 +401,41 @@ class CrawlerRecursive(Crawler):
         Initialize an instance of the CrawlerRecursive class.
         """
         super().__init__(config)
-        end = '-chetyre-medali-vserossijskih-sorevnovanij-voshod/'
-        self.start_url = f'https://sovsakh.ru/sahalinskie-gimnastki-zavoevali{end}'
+        self.start_url = 'https://sovsakh.ru/'
         self.recursive_path = ASSETS_PATH.parent / "recursive_articles.json"
-        self.urls = [self.start_url]
+        self.urls = []
+        self.previous_len = 0
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        if len(self.urls) > 1:
+        path = pathlib.Path(self.recursive_path)
+        if path.exists() and path.stat().st_size > 0:
             with open(self.recursive_path, 'r', encoding=self.config.get_encoding()) as file:
                 self.urls = json.load(file)
-        url = self.urls[-1]
+        if self.urls and len(self.urls) == self.config.get_num_articles():
+            return None
+        if not self.urls:
+            url = self.start_url
+        else:
+            n = randint(0, len(self.urls) - 1)
+            url = self.urls[n]
         response = make_request(url, self.config)
         if not response.ok:
             return None
         soup = BeautifulSoup(response.text, 'lxml')
         blocks1 = soup.find_all('h3', {'class': 'entry-title td-module-title'})
         blocks2 = soup.find_all('div', {'class': 'td-post-next-prev-content'})
-        blocks = blocks1 + blocks2
+        blocks3 = soup.find_all('div', {'class': 'td-related-span4'})
+        blocks = blocks1 + blocks2 + blocks3
         for block in blocks:
             got_url = self._extract_url(block)
             if got_url and got_url not in self.urls and got_url.count('/') == 4:
                 self.urls.append(got_url)
                 with open(self.recursive_path, 'w', encoding=self.config.get_encoding()) as file:
                     json.dump(self.urls, file, indent=4)
-            if len(self.urls) > self.config.get_num_articles():
+            if len(self.urls) == self.config.get_num_articles():
                 return None
         self.find_articles()
         return None
@@ -438,7 +446,7 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
-    crawler = CrawlerRecursive(config)
+    crawler = Crawler(config)
     prepare_environment(ASSETS_PATH)
     crawler.find_articles()
     for ind, url in enumerate(crawler.urls, 1):
@@ -456,7 +464,7 @@ def recursive_main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
-    crawler = Crawler(config)
+    crawler = CrawlerRecursive(config)
     prepare_recursive_environment(ASSETS_PATH)
     crawler.find_articles()
     for ind, url in enumerate(crawler.urls, 1):
