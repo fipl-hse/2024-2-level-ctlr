@@ -410,7 +410,7 @@ class CrawlerRecursive(Crawler):
         """
         Find articles.
         """
-        if pathlib.Path(self.recursive_path).stat().st_size > 0:
+        if len(self.urls) > 1:
             with open(self.recursive_path, 'r', encoding=self.config.get_encoding()) as file:
                 self.urls = json.load(file)
         url = self.urls[-1]
