@@ -307,8 +307,12 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        self.article.title = article_soup.find('h1', {'class': 'entry-title'}).text
+        title = article_soup.find('h1', {'class': 'entry-title'})
+        if title:
+            self.article.title = title.text
         block = article_soup.find('div', {'class': 'td-ss-main-content'})
+        if not block:
+            block = article_soup.find('div', {'class': 'tdb-block-inner td-fix-index'})
         texts = block.find_all('p')
         self.article.author = ['NOT FOUND']
         if len(texts) > 2:
@@ -458,6 +462,7 @@ def main() -> None:
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
+            article_id += 1
 
 
 def recursive_main() -> None:
@@ -477,7 +482,8 @@ def recursive_main() -> None:
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
+            article_id += 1
 
 
 if __name__ == "__main__":
-    main()
+    recursive_main()
