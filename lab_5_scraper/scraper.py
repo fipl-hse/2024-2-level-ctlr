@@ -254,6 +254,7 @@ class Crawler:
                     self.urls.append(got_url)
                 if len(self.urls) == self.config.get_num_articles():
                     return None
+        return None
 
     def get_search_urls(self) -> list:
         """
@@ -417,7 +418,7 @@ class CrawlerRecursive(Crawler):
         url = self.urls[-1]
         response = make_request(url, self.config)
         if not response.ok:
-            return
+            return None
         soup = BeautifulSoup(response.text, 'lxml')
         blocks1 = soup.find_all('h3', {'class': 'entry-title td-module-title'})
         blocks2 = soup.find_all('div', {'class': 'td-post-next-prev-content'})
@@ -431,6 +432,7 @@ class CrawlerRecursive(Crawler):
             if len(self.urls) > self.config.get_num_articles():
                 return None
         self.find_articles()
+        return None
 
 
 def main() -> None:
