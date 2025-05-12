@@ -26,6 +26,8 @@ Instructors:
    technical track practice lecturer
 -  `Kashchikhin Andrei Nikolaevich <https://github.com/WhiteJaeger>`__ -
    technical track expert
+-  `Zharikov Egor Igorevich <https://t.me/godb0i>`__ - technical track senior
+   assistant
 -  `Nurtdinova Sofia Alekseevna <https://t.me/sunrielly>`__ - technical track
    assistant
 -  `Podpryatova Anna Sergeevna <https://t.me/anpruch>`__ - technical
@@ -36,7 +38,7 @@ Instructors:
 Project Timeline
 ----------------
 
-1. **Scrapper**:
+1. **Scraper**:
 
    1. Short summary: Your code can automatically parse a media website
       you are going to choose, save texts and its metadata in a proper
@@ -51,7 +53,7 @@ Project Timeline
    1. Short summary: Your code can automatically process raw texts from
       previous step, make point-of-speech tagging and basic
       morphological analysis.
-   2. Deadline: **May, TBD**.
+   2. Deadline: **May, 23**.
    3. Format: each student works in their own PR.
    4. Dataset volume: 5-7 articles.
    5. Design document: :ref:`pipeline-label`.
@@ -69,6 +71,33 @@ Lectures history
 | 04.04.2024 | Seminar: Local      | N/A                                                          |
 |            | setup. Choose       |                                                              |
 |            | website.            |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 11.04.2024 | Lecture: 3rd party  | N/A                                                          |
+|            | libraries. Browser  |                                                              |
+|            | headers.            |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 11.04.2024 | Seminar:            | `Листинг <./seminars/seminar_04_08_2024/try_requests.py>`__. |
+|            | ``requests``:   .   |                                                              |
+|            | install, API.       |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 18.04.2024 | Lecture: HTML       | N/A                                                          |
+|            | structure. ``bs4``  |                                                              |
+|            | library.            |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 18.04.2024 | Seminar:            | `Листинг <./seminars/seminar_04_17_2024/try_bs.py>`__.       |
+|            | ``bs4``:   .        |                                                              |
+|            | install, API.       |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 25.04.2024 | Lecture: Filesystem | N/A                                                          |
+|            | with ``pathlib``.   |                                                              |
+|            | Dates.              |                                                              |
++------------+---------------------+--------------------------------------------------------------+
+| 25.04.2024 | Seminar:            | `Листинг <./seminars/seminar_04_25_2024/try_paths.py>`__.    |
+|            | filesystem with     | `Листинг <./seminars/seminar_04_25_2024/try_json.py>`__.     |
+|            | ``pathlib``, dates. | `Листинг <./seminars/seminar_04_25_2024/try_dates.py>`__.    |
++------------+---------------------+--------------------------------------------------------------+
+| 02.05.2024 | Offline Lab 5       | N/A                                                          |
+|            | handover.           |                                                              |
 +------------+---------------------+--------------------------------------------------------------+
 
 You can find a more complete summary from lectures in :ref:`ctlr-lectures-label`.
@@ -116,13 +145,13 @@ Technical solution
 
 Software solution is built on top of three components:
 
-1. `scraper.py <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/lab_5_scraper/scraper.py>`__
+1. `scraper.py <https://github.com/fipl-hse/2024-2-level-ctlr/blob/main/lab_5_scraper/scraper.py>`__
    - a module for finding articles from the given media, extracting text and dumping it to
    the file system. Students need to implement it.
 2. `pipeline.py <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/lab_6_pipeline/pipeline.py>`__
    - a module for processing text: point-of-speech tagging and basic
    morphological analysis. Students need to implement it.
-3. `article.py <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/core_utils/article/article.py>`__
+3. `article.py <https://github.com/fipl-hse/2024-2-level-ctlr/blob/main/core_utils/article/article.py>`__
    - a module for article abstraction to encapsulate low-level manipulations with the article.
 
 Handing over your work
@@ -153,9 +182,9 @@ Handing over your work
 are satisfied:**
 
 1. There is a Pull Request (PR) with a correctly formatted name:
-   ``Scrapper, <NAME> <SURNAME> - <UNIVERSITY GROUP NAME>``.
+   ``Scraper, <NAME> <SURNAME> - <UNIVERSITY GROUP NAME>``.
 
-   1. Example: ``Scrapper, Irina Novikova - 20FPL2``.
+   1. Example: ``Scraper, Irina Novikova - 20FPL2``.
 
 2. Has a filled file ``settings.json`` with an expected mark.
    Acceptable values: 4, 6, 8, 10.
@@ -172,8 +201,8 @@ Resources
 3. `Documentation website <https://fipl-hse.github.io/>`__
 4. `Python programming course from previous semester
    <https://github.com/fipl-hse/2024-2-level-labs>`__
-5. `Scrapping tutorials (Russian) <https://youtu.be/7hn1_t2ZtJQ>`__
-6. `Scrapping tutorials (English)
+5. `Scraping tutorials (Russian) <https://youtu.be/7hn1_t2ZtJQ>`__
+6. `Scraping tutorials (English)
    <https://www.youtube.com/playlist?list=PL1jK3K11NINiOn4DdIDVdyQpcU3kaNxl0>`__
 7. :ref:`starting-guide-en-label`
 8. :ref:`ctlr-tests-label`
