@@ -450,7 +450,7 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler.find_articles()
     article_id = 1
-    for ind, url in crawler.urls:
+    for url in crawler.urls:
         parser = HTMLParser(url, article_id, config)
         article = parser.parse()
         if not article or not article.text or len(article.text) > 50:
@@ -469,7 +469,7 @@ def recursive_main() -> None:
     prepare_recursive_environment(ASSETS_PATH)
     crawler.find_articles()
     article_id = 1
-    for ind, url in crawler.urls:
+    for url in crawler.urls:
         parser = HTMLParser(url, article_id, config)
         article = parser.parse()
         if not article or not article.text or len(article.text) < 50:
