@@ -308,6 +308,7 @@ class HTMLParser:
     """
     HTMLParser implementation.
     """
+    article: Article
 
     def __init__(self, full_url: str, article_id: int, config: Config) -> None:
         """
@@ -321,7 +322,6 @@ class HTMLParser:
         self.config = config
         self.full_url = full_url
         self.article_id = article_id
-        self.article = None
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
