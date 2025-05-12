@@ -453,7 +453,7 @@ def main() -> None:
     for url in crawler.urls:
         parser = HTMLParser(url, article_id, config)
         article = parser.parse()
-        if not article or not article.text or len(article.text) > 50:
+        if not article or not article.text or len(article.text) < 50:
             continue
         if isinstance(article, Article):
             to_raw(article)
