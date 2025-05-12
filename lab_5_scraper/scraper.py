@@ -402,7 +402,8 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     path = Path(base_path)
     if path.exists():
         if path.is_dir():
-            shutil.rmtree(path)
+            shutil.rmtree(path, onerror=lambda func, path, excinfo:
+            print(f"Error calling function {func.__name__} for path {path}: {excinfo}"))
     path.mkdir(parents=True, exist_ok=True)
 
 
