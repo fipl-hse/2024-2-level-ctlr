@@ -213,7 +213,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=headers, timeout=timeout, verify=verify)
     requests.encoding = config.get_encoding()
     response.raise_for_status()
-    sleep(randint(1, timeout))
+    #sleep(randint(1, timeout))
     return response
 
 
