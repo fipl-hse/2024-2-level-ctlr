@@ -449,8 +449,9 @@ def main() -> None:
     crawler = Crawler(config)
     prepare_environment(ASSETS_PATH)
     crawler.find_articles()
-    for ind, url in enumerate(crawler.urls, 1):
-        parser = HTMLParser(url, ind, config)
+    article_id = 1
+    for ind, url in crawler.urls:
+        parser = HTMLParser(url, article_id, config)
         article = parser.parse()
         if not article or not article.text or len(article.text) > 50:
             continue
@@ -467,8 +468,9 @@ def recursive_main() -> None:
     crawler = CrawlerRecursive(config)
     prepare_recursive_environment(ASSETS_PATH)
     crawler.find_articles()
-    for ind, url in enumerate(crawler.urls, 1):
-        parser = HTMLParser(url, ind, config)
+    article_id = 1
+    for ind, url in crawler.urls:
+        parser = HTMLParser(url, article_id, config)
         article = parser.parse()
         if not article or not article.text or len(article.text) < 50:
             continue
