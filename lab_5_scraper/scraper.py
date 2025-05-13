@@ -322,6 +322,7 @@ class HTMLParser:
         self.config = config
         self.full_url = full_url
         self.article_id = article_id
+        self.article = Article(self.full_url, self.article_id)
 
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
@@ -371,7 +372,6 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
-        self.article = Article(self.full_url, self.article_id)
         if not isinstance(self.article.url, str):
             raise ValueError("The article URL is not a string")
         loaded_html = make_request(self.article.url, self.config)
