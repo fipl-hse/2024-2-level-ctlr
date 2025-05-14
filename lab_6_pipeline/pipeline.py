@@ -20,6 +20,30 @@ from core_utils.pipeline import (
 )
 
 
+class FileNotFoundError(Exception):
+    """
+    File does not exist
+    """
+
+
+class NotADirectoryError(Exception):
+    """
+    Path does not lead to directory
+    """
+
+
+class InconsistentDatasetError(Exception):
+    """
+    IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Directory is empty
+    """
+
+
 class CorpusManager:
     """
     Work with articles and store them.
@@ -32,16 +56,37 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError('not existent path')
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError('path does not lead to directory')
+        try:
+            next(self.path_to_raw_txt_data.iterdir())
+        except StopIteration:
+            raise EmptyDirectoryError('directory is empty')
+        for i, file in enumerate(self.path_to_raw_txt_data.iterdir(),
+                                start=1):
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError('file is empty')
+        if len(list(self.path_to_raw_txt_data.glob('*.json'))) != \
+            len(list(self.path_to_raw_txt_data.glob('*.txt'))):
+            raise InconsistentDatasetError('numbers of meta and txt are not equal')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for i, file in enumerate(self.path_to_raw_txt_data.glob('*.txt')):
+            self._storage[i+1] = Article(url=None, article_id=i+1)
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +95,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
