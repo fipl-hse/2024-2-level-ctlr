@@ -8,6 +8,8 @@ import json
 import pathlib
 import re
 import shutil
+from random import randint, uniform
+from time import sleep
 from pathlib import Path
 from typing import Pattern, Union
 
@@ -205,6 +207,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    sleep(uniform(0.1, 0.5))
     timeout = config.get_timeout()
     headers = config.get_headers()
     verify = config.get_verify_certificate()
