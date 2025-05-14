@@ -104,33 +104,37 @@ class Config:
 
         url_pattern = re.compile(r'https?://(www\.)?.+')
         if not isinstance(config.seed_urls, list) or not config.seed_urls:
-            raise ValueError("seed_urls must be a non-empty list")
+            raise IncorrectSeedURLError("seed_urls must be a non-empty list")
         for url in config.seed_urls:
             if not re.match(url_pattern, url):
-                raise ValueError(f"Invalid seed URL: {url}")
+                raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
 
-        if not isinstance(config.total_articles, int) or config.total_articles < 1:
-            raise ValueError("total_articles must be an integer >= 1")
+        if not isinstance(
+                config.total_articles,
+                int) or config.total_articles < 1:
+            raise IncorrectNumberOfArticlesError(
+                "total_articles must be an integer >= 1")
         if config.total_articles > NUM_ARTICLES_UPPER_LIMIT:
-            raise ValueError(f"total_articles must be <= {NUM_ARTICLES_UPPER_LIMIT}")
+            raise NumberOfArticlesOutOfRangeError(
+                f"total_articles must be <= {NUM_ARTICLES_UPPER_LIMIT}")
 
         if not isinstance(config.headers, dict):
-            raise TypeError("headers must be a dictionary")
+            raise IncorrectHeadersError("headers must be a dictionary")
 
         if not isinstance(config.encoding, str) or not config.encoding:
-            raise ValueError("encoding must be a non-empty string")
+            raise IncorrectEncodingError("encoding must be a non-empty string")
 
         if not isinstance(config.timeout, int) or not (
                 TIMEOUT_LOWER_LIMIT <= config.timeout < TIMEOUT_UPPER_LIMIT):
-            raise ValueError(
-                f"""timeout must be an integer in range [{TIMEOUT_LOWER_LIMIT},
-                {TIMEOUT_UPPER_LIMIT})""")
+            raise IncorrectTimeoutError(
+                f"timeout must be an integer in range [{TIMEOUT_LOWER_LIMIT}, {TIMEOUT_UPPER_LIMIT})")
 
         if not isinstance(config.should_verify_certificate, bool):
-            raise TypeError("should_verify_certificate must be a boolean")
+            raise IncorrectVerifyError(
+                "should_verify_certificate must be a boolean")
 
         if not isinstance(config.headless_mode, bool):
-            raise TypeError("headless_mode must be a boolean")
+            raise IncorrectVerifyError("headless_mode must be a boolean")
 
     def get_seed_urls(self) -> list[str]:
         """
