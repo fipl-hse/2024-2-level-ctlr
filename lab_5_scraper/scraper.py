@@ -8,9 +8,9 @@ import json
 import pathlib
 import re
 import shutil
-from random import randint, uniform
-from time import sleep
 from pathlib import Path
+from random import uniform
+from time import sleep
 from typing import Pattern, Union
 
 import requests
