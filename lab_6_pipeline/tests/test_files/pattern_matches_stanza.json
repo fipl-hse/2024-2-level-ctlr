@@ -1,0 +1,21 @@
+{
+   "0": [
+        {
+            "upos": "VERB",
+            "text": "училась",
+            "children": [
+                {
+                    "upos": "NOUN",
+                    "text": "адресу",
+                    "children": [
+                        {
+                            "upos": "ADP",
+                            "text": "по",
+                            "children": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
