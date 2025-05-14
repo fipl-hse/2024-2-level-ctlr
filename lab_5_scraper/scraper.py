@@ -195,7 +195,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    time.sleep(random.randint(1, 5))
+    time.sleep(random.randint(1, 4))
     req = requests.get(url, headers= config.get_headers(),
                             timeout= config.get_timeout(),
                             verify= config.get_verify_certificate())
@@ -247,8 +247,7 @@ class Crawler:
             soup = BeautifulSoup(response.text, 'lxml')
             for block in soup.find_all('a', class_='img_box'):
                 url = self._extract_url(block)
-                if url and url not in self.urls and \
-                        len(self.urls) < self.config.get_num_articles():
+                if url and url not in self.urls:
                     self.urls.append(url)
                 else:
                     break
@@ -311,22 +310,23 @@ class HTMLParser:
         """
         title = article_soup.find('h1',
                                   itemprop = ['headline',
-                                              'headline name']).get_text(strip=True)
-        self.article.title = title
+                                              'headline name'])
+        if title is not None:
+            self.article.title = title.get_text(strip=True)
         div_author = article_soup.find('div', class_='authors')
         if div_author is None:
             self.article.author = ['NOT FOUND']
         else:
-            if div_author.get_text():
-                authors = (div_author.get_text(separator=',', strip=True)).split(',')
-                self.article.author = authors
+            authors = (div_author.get_text(separator=',', strip=True)).split(',')
+            self.article.author = authors
         div_topic = article_soup.find('div', class_='tags')
-        if div_topic.get_text():
+        if div_topic is not None:
             topics = (div_topic.get_text(separator=',', strip=True)).split(',')
             self.article.topics = topics
-        date_str = article_soup.find_all('time')[0].get_text(strip=True)
-        date = self.unify_date_format(date_str)
-        self.article.date = date
+        date_str = article_soup.find_all('time')
+        if date_str:
+            date = self.unify_date_format(date_str[0].get_text(strip=True))
+            self.article.date = date
 
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
@@ -376,16 +376,18 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    article_id = 1
+    index = 1
     for url in crawler.urls:
-        parser = HTMLParser(url, article_id, configuration)
+        parser = HTMLParser(url, index, configuration)
         article = parser.parse()
-        if not article.text:
+        if not article.text or len(article.text) < 50:
             continue
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
-        article_id += 1
+        index += 1
+        if (index - 1) == crawler.config.get_num_articles():
+            break
 
 
 if __name__ == "__main__":
