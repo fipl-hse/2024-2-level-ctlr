@@ -25,7 +25,6 @@ from core_utils.constants import (
     TIMEOUT_UPPER_LIMIT,
 )
 
-
 class IncorrectSeedURLError(Exception):
     """
     Raised when one or more seed URLs in the configuration are invalid.
@@ -73,9 +72,15 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
-        self._config_path = path_to_config
+        self.path_to_config = path_to_config
         self._config_dto = self._extract_config_content()
         self._validate_config_content()
+        self._seed_urls = self._config_dto.seed_urls
+        self._num_articles = self._config_dto.total_articles
+        self._headers = self._config_dto.headers
+        self._encoding = self._config_dto.encoding
+        self._timeout = self._config_dto.timeout
+        self._should_verify_certificate = self._config_dto.should_verify_certificate
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -84,7 +89,7 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
-        with open(self._config_path, 'r', encoding='utf-8') as file:
+        with open(self.path_to_config, 'r', encoding='utf-8') as file:
             config_data = json.load(file)
 
         return ConfigDTO(
@@ -235,7 +240,7 @@ class Crawler:
             config (Config): Configuration
         """
         self._config = config
-        self._urls = []
+        self.urls = []
 
     def _extract_url(self, article_bs: BeautifulSoup) -> list[str]:
         """
@@ -265,7 +270,7 @@ class Crawler:
         max_articles = self._config.get_num_articles()
         seed_urls = self._config.get_seed_urls()
         for url in seed_urls:
-            if len(self._urls) >= max_articles:
+            if len(self.urls) >= max_articles:
                 break
             try:
                 response = make_request(url, self._config)
@@ -274,9 +279,9 @@ class Crawler:
                 article_urls = self._extract_url(soup)
 
                 for article_url in article_urls:
-                    if article_url not in self._urls:
-                        self._urls.append(article_url)
-                    if len(self._urls) >= max_articles:
+                    if article_url not in self.urls:
+                        self.urls.append(article_url)
+                    if len(self.urls) >= max_articles:
                         break
 
             except requests.RequestException as e:
@@ -289,7 +294,7 @@ class Crawler:
         Returns:
             list: seed_urls param
         """
-        return self._urls
+        return self._config.get_seed_urls()
 
 
 # 10
