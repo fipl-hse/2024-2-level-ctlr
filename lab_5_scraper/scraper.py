@@ -7,7 +7,7 @@ import datetime
 import json
 import pathlib
 import shutil
-from random import choice, uniform
+from random import uniform
 from time import sleep
 from typing import Pattern, Union
 
@@ -232,27 +232,22 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        post_class = article_bs.find_all('a', class_='post-thumbnail')
-        article_urls = []
-        for post in post_class:
-            url = post['href']
-            if url and url not in article_urls:
-                article_urls.append(url)
-        return str(choice(article_urls))
+        return str(article_bs['href'])
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        num_articles = self.config.get_num_articles()
         for seed_url in self.get_search_urls():
             response = make_request(seed_url, self.config)
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            num_articles = self.config.get_num_articles()
-            for _ in range(num_articles):
-                url = self._extract_url(soup)
-                if url and url not in self.urls and len(self.urls) < num_articles:
+            post_class = soup.find_all('a', class_='post-thumbnail')
+            for post in post_class:
+                url = self._extract_url(post)
+                if url and len(self.urls) < num_articles:
                     self.urls.append(url)
 
     def get_search_urls(self) -> list:
@@ -345,7 +340,8 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if base_path.is_dir():
+    base_path = pathlib.Path(base_path)
+    if base_path.exists():
         shutil.rmtree(base_path)
     base_path.mkdir(parents=True)
 
