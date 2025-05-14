@@ -8,12 +8,11 @@ import datetime
 import json
 import pathlib
 import re
-import sys
+from re import Pattern
+from typing import Union
 
 import requests
 from bs4 import BeautifulSoup
-
-sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent))
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
@@ -25,7 +24,6 @@ from core_utils.constants import (
     TIMEOUT_LOWER_LIMIT,
     TIMEOUT_UPPER_LIMIT,
 )
-from exceptions import *
 
 
 class Config:
@@ -71,37 +69,33 @@ class Config:
 
         url_pattern = re.compile(r'https?://(www\.)?.+')
         if not isinstance(config.seed_urls, list) or not config.seed_urls:
-            raise IncorrectSeedURLError("seed_urls must be a non-empty list")
+            raise ValueError("seed_urls must be a non-empty list")
         for url in config.seed_urls:
             if not re.match(url_pattern, url):
-                raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
+                raise ValueError(f"Invalid seed URL: {url}")
 
-        if not isinstance(
-                config.total_articles,
-                int) or config.total_articles < 1:
-            raise IncorrectNumberOfArticlesError(
-                "total_articles must be an integer >= 1")
+        if not isinstance(config.total_articles, int) or config.total_articles < 1:
+            raise ValueError("total_articles must be an integer >= 1")
         if config.total_articles > NUM_ARTICLES_UPPER_LIMIT:
-            raise NumberOfArticlesOutOfRangeError(
-                f"total_articles must be <= {NUM_ARTICLES_UPPER_LIMIT}")
+            raise ValueError(f"total_articles must be <= {NUM_ARTICLES_UPPER_LIMIT}")
 
         if not isinstance(config.headers, dict):
-            raise IncorrectHeadersError("headers must be a dictionary")
+            raise TypeError("headers must be a dictionary")
 
         if not isinstance(config.encoding, str) or not config.encoding:
-            raise IncorrectEncodingError("encoding must be a non-empty string")
+            raise ValueError("encoding must be a non-empty string")
 
         if not isinstance(config.timeout, int) or not (
                 TIMEOUT_LOWER_LIMIT <= config.timeout < TIMEOUT_UPPER_LIMIT):
-            raise IncorrectTimeoutError(
-                f"timeout must be an integer in range [{TIMEOUT_LOWER_LIMIT}, {TIMEOUT_UPPER_LIMIT})")
+            raise ValueError(
+                f"""timeout must be an integer in range [{TIMEOUT_LOWER_LIMIT},
+                {TIMEOUT_UPPER_LIMIT})""")
 
         if not isinstance(config.should_verify_certificate, bool):
-            raise IncorrectVerifyError(
-                "should_verify_certificate must be a boolean")
+            raise TypeError("should_verify_certificate must be a boolean")
 
         if not isinstance(config.headless_mode, bool):
-            raise IncorrectVerifyError("headless_mode must be a boolean")
+            raise TypeError("headless_mode must be a boolean")
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -346,7 +340,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        MONTHS_RU = {
+        months_ru = {
             'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04',
             'мая': '05', 'июня': '06', 'июля': '07', 'августа': '08',
             'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12'
@@ -354,7 +348,7 @@ class HTMLParser:
 
         parts = date_str.strip().split()
         day = parts[0]
-        month = MONTHS_RU[parts[1].lower()]
+        month = months_ru[parts[1].lower()]
         year = parts[2]
         time = parts[4]
 
@@ -377,9 +371,15 @@ class HTMLParser:
             self._fill_article_with_meta_information(article_soup)
             self._fill_article_with_text(article_soup)
             return self.article
-        except Exception as e:
-            print(f"Failed to fetch article {self.full_url}: {e}")
+        except requests.exceptions.RequestException as e:
+            # Handle specific exception related to HTTP requests
+            print(f"Request error when fetching article {self.full_url}: {e}")
             return False
+        except AttributeError as e:
+            # Handle case where BeautifulSoup parsing or other attribute access fails
+            print(f"Attribute error when parsing article {self.full_url}: {e}")
+            return False
+
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -416,9 +416,9 @@ def main() -> None:
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     article_urls = crawler.get_search_urls()
-    for i in range(len(article_urls)):
+    for i, url in enumerate(article_urls):
         parser = HTMLParser(
-            full_url=article_urls[i],
+            full_url=url,
             article_id=i,
             config=configuration)
         article = parser.parse()
