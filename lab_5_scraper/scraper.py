@@ -94,11 +94,26 @@ class Config:
         Ensure configuration parameters are not corrupt.
         """
         if not isinstance(self.seed_urls, list) or not all(isinstance(url, str) for url in self.seed_urls):
-            raise IncorrectSeedURLError
+            raise IncorrectSeedURLError("Seed URLs must be a list of strings.")
         if not all(url.startswith('https://pravdasevera.ru/') for url in self.seed_urls):
-            raise IncorrectSeedURLError
+            raise IncorrectSeedURLError("Each seed URL must start with 'https://pravdasevera.ru/'")
+
         if not isinstance(self.num_articles, int) or self.num_articles <= 0:
-            raise ValueError("Number of articles must be positive integer.")
+            raise IncorrectNumberOfArticlesError("Number of articles must be a positive integer.")
+
+        if not isinstance(self.encoding, str):
+            raise IncorrectEncodingError("Encoding must be a string.")
+
+        if not isinstance(self.headers, dict) or not all(
+                isinstance(k, str) and isinstance(v, str) for k, v in self.headers.items()
+        ):
+            raise IncorrectHeadersError("Headers must be a dictionary with string keys and values.")
+
+        if not isinstance(self.verify, bool):
+            raise IncorrectVerifyError("Should verify certificate must be either True or False.")
+
+        if not isinstance(self.headless, bool):
+            raise IncorrectVerifyError("Headless mode must be either True or False.")
 
     def get_seed_urls(self) -> list[str]:
         """
