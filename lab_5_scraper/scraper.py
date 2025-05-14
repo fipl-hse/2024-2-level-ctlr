@@ -95,10 +95,11 @@ class Config:
         """
         if not isinstance(self.seed_urls, list) or not all(isinstance(url, str) for url in self.seed_urls):
             raise IncorrectSeedURLError("Seed URLs must be a list of strings.")
+
         if not all(url.startswith('https://pravdasevera.ru/') for url in self.seed_urls):
             raise IncorrectSeedURLError("Each seed URL must start with 'https://pravdasevera.ru/'")
 
-        if not isinstance(self.num_articles, int) or not (0 <= self.num_articles <= 60):
+        if not isinstance(self.num_articles, int) or not (0 < self.num_articles <= 60):
             raise IncorrectNumberOfArticlesError(
                 "Number of articles must be an integer between 0 and 60. 0 is a valid value.")
 
@@ -115,6 +116,14 @@ class Config:
 
         if not isinstance(self.headless, bool):
             raise IncorrectVerifyError("Headless mode must be either True or False.")
+
+        if not isinstance(self.timeout, int) or self.timeout < 0 or self.timeout > 60:
+            raise IncorrectTimeoutError("Timeout must be an integer between 0 and 60.")
+
+        if self.num_articles < 1:
+            raise IncorrectNumberOfArticlesError("Number of articles must be greater than 0.")
+        elif self.num_articles > 60:
+            raise NumberOfArticlesOutOfRangeError("Number of articles cannot exceed 60.")
 
     def get_seed_urls(self) -> list[str]:
         """
