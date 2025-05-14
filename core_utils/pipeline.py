@@ -6,7 +6,7 @@ Interface definitions for text processing pipelines.
 from dataclasses import dataclass
 from typing import Protocol
 
-from core_utils.article.article import Article, ArtifactType
+from core_utils.article.article import Article
 
 
 class PipelineProtocol(Protocol):
@@ -36,6 +36,37 @@ class CoNLLUDocument(UDPipeDocument, StanzaDocument, Protocol):
     """
     Utility class to mimic analyzer document classes.
     """
+
+
+@dataclass
+class ConLLUWord:
+    """
+    Interface definition for word class of unified analyzer document.
+    """
+
+    id: str
+    upos: str
+    head: str
+    deprel: str
+    text: str
+
+
+@dataclass
+class ConLLUSentence:
+    """
+    Interface definition for sentence class of unified analyzer document.
+    """
+
+    words: list[ConLLUWord]
+
+
+@dataclass
+class UnifiedCoNLLUDocument:
+    """
+    Interface definition for sentence class of unified analyzer document.
+    """
+
+    sentences: list[ConLLUSentence]
 
 
 class AbstractCoNLLUAnalyzer(Protocol):
@@ -111,12 +142,15 @@ class LibraryWrapper(Protocol):
             CoNLLUDocument: Document ready for parsing
         """
 
-    def get_artifact_type(self) -> ArtifactType:
+    def get_document(self, doc: CoNLLUDocument) -> UnifiedCoNLLUDocument:
         """
-        Get kind of analyzer.
+        Present ConLLU document's sentence tokens as a unified structure.
+
+        Args:
+            doc (CoNLLUDocument): ConLLU document from analyzer.
 
         Returns:
-            ArtifactType: Kind of analyzer
+            UnifiedCoNLLUDocument: Unified document of token features within document sentences
         """
 
 
