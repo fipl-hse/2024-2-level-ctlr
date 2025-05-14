@@ -25,6 +25,7 @@ from core_utils.constants import (
     TIMEOUT_UPPER_LIMIT,
 )
 
+
 class IncorrectSeedURLError(Exception):
     """
     Raised when one or more seed URLs in the configuration are invalid.
