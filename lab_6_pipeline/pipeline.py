@@ -5,11 +5,13 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 from pathlib import Path
+import re
 
 from networkx import DiGraph
 
 from core_utils.article.io import to_cleaned
 from core_utils.article.article import Article
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -66,7 +68,6 @@ class CorpusManager:
         """
         self.path_to_raw_txt_data = path_to_raw_txt_data
         self._storage = {}
-        self._corpus = {}
         self._scan_dataset()
 
     def _validate_dataset(self) -> None:
@@ -81,25 +82,41 @@ class CorpusManager:
         checks = [str(file)[0].isdigit() for file in path.glob('**/*.txt')]
         if not checks:
             raise EmptyDirectoryError("No txt files found in the directory.")
-        ids = []
+
         txt_files = list(path.glob('**/*.txt'))
+        if not txt_files:
+            raise EmptyDirectoryError("No txt files found in the directory.")
+
+        ids = []
         for file in txt_files:
+            print(f"Checking file: {file.name}")
             if not str(file.name)[0].isdigit():
                 raise InconsistentDatasetError(f"File ID is inconsistent: {file.name}")
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f"File is empty: {file.name}")
-            ids.append(str(file.name).split('.')[0])
-        if len(ids) != len(set(ids)):
-            raise InconsistentDatasetError("IDs contain duplicates, indicating slips in the dataset.")
+            ids.append(int(file.parts[-1].split('_')[0]))
+        if len(ids) != len(set(ids)) or not set(ids) == set(range(min(ids), max(ids) + 1)):
+            raise InconsistentDatasetError("IDs contain duplicates or are inconsistent.")
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
-        path = Path(self.path_to_raw_txt_data)
-        for file in path.rglob('*.txt'):
-            i = int(file.parts[-1].split('_')[0])
-            self._storage[i] = Article(url=None, article_id=i)
+        ids = []
+        compiled_expression = re.compile(r'\d+')
+
+        for file in Path(self.path_to_raw_txt_data).rglob('*.txt'):
+            pattern = compiled_expression.search(file.name)
+            if not pattern:
+                print(f"Skipping file with invalid name: {file.name}")
+                continue
+            article_id = int(pattern.group(0))
+            if article_id in ids:
+                print(f"Duplicate ID found: {article_id}, skipping file: {file.name}")
+                continue
+
+            self._storage[article_id] = Article(url=None, article_id=article_id)
+            ids.append(article_id)
 
     def get_articles(self) -> dict:
         """
@@ -134,10 +151,11 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         articles = self.corpus_manager.get_articles()
-        for ind, art in articles.values():
-            cleaned_text = art.get_cleaned_text()
+        for ind, art in articles.items():
+            cleaned_text = art.get_cleaned_text().lower()
             art.text = cleaned_text
             to_cleaned(art)
+
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
@@ -358,6 +376,10 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    corpus_manager._validate_dataset()
+    pipeline = TextProcessingPipeline(corpus_manager=corpus_manager)
+    pipeline.run()
 
 
 if __name__ == "__main__":
