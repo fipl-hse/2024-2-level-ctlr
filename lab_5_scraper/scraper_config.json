@@ -4,7 +4,10 @@
     "https://www.baikal-daily.ru/news/arch/?FILTER_ARCHIV_DATE_ACTIVE_FROM_1=06.07.2020&FILTER_ARCHIV_DATE_ACTIVE_FROM_2=13.07.2020&set_filter=Y&PAGEN_1=2",
     "https://www.baikal-daily.ru/news/arch/?FILTER_ARCHIV_DATE_ACTIVE_FROM_1=12.06.2018&FILTER_ARCHIV_DATE_ACTIVE_FROM_2=13.06.2018&set_filter=Y&PAGEN_1=3"
   ],
-  "headers": {},
+  "headers": {
+    "user-agent": "Mozilla/5.0",
+    "referer": "https://www.baikal-daily.ru/"
+  },
   "total_articles_to_find_and_parse": 100,
   "encoding": "UTF-8",
   "timeout": 30,
