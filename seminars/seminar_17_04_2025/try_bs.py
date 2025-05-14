@@ -17,7 +17,7 @@ def main() -> None:
     """
     Entrypoint for a seminar's listing
     """
-    correct_url = "https://pravdasevera.ru/2025/04/18/680188a1ddf21f4614067c74"
+    correct_url = "https://www.nn.ru/text/gorod/2023/04/03/72186935/"
     response = requests.get(correct_url)
     response.encoding = "utf-8"
 
