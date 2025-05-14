@@ -26,6 +26,41 @@ from core_utils.constants import (
 )
 
 
+class IncorrectSeedURLError(Exception):
+    """
+    Raised when one or more seed URLs in the configuration are invalid.
+    """
+
+class NumberOfArticlesOutOfRangeError(Exception):
+    """
+    Raised when the requested number of articles exceeds the allowed upper limit.
+    """
+
+class IncorrectNumberOfArticlesError(Exception):
+    """
+    Raised when the number of articles to scrape is not a positive integer.
+    """
+
+class IncorrectHeadersError(Exception):
+    """
+    Raised when headers provided in the configuration are not in a valid dictionary format.
+    """
+
+class IncorrectEncodingError(Exception):
+    """
+    Raised when the specified encoding is not a valid non-empty string.
+    """
+
+class IncorrectTimeoutError(Exception):
+    """
+    Raised when the timeout value is not an integer or falls outside the acceptable range.
+    """
+
+class IncorrectVerifyError(Exception):
+    """
+    Raised when the certificate verification flag is not a boolean.
+    """
+
 class Config:
     """
     Class for unpacking and validating configurations.
