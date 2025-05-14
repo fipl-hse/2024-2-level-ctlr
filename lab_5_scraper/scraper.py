@@ -245,23 +245,25 @@ class Crawler:
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
         Find and retrieve url from HTML.
-
         Args:
             article_bs (bs4.BeautifulSoup): BeautifulSoup instance
-
         Returns:
             str: Url from HTML
         """
-        link_tag = article_bs.find("a", href=True)
-        if not link_tag:
-            return ""
+        for title_tag in article_bs.find_all("h3", class_="news-title"):
+            link_tag = title_tag.find("a", href=True)
+            if not link_tag:
+                continue
 
-        href = link_tag["href"]
-        if not href.startswith("/news"):
-            return ""
+            href = link_tag["href"]
+            if not href.startswith("/news"):
+                continue
 
-        full_url = "https://www.baikal-daily.ru" + str(href)
-        return full_url
+            full_url = "https://www.baikal-daily.ru" + str(href)
+            if full_url not in self.urls:
+                return full_url
+
+        return ""
 
     def find_articles(self) -> None:
         """
@@ -276,14 +278,12 @@ class Crawler:
 
             page_bs = BeautifulSoup(response.text, 'lxml')
 
-            news_titles = page_bs.find_all("h3", class_="news-title")
-            for title_tag in news_titles:
-                extracted_url = self._extract_url(title_tag)
-                if extracted_url and len(self.urls) < self.config.get_num_articles():
-                    if extracted_url not in self.urls:
-                        self.urls.append(extracted_url)
+            extracted_url = self._extract_url(page_bs)
+            while extracted_url:
+                self.urls.append(extracted_url)
                 if len(self.urls) == self.config.get_num_articles():
                     return
+                extracted_url = self._extract_url(page_bs)
 
     def get_search_urls(self) -> list:
         """
