@@ -127,7 +127,8 @@ class Config:
         if not isinstance(config.timeout, int) or not (
                 TIMEOUT_LOWER_LIMIT <= config.timeout < TIMEOUT_UPPER_LIMIT):
             raise IncorrectTimeoutError(
-                f"timeout must be an integer in range [{TIMEOUT_LOWER_LIMIT}, {TIMEOUT_UPPER_LIMIT})")
+                f"""timeout must be an integer in range [{TIMEOUT_LOWER_LIMIT},
+                {TIMEOUT_UPPER_LIMIT})""")
 
         if not isinstance(config.should_verify_certificate, bool):
             raise IncorrectVerifyError(
