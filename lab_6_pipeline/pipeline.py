@@ -7,7 +7,10 @@ import pathlib
 
 from networkx import DiGraph
 
+from core_utils.article.io import to_cleaned
+from core_utils.article.io import from_raw
 from core_utils.article.article import Article
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -69,10 +72,14 @@ class CorpusManager:
             raise FileNotFoundError('not existent path')
         if not self.path_to_raw_txt_data.is_dir():
             raise NotADirectoryError('path does not lead to directory')
-        try:
-            next(self.path_to_raw_txt_data.iterdir())
-        except StopIteration:
+        ids = [int(file_path.name.split('_')[0])
+               for file_path in self.path_to_raw_txt_data.glob('*_raw.txt')]
+        if not ids:
             raise EmptyDirectoryError('directory is empty')
+        ids.sort()
+        expected_ids = list(range(1, len(ids) + 1))
+        if ids != expected_ids:
+            raise InconsistentDatasetError('ids contain slips')
         for i, file in enumerate(self.path_to_raw_txt_data.iterdir(),
                                 start=1):
             if file.stat().st_size == 0:
@@ -85,8 +92,9 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        for i, file in enumerate(self.path_to_raw_txt_data.glob('*.txt')):
-            self._storage[i+1] = Article(url=None, article_id=i+1)
+        for i, file_path in enumerate(self.path_to_raw_txt_data.glob('*_raw.txt')):
+                self._storage[i+1] = Article(url=None, article_id=i+1)
+
 
     def get_articles(self) -> dict:
         """
@@ -113,11 +121,18 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus_manager = corpus_manager
+        self.analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = self.corpus_manager.get_articles()
+        for id, article in articles.items():
+            file_path = self.corpus_manager.path_to_raw_txt_data / f"{id}_raw.txt"
+            article = from_raw(file_path, article)
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -339,6 +354,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corman = CorpusManager(ASSETS_PATH)
+    pipeline = TextProcessingPipeline(corman)
+    pipeline.run()
 
 
 if __name__ == "__main__":
