@@ -289,8 +289,24 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        text_blocks = article_soup.select('div.article-content p')
-        self.article.text = ' '.join(p.get_text(strip=True) for p in text_blocks)
+
+        def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
+            """
+            Find text of article by collecting all paragraphs.
+            """
+            body = article_soup.find('div', class_='news-detail')  # <-- your site’s container
+
+            if not body:
+                self.article.text = ""
+                return
+
+            paragraphs = [
+                p.get_text(strip=True, separator=" ")
+                for p in body.find_all('p')
+                if p.get_text(strip=True)
+            ]
+
+            self.article.text = "\n".join(paragraphs)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
