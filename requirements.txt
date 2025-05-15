@@ -1,4 +1,2 @@
-matplotlib>=3.5
-networkx>=2.8
 requests==2.32.3
 
