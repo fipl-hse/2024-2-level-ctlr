@@ -217,6 +217,8 @@ class Crawler:
         self.config = config
         self.urls = []
 
+    from urllib.parse import urljoin
+
     def _extract_url(self, article_bs: Tag) -> str:
         """
         Find and retrieve url from HTML.
@@ -226,8 +228,9 @@ class Crawler:
             link_tag = preview.find('a', href=True)
             if link_tag:
                 href = link_tag['href']
-                if href.startswith('https://pravdasevera.ru/') and href not in self.urls:
-                    return href
+                full_url = urljoin('https://pravdasevera.ru', href)
+                if full_url.startswith('https://pravdasevera.ru') and full_url not in self.urls:
+                    return full_url
         return ''
 
     def find_articles(self) -> None:
@@ -251,11 +254,7 @@ class Crawler:
                 href = self._extract_url(block)
                 if href:
                     self.urls.append(href)
-            if not self.urls:
-                self.urls = [
-                    "https://pravdasevera.ru/news/12345",
-                    "https://pravdasevera.ru/news/67890",
-                ]
+
 
     def get_search_urls(self) -> list:
         """
