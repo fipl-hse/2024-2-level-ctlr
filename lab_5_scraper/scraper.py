@@ -7,6 +7,7 @@ import datetime
 import json
 import pathlib
 import shutil
+from random import randint
 from time import sleep
 from typing import Pattern, Union
 
@@ -103,7 +104,7 @@ class Config:
             not self.config.seed_urls
             or not isinstance(self.config.seed_urls, list)
             or not all(isinstance(url, str) for url in self.config.seed_urls)
-            or not all("https://www.volga-tv.ru/" in url for url in self.config.seed_urls)
+            or not all("https://tuvapravda.ru/" in url for url in self.config.seed_urls)
         ):
             raise IncorrectSeedURLError("Something is wrong with the urls")
         if (
@@ -200,12 +201,12 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    sleep(15)
+    sleep(randint(1, 5))
     response = requests.get(
         url,
         headers=config.get_headers(),
         verify=config.get_verify_certificate(),
-        timeout=120,
+        timeout=config.get_timeout(),
     )
     response.encoding = config.get_encoding()
     return response
@@ -239,10 +240,9 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        link = article_bs.find("a", class_="prw")
-        href = link.get("href")
+        href = article_bs.get("href")
         if isinstance(href, str):
-            real_link = f"https://www.volga-tv.ru{href}"
+            real_link = f"https://tuvapravda.ru{href}"
             return real_link
         return ""
 
@@ -258,7 +258,7 @@ class Crawler:
             if not response.ok:
                 continue
             bs = BeautifulSoup(response.text, "lxml")
-            news = bs.find_all("div", class_="item news")
+            news = bs.find_all("a", class_="news-card__link-to-article")
             for article in news:
                 if len(self.urls) >= self.config.get_num_articles():
                     break
@@ -306,15 +306,10 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        news = article_soup.find("div", class_="news-detail hyphenate")
+        news = article_soup.find("div", class_="text-content")
         text = []
         for i in news:
-            if i.get_text().strip() and not (
-                i.get_text().strip().startswith("Служба информации:")
-                or i.get_text().strip() == "Поделитесь этой новостью с друзьями в соцсетях:"
-                or i.get_text().strip() == "Все новости раздела «Новости дня»"
-                or str(i).startswith("<time class=")
-            ):
+            if i.get_text().strip():
                 text.append(i.get_text(strip=True, separator="\n"))
         self.article.text = "\n".join(text)
 
@@ -325,18 +320,18 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        self.article.title = article_soup.find("h1").text
-        date = article_soup.find("time", class_="news-date-time").attrs["datetime"]
+        self.article.title = article_soup.find("h1", class_="article__title").text.strip()
+        date = article_soup.find("div", class_="article-attributes-item__value article-attributes-item--time").text
         self.article.date = self.unify_date_format(date)
-        self.article.topics = ["Новости дня"]
-
-        full_text = article_soup.find("div", class_="news-detail hyphenate")
-        self.article.author = ["NOT FOUND"]
-        for i in full_text:
-            if i.get_text().strip().startswith("Служба информации:"):
-                authors = i.get_text().strip().replace("Служба информации: ", "")[:-1:]
-                authors_list = authors.split(", ")
-                self.article.author = authors_list
+        if 'https://tuvapravda.ru/natsionalnye-proekty/' in self.article.url:
+            self.article.topics = 'Национальные проекты'
+        elif 'https://tuvapravda.ru/novosti/' in self.article.url:
+            self.article.topics = 'Новости'
+        elif 'https://tuvapravda.ru/fotofakt/' in self.article.url:
+            self.article.topics = 'Фотофакт'
+        else:
+            self.article.topics = 'NOT FOUND'
+        self.article.author = [article_soup.find("span", class_="author__name").text]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -348,8 +343,24 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        nice_date = date_str.split("T")
-        return datetime.datetime.strptime(" ".join(nice_date), "%Y-%m-%d %H:%M:%S%z")
+        translated_months = {
+            'января': 'Jan',
+            'февраля': 'Feb',
+            'марта': 'Mar',
+            'апреля': 'Apr',
+            'мая': 'May',
+            'июня': 'Jun',
+            'июля': 'Jul',
+            'августа': 'Aug',
+            'сентября': 'Sep',
+            'октября': 'Oct',
+            'ноября': 'Nov',
+            'декабря': 'Dec'
+        }
+        date_list = date_str.split()
+        date_list[1] = translated_months[date_list[1]]
+        nice_date = ' '.join(date_list)
+        return datetime.datetime.strptime(nice_date, '%d %b %Y')
 
     def parse(self) -> Union[Article, bool, list]:
         """
