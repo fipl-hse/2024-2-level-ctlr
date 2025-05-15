@@ -356,8 +356,10 @@ class HTMLParser:
             raw_date = date_block.a.text.strip()
             self.article.date = self.unify_date_format(raw_date)
 
-        topic_tags = article_soup.find_all('a', rel='tag')
-        self.article.topics = [tag.text.strip() for tag in topic_tags] if topic_tags else []
+        tag_block = article_soup.find('div', class_='article__tags')
+        if tag_block:
+            tag_links = tag_block.find_all('a')
+            self.article.topics = [tag.text.strip() for tag in tag_links]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
