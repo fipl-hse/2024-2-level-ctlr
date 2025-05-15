@@ -249,7 +249,7 @@ class Crawler:
                 link.decompose()
                 if isinstance(full_url, str):
                     return full_url
-        return 'stop iteration'
+        return ''
 
     def find_articles(self) -> None:
         """
@@ -263,7 +263,7 @@ class Crawler:
                 soup = BeautifulSoup(response.text, 'lxml')
                 while True:
                     url = self._extract_url(soup)
-                    if url == 'stop iteration' or url in self.urls:
+                    if url == '' or url in self.urls:
                         break
                     self.urls.append(url)
                     if len(self.urls) >= self.config.get_num_articles():
