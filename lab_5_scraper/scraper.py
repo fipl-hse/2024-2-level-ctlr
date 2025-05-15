@@ -240,14 +240,17 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            for block in soup.find_all('a', class_='img_box'):
-                url = self._extract_url(block)
-                if (url and (url not in self.urls) and
-                        (len(self.urls) < self.config.get_num_articles())):
+            # now find each <h3><a href="...">...</a></h3> block
+            for header in soup.find_all('h3'):
+                link = header.find('a', href=True)
+                if not link:
+                    continue
+                url = self._extract_url(link)
+                # add until we hit total_articles limit
+                if url and url not in self.urls and len(self.urls) < self.config.get_num_articles():
                     self.urls.append(url)
                 else:
                     break
-
 
     def get_search_urls(self) -> list:
         """
