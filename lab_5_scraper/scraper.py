@@ -321,7 +321,8 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        paragraphs = article_soup.find_all('p')
+        paragraphs = article_soup.find_all('div', id='MainMasterContentPlaceHolder_'
+                                                     'InsidePlaceHolder_articleText')
         self.article.text = '\n'.join(p.get_text(strip=True) for p in paragraphs)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
@@ -331,9 +332,8 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title_tag = article_soup.find('a', id=
-                                      'MainMasterContentPlaceHolder_InsidePlaceHolder_'
-                                      'articleHeader')
+        title_tag = article_soup.find('a', id='MainMasterContentPlaceHolder_'
+                                              'InsidePlaceHolder_articleHeader')
         self.article.title = title_tag.get_text().strip() if title_tag else "NO TITLE"
 
         author = article_soup.find('a', class_='red', id=re.compile(r'.*_authorName$'))
