@@ -225,10 +225,12 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        href_link = article_bs.get('href')
-        if isinstance(href_link, str):
-            return "https://kam-kray.ru"+href_link
-        return ''
+        href = article_bs.get('href')
+        if not isinstance(href, str):
+            return ""
+        if href.startswith(('http://', 'https://')):
+            return href
+        return "https://kam-kray.ru" + href
 
     def find_articles(self) -> None:
         """
