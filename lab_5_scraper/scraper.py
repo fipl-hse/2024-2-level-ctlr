@@ -195,7 +195,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    # sleep(uniform(0.1, 2.0))
+    sleep(uniform(0.1, 0.5))
     response = requests.get(
         url,
         headers=config.get_headers(),
@@ -486,4 +486,4 @@ def recursive_main() -> None:
 
 
 if __name__ == "__main__":
-    recursive_main()
+    main()

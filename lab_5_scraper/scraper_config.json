@@ -1,6 +1,13 @@
 {
     "seed_urls":
     [
+        "https://sovsakh.ru/category/politika/page/2/",
+        "https://sovsakh.ru/category/politika/page/3/",
+        "https://sovsakh.ru/category/politika/page/4/",
+        "https://sovsakh.ru/category/politika/page/5/",
+        "https://sovsakh.ru/category/ekonomika/",
+        "https://sovsakh.ru/category/proisshestviya/",
+        "https://sovsakh.ru/category/project/",
         "https://sovsakh.ru/category/obshhestvo/",
         "https://sovsakh.ru/category/obshhestvo/page/2/",
         "https://sovsakh.ru/category/obshhestvo/page/3/",
@@ -11,14 +18,7 @@
         "https://sovsakh.ru/category/obshhestvo/page/8/",
         "https://sovsakh.ru/category/obshhestvo/page/9/",
         "https://sovsakh.ru/category/obshhestvo/page/10/",
-        "https://sovsakh.ru/",
-        "https://sovsakh.ru/category/politika/page/2/",
-        "https://sovsakh.ru/category/politika/page/3/",
-        "https://sovsakh.ru/category/politika/page/4/",
-        "https://sovsakh.ru/category/politika/page/5/",
-        "https://sovsakh.ru/category/ekonomika/",
-        "https://sovsakh.ru/category/proisshestviya/",
-        "https://sovsakh.ru/category/project/"
+        "https://sovsakh.ru/"
     ],
     "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36"},
     "total_articles_to_find_and_parse": 40,
