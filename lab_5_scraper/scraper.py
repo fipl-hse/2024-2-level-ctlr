@@ -120,7 +120,7 @@ class Config:
         if not isinstance(self.timeout, int) or self.timeout < 0 or self.timeout > 60:
             raise IncorrectTimeoutError("Timeout must be an integer between 0 and 60.")
 
-        if not isinstance(self.num_articles, int):
+        if not isinstance(self.num_articles, int) or self.num_articles < 0 or self.num_articles > 60:
             raise IncorrectNumberOfArticlesError("Number of articles must be an integer.")
 
         if self.num_articles < 0 or self.num_articles > 60:
