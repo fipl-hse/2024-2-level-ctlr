@@ -321,7 +321,7 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         h1 = article_soup.find('h1')
-        self.article.title = h1.get_text(strip=True) if h1 else 'NOT FOUND'
+        self.article.title = h1.decode_contents().strip() if h1 else 'NOT FOUND'
         self.article.author = ['NOT FOUND']
         time_tag = article_soup.find('time')
         raw_date = time_tag.get_text(strip=True) if time_tag else ''
