@@ -207,7 +207,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    sleep(uniform(0.1, 0.5))
+    #sleep(uniform(0.1, 0.5))
     timeout = config.get_timeout()
     headers = config.get_headers()
     verify = config.get_verify_certificate()
@@ -332,7 +332,7 @@ class HTMLParser:
         """
         title_element = article_soup.find("h1", class_="entry-title")
         self.article.title = (title_element.get_text
-                                  (strip=True)) if title_element else "NOT FOUND"
+                                  (strip=True))
 
         authors = []
 

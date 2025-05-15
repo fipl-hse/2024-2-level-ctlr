@@ -4,13 +4,14 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-from pathlib import Path
 import re
+from pathlib import Path
+import spacy_udpipe
 
 from networkx import DiGraph
 
+from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import to_cleaned
-from core_utils.article.article import Article
 from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -27,18 +28,6 @@ from core_utils.pipeline import (
 class EmptyDirectoryError(Exception):
     """
     This class checks directory is empty.
-    """
-
-
-class FileNotFoundError(Exception):
-    """
-    Check file does exist or not.
-    """
-
-
-class NotADirectoryError(Exception):
-    """
-    Check how path leads to directory
     """
 
 
@@ -68,6 +57,7 @@ class CorpusManager:
         """
         self.path_to_raw_txt_data = path_to_raw_txt_data
         self._storage = {}
+        self._validate_dataset()
         self._scan_dataset()
 
     def _validate_dataset(self) -> None:
@@ -79,44 +69,57 @@ class CorpusManager:
             raise FileNotFoundError(f"The specified path does not exist: {path}")
         if not path.is_dir():
             raise NotADirectoryError(f"The specified path is not a directory: {path}")
-        checks = [str(file)[0].isdigit() for file in path.glob('**/*.txt')]
-        if not checks:
-            raise EmptyDirectoryError("No txt files found in the directory.")
 
-        txt_files = list(path.glob('**/*.txt'))
-        if not txt_files:
-            raise EmptyDirectoryError("No txt files found in the directory.")
+        if not any(self.path_to_raw_txt_data.iterdir()):
+            raise EmptyDirectoryError
 
-        ids = []
-        for file in txt_files:
-            print(f"Checking file: {file.name}")
-            if not str(file.name)[0].isdigit():
-                raise InconsistentDatasetError(f"File ID is inconsistent: {file.name}")
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"File is empty: {file.name}")
-            ids.append(int(file.parts[-1].split('_')[0]))
-        if len(ids) != len(set(ids)) or not set(ids) == set(range(min(ids), max(ids) + 1)):
-            raise InconsistentDatasetError("IDs contain duplicates or are inconsistent.")
+        raw_files = list(path.glob('**/*_raw.txt'))
+        meta_files = list(path.glob('**/*_meta.txt'))
+        raw_ids = set()
+        meta_ids = set()
+
+        for file in raw_files:
+            try:
+                file_id = int(file.parts[-1].split('_')[0])
+                if file.stat().st_size == 0:
+                    raise InconsistentDatasetError(f"File is empty: {file.name}")
+                raw_ids.add(file_id)
+            except (ValueError, IndexError):
+                continue
+
+        for file in meta_files:
+            try:
+                file_id = int(file.parts[-1].split('_')[0])
+                if file.stat().st_size == 0:
+                    raise InconsistentDatasetError(f"File is empty: {file.name}")
+                meta_ids.add(file_id)
+            except (ValueError, IndexError):
+                continue
+
+        if raw_ids != meta_ids or not raw_ids or not meta_ids:
+            raise InconsistentDatasetError("Number of meta and raw files is not equal")
+        if sorted(raw_ids) != list(range(min(sorted(raw_ids)), max(sorted(raw_ids)) + 1)):
+            raise InconsistentDatasetError("IDs contain slips or are inconsistent.")
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
-        ids = []
+        ids = set()
         compiled_expression = re.compile(r'\d+')
 
         for file in Path(self.path_to_raw_txt_data).rglob('*.txt'):
+            if not file.name.endswith('_raw.txt'):
+                continue
             pattern = compiled_expression.search(file.name)
             if not pattern:
-                print(f"Skipping file with invalid name: {file.name}")
                 continue
             article_id = int(pattern.group(0))
             if article_id in ids:
-                print(f"Duplicate ID found: {article_id}, skipping file: {file.name}")
                 continue
 
             self._storage[article_id] = Article(url=None, article_id=article_id)
-            ids.append(article_id)
+            ids.add(article_id)
 
     def get_articles(self) -> dict:
         """
@@ -150,10 +153,9 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = self.corpus_manager.get_articles()
-        for ind, art in articles.items():
-            cleaned_text = art.get_cleaned_text().lower()
-            art.text = cleaned_text
+        for art in self.corpus_manager.get_articles().values():
+            lower_text = art.text.lower()
+            art.text = re.sub(r'[^\w\s]', '', lower_text, flags=re.UNICODE)
             to_cleaned(art)
 
 
@@ -169,6 +171,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -177,6 +180,12 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        spacy_udpipe.download("ru")
+        nlp = spacy_udpipe.load_from_path(
+            lang="ru",
+            path="lab_6_pipeline/assets/model/your_model.udpipe"
+        )
+        return AbstractCoNLLUAnalyzer
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -189,6 +198,7 @@ class UDPipeAnalyzer(LibraryWrapper):
             list[UDPipeDocument | str]: List of documents
         """
 
+
     def to_conllu(self, article: Article) -> None:
         """
         Save content to ConLLU format.
@@ -196,6 +206,10 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        conllu = article.get_cleaned_text()
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        with open(path, 'w', encoding='utf-8') as file:
+            file.write(conllu)
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
