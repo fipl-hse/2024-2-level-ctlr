@@ -254,7 +254,7 @@ class Crawler:
                 continue
 
             soup = BeautifulSoup(response.text, 'html.parser')
-            blocks = soup.find_all('div', class_='post-card__thumbnail')
+            blocks = soup.find_all('article')
             for block in blocks:
                 if len(self.urls) >= self.config.get_num_articles():
                     break
