@@ -335,8 +335,10 @@ class HTMLParser:
         """
         h1 = article_soup.find('h1')
         if h1:
-            raw_title = h1.decode_contents(formatter="html").strip()
-            self.article.title = raw_title
+            title_text = h1.get_text(strip=True)
+            if title_text.startswith('#'):
+                title_text = title_text[1:].strip()
+            self.article.title = title_text
         else:
             self.article.title = 'NOT FOUND'
         self.article.author = ['NOT FOUND']
