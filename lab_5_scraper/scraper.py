@@ -240,13 +240,11 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            # now find each <h3><a href="...">...</a></h3> block
             for header in soup.find_all('h3'):
                 link = header.find('a', href=True)
                 if not link:
                     continue
                 url = self._extract_url(link)
-                # add until we hit total_articles limit
                 if url and url not in self.urls and len(self.urls) < self.config.get_num_articles():
                     self.urls.append(url)
                 else:
@@ -291,8 +289,16 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        text = article_soup.find_all('div', class_='value')[0].text
-        self.article.text = text
+        body = article_soup.find('div', class_='value')
+        if not body:
+            self.article.text = ""
+            return
+        paragraphs = [
+            p.get_text(strip=True)
+            for p in body.find_all('p')
+            if p.get_text(strip=True)
+            ]
+        self.article.text = "\n".join(paragraphs)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
