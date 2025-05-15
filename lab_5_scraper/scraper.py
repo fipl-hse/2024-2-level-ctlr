@@ -226,11 +226,20 @@ class Crawler:
             str: Url from HTML
         """
         href = article_bs.get('href')
-        if not isinstance(href, str):
+        if not href:
             return ""
+
         if href.startswith(('http://', 'https://')):
             return href
-        return "https://kam-kray.ru" + href
+
+        seed_list = self.config.get_seed_urls()
+        if not seed_list:
+            return ""
+        base = seed_list[0]
+        parts = base.split('/')
+        domain = parts[0] + '//' + parts[2]
+
+        return domain + href
 
     def find_articles(self) -> None:
         """
