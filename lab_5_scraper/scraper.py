@@ -7,6 +7,7 @@ import json
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
+from pathlib import Path
 import shutil
 from typing import Pattern, Union
 from urllib.parse import urljoin
@@ -52,6 +53,10 @@ class IncorrectVerifyError(Exception):
     Verify certificate value must either be True or False.
     """
 
+class IncorrectVerifyCertificateError(Exception):
+    pass
+
+
 class Config:
     """
     Class for unpacking and validating configurations.
@@ -64,6 +69,7 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.urls = []
         self.path_to_config = path_to_config
         config_data = self._load_config_from_file()
 
@@ -72,9 +78,8 @@ class Config:
         self._headers = config_data["headers"]
         self._encoding = config_data["encoding"]
         self._timeout = config_data["timeout"]
-        self._should_verify_certificate = config_data.get("verify_certificate", True)
+        self._should_verify_certificate = config_data.get("should_verify_certificate", True)
         self._headless_mode = config_data["headless_mode"]
-
         self._validate_config_content()
 
     def _load_config_from_file(self) -> dict:
@@ -100,6 +105,12 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
+        if not isinstance(self._should_verify_certificate, bool):
+            raise IncorrectVerifyError(
+                "Checking that scraper can handle incorrect verify certificate argument.\n"
+                "Verify certificate must be either True or False"
+            )
+
         if not isinstance(self._seed_urls, list) or not all(isinstance(url, str) for url in self._seed_urls):
             raise IncorrectSeedURLError("Seed URLs must be a list of strings.")
 
@@ -115,7 +126,7 @@ class Config:
             raise IncorrectHeadersError("Headers must be a dictionary with string keys and values.")
 
         if not isinstance(self._should_verify_certificate, bool):
-            raise IncorrectVerifyError("Should verify certificate must be either True or False.")
+            raise IncorrectVerifyCertificateError("Verify certificate must be either True or False.")
 
         if not isinstance(self._headless_mode, bool):
             raise IncorrectVerifyError("Headless mode must be either True or False.")
@@ -128,6 +139,7 @@ class Config:
 
         if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError("num_articles must not be too large")
+
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -226,41 +238,50 @@ class Crawler:
         self.config = config
         self.urls = []
 
-    def _extract_url(self, article_bs: Tag) -> str:
+    def _extract_url(self, article_bs: Tag, base_url: str) -> str:
         """
         Find and retrieve url from HTML.
         """
-        preview = article_bs.find('div', class_='post-card__thumbnail')
-        if preview:
-            link_tag = article_bs.find('a', href=True)
-            if link_tag:
-                href = link_tag['href']
-                full_url = urljoin('https://pravdasevera.ru', href)
-                if full_url.startswith('https://pravdasevera.ru') and full_url not in self.urls:
-                    return full_url
+        link_tag = article_bs.find('a', href=True)
+        if link_tag:
+            href = link_tag['href']
+            full_url = urljoin(base_url, href)
+            if full_url not in self.urls:
+                return full_url
         return ''
+    def is_valid_article_url(self, url: str) -> bool:
+        return url.startswith(
+            "https://pravdasevera.ru/") and "/society/" in url or "/politics/" in url or "/economics/" in url
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        for seed_url in self.get_search_urls():
-            if len(self.urls) >= self.config.get_num_articles():
-                break
-            try:
-                response = make_request(seed_url, self.config)
-            except Exception as e:
-                print(f"Ошибка при запросе к {seed_url}: {e}")
-                continue
+        self.urls = []
+        headers = self.config._headers
+        timeout = self.config._timeout
+        total_needed = self.config._num_articles
 
-            soup = BeautifulSoup(response.text, 'html.parser')
-            blocks = soup.find_all('article')
-            for block in blocks:
-                if len(self.urls) >= self.config.get_num_articles():
-                    break
-                href = self._extract_url(block)
-                if href:
-                    self.urls.append(href)
+        for seed_url in self.config._seed_urls:
+            try:
+                response = requests.get(seed_url, headers=headers, timeout=timeout,
+                                        verify=self.config._should_verify_certificate)
+                response.raise_for_status()
+                response.encoding = self.config._encoding
+
+                soup = BeautifulSoup(response.text, 'html.parser')
+                links = soup.find_all('a', href=True)
+
+                for link in links:
+                    href = link['href']
+                    full_url = urljoin(seed_url, href)
+                    if self.is_valid_article_url(full_url):
+                        if full_url not in self.urls:
+                            self.urls.append(full_url)
+                        if len(self.urls) >= total_needed:
+                            return
+            except requests.RequestException:
+                continue
 
 
     def get_search_urls(self) -> list:
@@ -288,6 +309,7 @@ class HTMLParser:
             article_id (int): Article id
             config (Config): Configuration
         """
+
         self.full_url = full_url
         self.article_id = article_id
         self.config = config
@@ -349,11 +371,14 @@ class HTMLParser:
 
         try:
             parts = date_str.strip().split()
-            if len(parts) < 3:
-                raise ValueError("Unexpected date format")
-            parts[1] = months.get(parts[1].rstrip(','), 'Jan')
-            new_date = ' '.join(parts)
-            return datetime.datetime.strptime(new_date, '%d %b %Y')
+            if len(parts) >= 3:
+                day = parts[0]
+                month = months.get(parts[1], 'Jan')
+                year = parts[2]
+                date_str_en = f"{day} {month} {year}"
+                return datetime.datetime.strptime(date_str_en, '%d %b %Y')
+            else:
+                return datetime.datetime.now()
         except Exception:
             return datetime.datetime.now()
 
@@ -401,6 +426,7 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    CRAWLER_CONFIG_PATH = Path("path/to/crawler_config.json")
     config = Config(path_to_config=CRAWLER_CONFIG_PATH)
 
     prepare_environment(ASSETS_PATH)
