@@ -466,7 +466,7 @@ def main() -> None:
     for i, url in enumerate(article_urls):
         parser = HTMLParser(
             full_url=url,
-            article_id=i,
+            article_id=i+1,
             config=configuration)
         article = parser.parse()
         if isinstance(article, Article):
