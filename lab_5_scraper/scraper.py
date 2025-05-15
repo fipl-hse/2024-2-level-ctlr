@@ -65,16 +65,25 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        config_dto = self._extract_config_content()
+        config_data = self._load_config_from_file()
 
-        self._seed_urls = config_dto.seed_urls
-        self._num_articles = config_dto.total_articles
-        self._headers = config_dto.headers
-        self._encoding = config_dto.encoding
-        self._timeout = config_dto.timeout
-        self._verify = config_dto.should_verify_certificate
-        self._headless = config_dto.headless_mode
+        self._seed_urls = config_data["seed_urls"]
+        self._num_articles = config_data["total_articles_to_find_and_parse"]
+        self._headers = config_data["headers"]
+        self._encoding = config_data["encoding"]
+        self._timeout = config_data["timeout"]
+        self._should_verify_certificate = config_data["verify_certificate"]
+        self._headless_mode = config_data["headless_mode"]
+
         self._validate_config_content()
+
+    def _load_config_from_file(self) -> dict:
+        """
+        Load config from json file.
+        """
+        with open(self.path_to_config, 'r', encoding='utf-8') as file:
+            config_dict = json.load(file)
+        return config_dict
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -105,10 +114,10 @@ class Config:
         ):
             raise IncorrectHeadersError("Headers must be a dictionary with string keys and values.")
 
-        if not isinstance(self._verify, bool):
+        if not isinstance(self._should_verify_certificate, bool):
             raise IncorrectVerifyError("Should verify certificate must be either True or False.")
 
-        if not isinstance(self._headless, bool):
+        if not isinstance(self._headless_mode, bool):
             raise IncorrectVerifyError("Headless mode must be either True or False.")
 
         if not isinstance(self._timeout, int) or self._timeout < 0 or self._timeout > 60:
