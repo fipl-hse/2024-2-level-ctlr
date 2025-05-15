@@ -318,13 +318,20 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        h1 = article_soup.find('h1', itemprop='headline name')
+        h1 = article_soup.find('h1')
         self.article.title = h1.get_text(strip=True) if h1 else 'NOT FOUND'
         self.article.author = ['NOT FOUND']
         time_tag = article_soup.find('time')
-        raw_date = time_tag.get_text(strip=True) if time_tag else 'NOT FOUND'
+        raw_date = time_tag.get_text(strip=True) if time_tag else ''
         self.article.date = self.unify_date_format(raw_date)
-        self.article.topics = []
+        topics = []
+        about_ul = article_soup.find('ul', itemprop='about')
+        if about_ul:
+            for li in about_ul.find_all('li', itemprop='itemListElement'):
+                meta = li.find('meta', itemprop='name')
+                if meta and meta.has_attr('content'):
+                    topics.append(meta['content'].strip())
+        self.article.topics = topics or ['NOT FOUND']
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
