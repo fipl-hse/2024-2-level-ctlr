@@ -7,7 +7,12 @@
         "https://ria.ru/politics/",
         "https://ria.ru/world/"
     ],
-    "headers": {},
+    "headers": {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "User-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15",
+        "Cookie": "FCNEC=%5B%5B%22AKsRol994Ni87PCklLME6DLVM3wIefL94RgWgMvGAa4k3VQUlgIFltIkppGvIEESeevnaOpBXBjasol2YfPWKHMn2jXZbARCy_ATcNvUZ2t9NiP5KdEVat3EkxPhN0AoRfPJIvVMXQkKWIFEsnXgVZV8yE13zAmlVA%3D%3D%22%5D%5D; __eoi=ID=961a2f95f5e0baa8:T=1747330429:RT=1747330429:S=AA-AfjbDlDu8p8Ndl7pt7GzFMJeC; __gads=ID=469bae95aa5fbeaa:T=1747330429:RT=1747330429:S=ALNI_MbAsuzlqBBJoYsPeD3H_0VMAw0AOg; __gpi=UID=000010af2bfc809e:T=1747330429:RT=1747330429:S=ALNI_MZ-hSj2Fs0zp89hCkbpDCeW8_xrBQ",
+    },
     "total_articles_to_find_and_parse": 100,
     "encoding": "utf-8",
     "timeout": 50,
