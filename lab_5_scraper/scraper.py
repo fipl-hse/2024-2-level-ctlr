@@ -207,8 +207,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    response = requests.get(url, headers=config.get_headers(),
-                             timeout=config.get_timeout(),
+    response = requests.get(url, headers= config.get_headers(),
+                             timeout= config.get_timeout(),
                              verify= config.get_verify_certificate())
     return response
 
@@ -321,12 +321,10 @@ class HTMLParser:
         div = article_soup.find('div', class_="fullnews_content")
         text = []
         if div is not None:
-            # Get all paragraph tags within the div
             paragraphs = div.find_all('p')
             for p in paragraphs:
-                if p.text.strip():  # Only add non-empty paragraphs
+                if p.text.strip():
                     text.append(p.text.strip())
-            # If no paragraphs found, try getting direct text
             if not text:
                 text = [div.get_text(strip=True)]
             self.article.text = '\n'.join(text)
