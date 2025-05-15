@@ -182,7 +182,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self._verify
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -191,7 +191,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-        return self._headless
+        return self._headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
