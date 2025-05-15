@@ -100,20 +100,21 @@ class Config:
         if not isinstance(self._seed_urls, list):
             raise IncorrectSeedURLError('incorrect url')
         for url in self._seed_urls:
-            if not isinstance(url, str):
+            # <-- updated line:
+            if not isinstance(url, str) or not url.startswith(('http://', 'https://')):
                 raise IncorrectSeedURLError('incorrect url')
+
         if not isinstance(self._num_articles, int) or self._num_articles <= 0:
             raise IncorrectNumberOfArticlesError('number is not int or less that 0')
-        if self._num_articles < 0 or self._num_articles > 150:
+        if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError('wrong number of articles')
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('incorrect type of headers')
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('incorrect type of encoding')
-        if not isinstance(self._timeout, int) or self._timeout <= 0 or self._timeout >= 60:
+        if not isinstance(self._timeout, int) or not (0 < self._timeout < 60):
             raise IncorrectTimeoutError('incorrect timeouts')
-        if not isinstance(self._should_verify_certificate, bool) or not \
-                isinstance(self._headless_mode, bool):
+        if not isinstance(self._should_verify_certificate, bool) or not isinstance(self._headless_mode, bool):
             raise IncorrectVerifyError('type is not bool')
 
     def get_seed_urls(self) -> list[str]:
@@ -226,7 +227,7 @@ class Crawler:
         """
         href_link = article_bs.get('href')
         if isinstance(href_link, str):
-            return href_link
+            return "https://kam-kray.ru"+href_link
         return ''
 
     def find_articles(self) -> None:
