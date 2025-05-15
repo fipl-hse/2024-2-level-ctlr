@@ -294,9 +294,12 @@ class HTMLParser:
             """
             Find text of article by collecting all paragraphs.
             """
-            html_field = article_soup.find(
-                "div", class_="field ft_html f_content auto_field"
-            )
+            body = article_soup.find("div", itemprop="articleBody")
+            if not body:
+                self.article.text = ""  # ничего не найдено
+                return
+
+            html_field = body.find("div", class_="field ft_html f_content auto_field")
             if not html_field:
                 self.article.text = ""
                 return
@@ -351,7 +354,7 @@ class HTMLParser:
         response.encoding = self.config.get_encoding()
 
         if response.ok:
-            soup = BeautifulSoup(response.text, 'lxml')
+            soup = BeautifulSoup(response.text, "lxml")
             self._fill_article_with_text(soup)
             self._fill_article_with_meta_information(soup)
         else:
