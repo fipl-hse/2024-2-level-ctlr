@@ -245,17 +245,24 @@ class Crawler:
         """
         Find articles.
         """
-        for seed in self.get_search_urls():
-            response = make_request(seed, self.config)
+        for seed_url in self.get_search_urls():
+            response = make_request(seed_url, self.config)
             if not response.ok:
                 continue
+
             soup = BeautifulSoup(response.text, 'lxml')
-            for link_tag in soup.find_all('a', class_='news_pic'):
-                url = self._extract_url(link_tag)
-                if url and url not in self.urls and len(self.urls) < self.config.get_num_articles():
-                    self.urls.append(url)
-                else:
+
+            for header in soup.find_all('h3'):
+                if len(self.urls) >= self.config.get_num_articles():
                     break
+
+                a_tag = header.find('a', href=True)
+                if not a_tag:
+                    continue
+
+                url = self._extract_url(a_tag)
+                if url and url not in self.urls:
+                    self.urls.append(url)
 
     def get_search_urls(self) -> list:
         """
