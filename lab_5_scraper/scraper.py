@@ -344,7 +344,7 @@ class HTMLParser:
         if time_tag and time_tag.text:
             self.article.date = self.unify_date_format(time_tag.text.strip())
 
-        self.article.topics = ["NOT FOUND"]
+        self.article.topics = []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
