@@ -241,14 +241,12 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        all_links = article_bs.find_all('a', href=True)
-        for link in all_links:
-            href = str(link['href'])
-            if href.startswith('/news/'):
+        link = article_bs.find('a', href=True)
+        if link:
+            href = link['href']
+            if isinstance(href, str) and href.startswith('/news/'):
                 full_url = 'https://ks-yanao.ru' + href
-                link.decompose()
-                if isinstance(full_url, str):
-                    return full_url
+                return full_url
         return ''
 
     def find_articles(self) -> None:
@@ -259,15 +257,17 @@ class Crawler:
             if len(self.urls) >= self.config.get_num_articles():
                 break
             response = make_request(seed_url, self.config)
-            if response and response.ok:
-                soup = BeautifulSoup(response.text, 'lxml')
-                while True:
-                    url = self._extract_url(soup)
-                    if url == '' or url in self.urls:
-                        break
-                    self.urls.append(url)
-                    if len(self.urls) >= self.config.get_num_articles():
-                        return
+            if not (response and response.ok):
+                continue
+            soup = BeautifulSoup(response.text, 'lxml')
+            articles = soup.find_all('article')
+            for article in articles:
+                url = self._extract_url(article)
+                if not url or url in self.urls:
+                    continue
+                self.urls.append(url)
+                if len(self.urls) >= self.config.get_num_articles():
+                    return
 
     def get_search_urls(self) -> list:
         """
