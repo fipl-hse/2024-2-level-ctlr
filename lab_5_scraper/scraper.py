@@ -214,7 +214,7 @@ class Crawler:
         Initialize an instance of the Crawler class.
         """
         self.config = config
-        self._urls = []
+        self.urls = []
 
     def _extract_url(self, article_bs: Tag) -> str:
         """
@@ -225,7 +225,7 @@ class Crawler:
             link_tag = preview.find('a', href=True)
             if link_tag:
                 href = link_tag['href']
-                if href.startswith('https://pravdasevera.ru/') and href not in self._urls:
+                if href.startswith('https://pravdasevera.ru/') and href not in self.urls:
                     return href
         return ''
 
@@ -234,7 +234,7 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.get_search_urls():
-            if len(self._urls) >= self.config.get_num_articles():
+            if len(self.urls) >= self.config.get_num_articles():
                 break
             try:
                 response = make_request(seed_url, self.config)
@@ -245,11 +245,11 @@ class Crawler:
             soup = BeautifulSoup(response.text, 'html.parser')
             blocks = soup.find_all('div', class_='post-card__thumbnail')
             for block in blocks:
-                if len(self._urls) >= self.config.get_num_articles():
+                if len(self.urls) >= self.config.get_num_articles():
                     break
                 href = self._extract_url(block)
                 if href:
-                    self._urls.append(href)
+                    self.urls.append(href)
 
     def get_search_urls(self) -> list:
         """
