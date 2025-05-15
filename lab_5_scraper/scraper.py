@@ -207,35 +207,25 @@ class Crawler:
     Crawler implementation.
     """
 
-    #: Url pattern
     url_pattern: Union[Pattern, str]
 
     def __init__(self, config: Config) -> None:
         """
         Initialize an instance of the Crawler class.
-
-        Args:
-            config (Config): Configuration
         """
         self.config = config
-        self.urls = []
+        self._urls = []
 
     def _extract_url(self, article_bs: Tag) -> str:
         """
         Find and retrieve url from HTML.
-
-        Args:
-            article_bs (bs4.BeautifulSoup): BeautifulSoup instance
-
-        Returns:
-            str: Url from HTML
         """
         preview = article_bs.find('div', class_='post-card__thumbnail')
         if preview:
             link_tag = preview.find('a', href=True)
             if link_tag:
                 href = link_tag['href']
-                if href.startswith('https://pravdasevera.ru/') and href not in self.urls:
+                if href.startswith('https://pravdasevera.ru/') and href not in self._urls:
                     return href
         return ''
 
@@ -244,31 +234,29 @@ class Crawler:
         Find articles.
         """
         for seed_url in self.get_search_urls():
-            if len(self.urls) >= self.config.get_num_articles():
+            if len(self._urls) >= self.config.get_num_articles():
                 break
             try:
                 response = make_request(seed_url, self.config)
-            except requests.RequestException as e:
-                print(f"Failed to make request to {seed_url}: {e}")
+            except Exception as e:
+                print(f"Ошибка при запросе к {seed_url}: {e}")
                 continue
 
             soup = BeautifulSoup(response.text, 'html.parser')
             blocks = soup.find_all('div', class_='post-card__thumbnail')
             for block in blocks:
-                if len(self.urls) >= self.config.get_num_articles():
+                if len(self._urls) >= self.config.get_num_articles():
                     break
                 href = self._extract_url(block)
-                if href and href not in self.urls:
-                    self.urls.append(href)
+                if href:
+                    self._urls.append(href)
 
     def get_search_urls(self) -> list:
         """
         Get seed_urls param.
-
-        Returns:
-            list: seed_urls param
         """
         return self.config.get_seed_urls()
+
 
 # 10
 # 4, 6, 8, 10
