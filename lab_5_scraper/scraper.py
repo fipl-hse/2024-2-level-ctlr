@@ -65,16 +65,15 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        self.config = self._extract_config_content()
-        prepare_environment(ASSETS_PATH)
+        config_dto = self._extract_config_content()
 
-        self.seed_urls = self.config.seed_urls
-        self.num_articles = self.config.total_articles
-        self.headers = self.config.headers
-        self.encoding = self.config.encoding
-        self.timeout = self.config.timeout
-        self.verify = self.config.should_verify_certificate
-        self.headless = self.config.headless_mode
+        self.seed_urls = config_dto.seed_urls
+        self.num_articles = config_dto.total_articles
+        self.headers = config_dto.headers
+        self.encoding = config_dto.encoding
+        self.timeout = config_dto.timeout
+        self.verify = config_dto.should_verify_certificate
+        self.headless = config_dto.headless_mode
 
         self._validate_config_content()
 
@@ -116,7 +115,7 @@ class Config:
         if not isinstance(self.timeout, int) or self.timeout < 0 or self.timeout > 60:
             raise IncorrectTimeoutError("Timeout must be an integer between 0 and 60.")
 
-        if not isinstance(self.num_articles, int) or not (1 <= self.num_articles <= 60):
+        if not isinstance(self.num_articles, int) or not (1 <= self.num_articles <= 150):
             raise IncorrectNumberOfArticlesError("Number of articles must be an integer between 1 and 60.")
 
     def get_seed_urls(self) -> list[str]:
@@ -249,9 +248,8 @@ class Crawler:
                 break
             try:
                 response = make_request(seed_url, self.config)
-            except requests.RequestException:
-                continue
-            if not response.ok:
+            except requests.RequestException as e:
+                print(f"Failed to make request to {seed_url}: {e}")
                 continue
 
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -363,13 +361,21 @@ class HTMLParser:
         """
         try:
             response = make_request(self.full_url, self.config)
-            if not response.ok:
-                return False
+        except requests.RequestException as e:
+            print(f"Request failed for {self.full_url}: {e}")
+            return False
+
+        if not response.ok:
+            print(f"Bad response ({response.status_code}) from {self.full_url}")
+            return False
+
+        try:
             soup = BeautifulSoup(response.text, 'html.parser')
             self._fill_article_with_text(soup)
             self._fill_article_with_meta_information(soup)
             return self.article
-        except Exception:
+        except Exception as e:
+            print(f"Error parsing article from {self.full_url}: {e}")
             return False
 
 
@@ -391,6 +397,9 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(path_to_config=CRAWLER_CONFIG_PATH)
+
+    prepare_environment(ASSETS_PATH)
+
     crawler = Crawler(config)
     crawler.find_articles()
 
