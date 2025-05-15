@@ -208,7 +208,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         verify=config.get_verify_certificate()
     )
     response.encoding = config.get_encoding()
-    # time.sleep(random.randint(1, 10))
+    #time.sleep(random.randint(1, 10))
     return response
 
 
@@ -357,10 +357,8 @@ class HTMLParser:
                 self.article.date = self.unify_date_format(date_str)
             else:
                 self.article.date = datetime.datetime.now().replace(microsecond=0)
-            #print('OK')
         else:
             self.article.date = datetime.datetime.now().replace(microsecond=0)
-            #print('AAAAAAA')
 
         topic = article_soup.find(
             'p',
@@ -422,8 +420,8 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    for i, full_url in enumerate(crawler.urls):
-        parser = HTMLParser(full_url=full_url, article_id=i+1, config=configuration)
+    for i, full_url in enumerate(crawler.urls, start=1):
+        parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
