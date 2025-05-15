@@ -243,7 +243,7 @@ class Crawler:
         """
         link = article_bs.find('a', href=True)
         if link:
-            href = link['href']
+            href = link.get('href')
             if isinstance(href, str) and href.startswith('/news/'):
                 full_url = 'https://ks-yanao.ru' + href
                 return full_url
