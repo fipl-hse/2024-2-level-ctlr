@@ -289,33 +289,28 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        body = article_soup.find("div", itemprop="articleBody")
+        if not body:
+            self.article.text = ""  # ничего не найдено
+            return
 
-        def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
-            """
-            Find text of article by collecting all paragraphs.
-            """
-            body = article_soup.find("div", itemprop="articleBody")
-            if not body:
-                self.article.text = ""  # ничего не найдено
-                return
+        html_field = body.find("div", class_="field ft_html f_content auto_field")
+        if not html_field:
+            self.article.text = ""
+            return
 
-            html_field = body.find("div", class_="field ft_html f_content auto_field")
-            if not html_field:
-                self.article.text = ""
-                return
+        value_div = html_field.find("div", class_="value")
+        if not value_div:
+            self.article.text = ""
+            return
 
-            value_div = html_field.find("div", class_="value")
-            if not value_div:
-                self.article.text = ""
-                return
+        paragraphs = [
+            p.get_text(strip=True)
+            for p in value_div.find_all("p")
+            if p.get_text(strip=True)
+        ]
 
-            paragraphs = [
-                p.get_text(strip=True)
-                for p in value_div.find_all("p")
-                if p.get_text(strip=True)
-            ]
-
-            self.article.text = "\n".join(paragraphs)
+        self.article.text = "\n".join(paragraphs)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
