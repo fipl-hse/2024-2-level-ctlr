@@ -333,14 +333,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        raw_html = str(article_soup)
-        start = raw_html.find('<h1')
-        end = raw_html.find('</h1>') + len('</h1>')
-        if start != -1 and end != -1:
-            h1_block = raw_html[start:end]
-            soup_temp = BeautifulSoup(h1_block, "html.parser")
-            headline = soup_temp.get_text(strip=True)
-            self.article.title = headline
+        h1_tag = article_soup.find('h1')
+        if h1_tag:
+            # decode_contents() вернёт «inner HTML» вместе с сущностями (&laquo;, &raquo; и т.п.)
+            headline_html = h1_tag.decode_contents().strip()
+            self.article.title = headline_html
         else:
             self.article.title = "NOT FOUND"
 
