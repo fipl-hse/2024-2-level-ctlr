@@ -328,25 +328,26 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         div = article_soup.find('div', class_='col-md-6 col-md-push-3')
-        if isinstance(div, Tag) and div.find('h1', class_='entry-title'):
-            entry_title = div.find('h1', class_='entry-title')
-            if entry_title:
-                self.article.title = entry_title.get_text(strip=True)
+        if not (isinstance(div, Tag) and div.find('h1', class_='entry-title')):
+            return
+        entry_title = div.find('h1', class_='entry-title')
+        if entry_title:
+            self.article.title = entry_title.get_text(strip=True)
 
-            article_author = div.find('h3', class_='user-name')
-            if article_author:
-                self.article.author = ([article_author.get_text(strip=True)]
-                                       if article_author else ["NOT FOUND"])
+        article_author = div.find('h3', class_='user-name')
+        if article_author:
+            self.article.author = ([article_author.get_text(strip=True)]
+                                   if article_author else ["NOT FOUND"])
 
-            date_meta = article_soup.find('meta', {'property': 'article:published_time'})
-            if date_meta:
-                date_str = date_meta.get('datetime') or date_meta.get('content')
-                if isinstance(date_str, str):
-                    self.article.date = self.unify_date_format(date_str)
-                else:
-                    self.article.date = datetime.datetime.now().replace(microsecond=0)
+        date_meta = article_soup.find('meta', {'property': 'article:published_time'})
+        if date_meta:
+            date_str = date_meta.get('datetime') or date_meta.get('content')
+            if isinstance(date_str, str):
+                self.article.date = self.unify_date_format(date_str)
             else:
                 self.article.date = datetime.datetime.now().replace(microsecond=0)
+        else:
+            self.article.date = datetime.datetime.now().replace(microsecond=0)
 
             self.article.topics = []
 
