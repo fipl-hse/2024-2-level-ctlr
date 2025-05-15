@@ -220,7 +220,9 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     """
     response = requests.get(url,
                             headers=config.get_headers(),
-                            timeout=config.get_timeout())
+                            timeout=config.get_timeout(),
+                            verify=config.get_verify_certificate())
+
     response.raise_for_status()
     return response
 
@@ -243,15 +245,15 @@ class Crawler:
         self._config = config
         self.urls = []
 
-    def _extract_url(self, article_bs: BeautifulSoup) -> list[str]:
+    def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
-        Find and retrieve URLs from HTML.
+        Find and retrieve url from HTML.
 
         Args:
             article_bs (bs4.BeautifulSoup): BeautifulSoup instance
 
         Returns:
-            list[str]: List of matched article URLs
+            str: Url from HTML
         """
         article_urls = []
         pattern = re.compile(
@@ -262,7 +264,7 @@ class Crawler:
             if pattern.match(href):
                 article_urls.append(href)
 
-        return article_urls
+        return ', '.join(article_urls)
 
     def find_articles(self) -> None:
         """
@@ -461,10 +463,10 @@ def main() -> None:
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     article_urls = crawler.urls
-    for i, url in enumerate(article_urls):
+    for i, url in enumerate(article_urls, start=1):
         parser = HTMLParser(
             full_url=url,
-            article_id=i+1,
+            article_id=i,
             config=configuration)
         article = parser.parse()
         if isinstance(article, Article):

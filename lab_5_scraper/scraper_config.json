@@ -1,7 +1,7 @@
 {
     "seed_urls": ["https://www.kchetverg.ru/", "https://www.kchetverg.ru/page/2/", "https://www.kchetverg.ru/page/3/", "https://www.kchetverg.ru/page/4/", "https://www.kchetverg.ru/page/5/", "https://www.kchetverg.ru/page/6/", "https://www.kchetverg.ru/page/7/", "https://www.kchetverg.ru/page/8/", "https://www.kchetverg.ru/page/9/", "https://www.kchetverg.ru/page/10/", "https://www.kchetverg.ru/page/11/", "https://www.kchetverg.ru/page/12/", "https://www.kchetverg.ru/page/13/"],
     "headers": { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
-    "total_articles_to_find_and_parse": 10,
+    "total_articles_to_find_and_parse": 100,
     "encoding": "utf-8",
     "timeout": 10,
     "should_verify_certificate": true,
