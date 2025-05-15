@@ -334,13 +334,17 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         h1 = article_soup.find('h1')
-        if h1:
+        if h1 and h1.get_text(strip=True):
             title_text = h1.get_text(strip=True)
-            if title_text.startswith('#'):
-                title_text = title_text[1:].strip()
-            self.article.title = title_text
         else:
-            self.article.title = 'NOT FOUND'
+            og_title = article_soup.find('meta', property='og:title')
+            if og_title and og_title.get('content'):
+                title_text = og_title['content'].strip()
+            else:
+                page_title = article_soup.find('title')
+                title_text = page_title.get_text(strip=True) if page_title else 'NOT FOUND'
+        self.article.title = title_text
+
         self.article.author = ['NOT FOUND']
         time_tag = article_soup.find('time')
         raw_date = time_tag.get_text(strip=True) if time_tag else ''
