@@ -117,13 +117,13 @@ class Config:
         if not isinstance(self.headless, bool):
             raise IncorrectVerifyError("Headless mode must be either True or False.")
 
-        if not isinstance(self.timeout, int) or self.timeout < 0 or self.timeout > 60:
+        if not isinstance(self.timeout, int) or self.timeout <= 0 or self.timeout > 61:
             raise IncorrectTimeoutError("Timeout must be an integer between 0 and 60.")
 
         if not isinstance(self.num_articles, int):
             raise IncorrectNumberOfArticlesError("Number of articles must be an integer.")
 
-        if self.num_articles < 1 or self.num_articles > 60:
+        if self.num_articles <= 0 or self.num_articles > 61:
             raise NumberOfArticlesOutOfRangeError("Number of articles must be between 1 and 60.")
 
     def get_seed_urls(self) -> list[str]:
