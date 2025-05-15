@@ -206,7 +206,6 @@ class Crawler:
     """
     Crawler implementation.
     """
-
     url_pattern: Union[Pattern, str]
 
     def __init__(self, config: Config) -> None:
