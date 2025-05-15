@@ -116,7 +116,7 @@ class Config:
             raise IncorrectTimeoutError("Timeout must be an integer between 0 and 60.")
 
         if not isinstance(self.num_articles, int) or not (1 <= self.num_articles <= 150):
-            raise IncorrectNumberOfArticlesError("Number of articles must be an integer between 1 and 60.")
+            raise IncorrectNumberOfArticlesError("Number of articles must be an integer between 1 and 150.")
 
     def get_seed_urls(self) -> list[str]:
         """
