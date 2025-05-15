@@ -250,11 +250,8 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            for header in soup.find_all('h3'):
-                link = header.find('a', href=True)
-                if not link:
-                    continue
-                url = self._extract_url(link)
+            for link_tag in soup.find_all('a', class_='news_pic'):
+                url = self._extract_url(link_tag)
                 if url and url not in self.urls and len(self.urls) < self.config.get_num_articles():
                     self.urls.append(url)
                 else:
