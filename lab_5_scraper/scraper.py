@@ -327,17 +327,19 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        div = article_soup.find('div', class_='col-md-6 col-md-push-3')
-        if not (div and div.find('h1', class_='entry-title')):
+        div = article_soup.find('div', {'class': 'col-md-6 col-md-push-3'})
+
+        if div is None:
             return
-        entry_title = div.find('h1', class_='entry-title')
+
+        entry_title = div.find('h1', {'class': 'entry-title'})
         if entry_title:
             self.article.title = entry_title.get_text(strip=True)
+        else:
+            self.article.title = "NOT FOUND"
 
-        article_author = div.find('h3', class_='user-name')
-        if article_author:
-            self.article.author = ([article_author.get_text(strip=True)]
-                                   if article_author else ["NOT FOUND"])
+        article_author = div.find('h3', {'class': 'user-name'})
+        self.article.author = [article_author.get_text(strip=True)] if article_author else ["NOT FOUND"]
 
         date_meta = article_soup.find('meta', {'property': 'article:published_time'})
         if date_meta:
