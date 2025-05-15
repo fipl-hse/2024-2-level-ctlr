@@ -333,7 +333,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        h1 = article_soup.find('h1')
+        h1 = article_soup.find('h1', itemprop='headline')
         if h1 and h1.get_text(strip=True):
             title_text = h1.get_text(strip=True)
         else:
