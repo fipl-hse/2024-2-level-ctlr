@@ -410,24 +410,22 @@ class HTMLParser:
         Returns:
             Union[Article, bool, list]: Article instance
         """
-        #try:
-        response = make_request(self.full_url, self.config)
-        if response.status_code != 200:
+        try:
+            response = make_request(self.full_url, self.config)
+            if response.status_code != 200:
+                return False
+            article_soup = BeautifulSoup(response.text, 'html.parser')
+            self._fill_article_with_meta_information(article_soup)
+            self._fill_article_with_text(article_soup)
+            return self.article
+        except requests.exceptions.RequestException as e:
+            # Handle specific exception related to HTTP requests
+            print(f"Request error when fetching article {self.full_url}: {e}")
             return False
-        article_soup = BeautifulSoup(response.text, 'html.parser')
-        self._fill_article_with_meta_information(article_soup)
-        self._fill_article_with_text(article_soup)
-        return self.article
-        # except requests.exceptions.RequestException as e:
-        #     # Handle specific exception related to HTTP requests
-        #     print(f"Request error when fetching article {self.full_url}: {e}")
-        #     return False
-        # except AttributeError as e:
-        #     # Handle case where BeautifulSoup parsing or other attribute access fails
-        #     print(f"Attribute error when parsing article {self.full_url}: {e}")
-        #     return False
-
-
+        except AttributeError as e:
+            # Handle case where BeautifulSoup parsing or other attribute access fails
+            print(f"Attribute error when parsing article {self.full_url}: {e}")
+            return False
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
