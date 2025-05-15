@@ -332,7 +332,8 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         title_tag = article_soup.find('a', id=
-                                      'MainMasterContentPlaceHolder_InsidePlaceHolder_articleHeader')
+                                      'MainMasterContentPlaceHolder_InsidePlaceHolder_'
+                                      'articleHeader')
         self.article.title = title_tag.get_text().strip() if title_tag else "NO TITLE"
 
         author = article_soup.find('a', class_='red', id=re.compile(r'.*_authorName$'))
