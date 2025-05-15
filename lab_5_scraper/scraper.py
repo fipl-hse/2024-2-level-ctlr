@@ -348,10 +348,14 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         response = make_request(self.full_url, self.config)
+        response.encoding = self.config.get_encoding()
+
         if response.ok:
             soup = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(soup)
             self._fill_article_with_meta_information(soup)
+        else:
+            self.article.text = ""
         return self.article
 
 
