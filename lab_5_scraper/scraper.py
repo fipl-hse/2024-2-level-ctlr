@@ -17,8 +17,6 @@ from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
-WEB = "https://kam-kray.ru/"
-
 class IncorrectSeedURLError(Exception):
     """
     Seed URL does not match standard pattern 'https?://(www.)?'
@@ -72,7 +70,6 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
-        self.WEB = WEB
         self.path_to_config = path_to_config
         data = self._extract_config_content()
         self._seed_urls = data.seed_urls
@@ -102,7 +99,7 @@ class Config:
         if not isinstance(self._seed_urls, list):
             raise IncorrectSeedURLError('incorrect url')
         for url in self._seed_urls:
-            if not isinstance(url, str) or not WEB in url:
+            if not isinstance(url, str):
                 raise IncorrectSeedURLError('incorrect url')
         if not isinstance(self._num_articles, int) or self._num_articles <= 0:
             raise IncorrectNumberOfArticlesError('number is not int or less that 0')
@@ -228,7 +225,7 @@ class Crawler:
         """
         href_link = article_bs.get('href')
         if isinstance(href_link, str):
-            return WEB+href_link
+            return href_link
         return ''
 
     def find_articles(self) -> None:
