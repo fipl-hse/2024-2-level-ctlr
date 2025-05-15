@@ -74,7 +74,6 @@ class Config:
         self._timeout = config_dto.timeout
         self._verify = config_dto.should_verify_certificate
         self._headless = config_dto.headless_mode
-
         self._validate_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
@@ -115,8 +114,11 @@ class Config:
         if not isinstance(self._timeout, int) or self._timeout < 0 or self._timeout > 60:
             raise IncorrectTimeoutError("Timeout must be an integer between 0 and 60.")
 
-        if not isinstance(self._num_articles, int) or not (1 <= self._num_articles <= 150):
-            raise IncorrectNumberOfArticlesError("Number of articles must be an integer between 1 and 150.")
+        if not isinstance(self._num_articles, int) or self._num_articles <= 0:
+            raise IncorrectNumberOfArticlesError("num_articles must be a positive integer")
+
+        if self._num_articles > 150:
+            raise NumberOfArticlesOutOfRangeError("num_articles must not be too large")
 
     def get_seed_urls(self) -> list[str]:
         """
