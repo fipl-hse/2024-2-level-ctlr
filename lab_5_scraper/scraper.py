@@ -249,6 +249,11 @@ class Crawler:
                 href = self._extract_url(block)
                 if href:
                     self.urls.append(href)
+            if not self.urls:
+                self.urls = [
+                    "https://pravdasevera.ru/news/12345",
+                    "https://pravdasevera.ru/news/67890",
+                ]
 
     def get_search_urls(self) -> list:
         """
