@@ -294,14 +294,21 @@ class HTMLParser:
             """
             Find text of article by collecting all paragraphs.
             """
-            container = article_soup.find('div', itemprop='articleBody')
-            if not container:
+            html_field = article_soup.find(
+                "div", class_="field ft_html f_content auto_field"
+            )
+            if not html_field:
+                self.article.text = ""
+                return
+
+            value_div = html_field.find("div", class_="value")
+            if not value_div:
                 self.article.text = ""
                 return
 
             paragraphs = [
                 p.get_text(strip=True)
-                for p in container.find_all('p')
+                for p in value_div.find_all("p")
                 if p.get_text(strip=True)
             ]
 
