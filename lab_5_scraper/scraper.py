@@ -342,10 +342,9 @@ class HTMLParser:
                     article_author = text
                     break
 
+        self.article.author = ["NOT FOUND"]
         if article_author:
             self.article.author = [article_author]
-        else:
-            self.article.author = ["NOT FOUND"]
 
         date = article_soup.find('time', class_=lambda
             class_name: (class_name and 'Typography_size__11' in class_name and
