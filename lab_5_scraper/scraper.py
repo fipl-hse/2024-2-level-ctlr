@@ -124,7 +124,7 @@ class Config:
             raise IncorrectNumberOfArticlesError("Number of articles must be an integer between 1 and 60.")
 
         if self.num_articles > 60:
-            raise NumberOfArticlesOutOfRangeError("Number of articles must be between 0 and 60.")
+            raise IncorrectNumberOfArticlesError("Number of articles must be an integer between 1 and 60.")
 
     def get_seed_urls(self) -> list[str]:
         """
