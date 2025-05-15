@@ -72,7 +72,7 @@ class Config:
         self._headers = config_data["headers"]
         self._encoding = config_data["encoding"]
         self._timeout = config_data["timeout"]
-        self._should_verify_certificate = config_data["verify_certificate"]
+        self._should_verify_certificate = config_data.get("verify_certificate", True)
         self._headless_mode = config_data["headless_mode"]
 
         self._validate_config_content()
