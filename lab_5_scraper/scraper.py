@@ -107,7 +107,7 @@ class Config:
 
         if (not isinstance(self._seed_urls, list)
                 or not all(isinstance(url, str) for url in self._seed_urls)
-                or not all(url.startswith('https://astralist.info/') for url in self._seed_urls)):
+                or not all(url.startswith('https://astralist.info/archives') for url in self._seed_urls)):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern "https?://(www.)?"')
         if (not isinstance(self._num_articles, int) or isinstance(self._num_articles, bool)
                 or self._num_articles < 0):
@@ -239,7 +239,7 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        link = article_bs.find("a", class_="url fn n")
+        link = article_bs.find("a")
         href = link.get("href")
         if isinstance(href, str):
             real_link = f"{href}"
@@ -306,7 +306,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        news = article_soup.find("div", class_="below-entry-meta")
+        news = article_soup.find("div", class_="entry-content clearfix")
         text = []
         for new in news:
             if new.get_text().strip() and not (
