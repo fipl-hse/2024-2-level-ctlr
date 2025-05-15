@@ -321,7 +321,8 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find("h1", class_="article__title").text.strip()
-        date = json.loads(article_soup.find('script', type='application/ld+json').text)["@graph"][1]['datePublished']
+        date = json.loads(article_soup.find('script',
+                                            type='application/ld+json').text)["@graph"][1]['datePublished']
         self.article.date = self.unify_date_format(date)
         if 'https://tuvapravda.ru/natsionalnye-proekty/' in self.article.url:
             self.article.topics = ['Национальные проекты']
