@@ -155,8 +155,8 @@ class RawMediumDataValidator(unittest.TestCase):
             self.assertTrue(response, msg=msg % metadata[1]["url"])
 
             html_source = response.text
-            '''if '&#8230;' in html_source:
-                html_source = html_source.replace('&#8230;', '…')'''
+            if '&#8230;' in html_source:
+                html_source = html_source.replace('&#8230;', '…')
             msg = (
                 "Title is not found by specified in metadata "
                 "URL %s. Check how you collect titles"
