@@ -333,11 +333,30 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title_element = article_soup.find('h1', attrs={'itemprop': 'headline name'})
-        if title_element:
-            self.article.title = title_element.get_text(strip=True)
+        raw_html = str(article_soup)
+        start = raw_html.find('<h1')
+        end = raw_html.find('</h1>') + len('</h1>')
+        if start != -1 and end != -1:
+            h1_block = raw_html[start:end]
+            soup_temp = BeautifulSoup(h1_block, "html.parser")
+            headline = soup_temp.get_text(strip=True)
+            self.article.title = headline
         else:
             self.article.title = "NOT FOUND"
+
+        self.article.author = ['NOT FOUND']
+        time_tag = article_soup.find('time')
+        raw_date = time_tag.get_text(strip=True) if time_tag else ''
+        self.article.date = self.unify_date_format(raw_date)
+
+        topics = []
+        about_ul = article_soup.find('ul', itemprop='about')
+        if about_ul:
+            for li in about_ul.find_all('li', itemprop='itemListElement'):
+                meta = li.find('meta', itemprop='name')
+                if meta and meta.has_attr('content'):
+                    topics.append(meta['content'].strip())
+        self.article.topics = topics or ['NOT FOUND']
 
         self.article.author = ['NOT FOUND']
         time_tag = article_soup.find('time')
