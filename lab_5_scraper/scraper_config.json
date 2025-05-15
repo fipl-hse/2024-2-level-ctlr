@@ -1,8 +1,16 @@
 {
-    "seed_urls": [],
+    "seed_urls": [
+        "https://kam-kray.ru/news/ekonomika",
+        "https://kam-kray.ru/news/ekonomika?page=2",
+        "https://kam-kray.ru/news/ekonomika?page=3",
+        "https://kam-kray.ru/news/ekonomika?page=4",
+        "https://kam-kray.ru/news/ekonomika?page=5",
+        "https://kam-kray.ru/news/ekonomika?page=6",
+        "https://kam-kray.ru/news/ekonomika?page=7"
+    ],
     "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
+    "total_articles_to_find_and_parse": 100,
+    "encoding": "utf-8",
     "timeout": 0,
     "should_verify_certificate": true,
     "headless_mode": true

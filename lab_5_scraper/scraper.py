@@ -288,7 +288,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        text = article_soup.find_all('div', {'class': 'value'})[0].text
+        text = article_soup.find_all('div', class_='value')[0].text
         self.article.text = text
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
@@ -298,6 +298,13 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        h1 = article_soup.find('h1', itemprop='headline name')
+        self.article.title = h1.get_text(strip=True) if h1 else 'NOT FOUND'
+        self.article.author = ['NOT FOUND']
+        time_tag = article_soup.find('time')
+        raw_date = time_tag.get_text(strip=True) if time_tag else 'NOT FOUND'
+        self.article.date = self.unify_date_format(raw_date)
+        self.article.topics = []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -358,4 +365,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-# pull request
