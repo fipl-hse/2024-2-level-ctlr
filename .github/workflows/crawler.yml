@@ -275,7 +275,7 @@ jobs:
     name: Starting pipeline checks!
     needs: [ milestone-1-crawler-is-working ]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 2
     steps:
       - name: Congratulations
         run: |
@@ -528,7 +528,7 @@ jobs:
       checking-compatibility-with-advanced-analyzer
     ]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
     steps:
       - name: Congratulations
         run: |

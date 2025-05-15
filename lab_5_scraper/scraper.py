@@ -321,16 +321,17 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find("h1", class_="article__title").text.strip()
-        date = article_soup.find("div", class_="article-attributes-item__value article-attributes-item--time").text
+        date = article_soup.find("div", class_="article-attributes-item__value"
+                                               " article-attributes-item--time").text
         self.article.date = self.unify_date_format(date)
         if 'https://tuvapravda.ru/natsionalnye-proekty/' in self.article.url:
-            self.article.topics = 'Национальные проекты'
+            self.article.topics = ['Национальные проекты']
         elif 'https://tuvapravda.ru/novosti/' in self.article.url:
-            self.article.topics = 'Новости'
+            self.article.topics = ['Новости']
         elif 'https://tuvapravda.ru/fotofakt/' in self.article.url:
-            self.article.topics = 'Фотофакт'
+            self.article.topics = ['Фотофакт']
         else:
-            self.article.topics = 'NOT FOUND'
+            self.article.topics = ['NOT FOUND']
         self.article.author = [article_soup.find("span", class_="author__name").text]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
