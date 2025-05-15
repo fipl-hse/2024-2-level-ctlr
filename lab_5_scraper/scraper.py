@@ -67,13 +67,13 @@ class Config:
         self.path_to_config = path_to_config
         config_dto = self._extract_config_content()
 
-        self.seed_urls = config_dto.seed_urls
-        self.num_articles = config_dto.total_articles
-        self.headers = config_dto.headers
-        self.encoding = config_dto.encoding
-        self.timeout = config_dto.timeout
-        self.verify = config_dto.should_verify_certificate
-        self.headless = config_dto.headless_mode
+        self._seed_urls = config_dto.seed_urls
+        self._num_articles = config_dto.total_articles
+        self._headers = config_dto.headers
+        self._encoding = config_dto.encoding
+        self._timeout = config_dto.timeout
+        self._verify = config_dto.should_verify_certificate
+        self._headless = config_dto.headless_mode
 
         self._validate_config_content()
 
@@ -92,30 +92,30 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self.seed_urls, list) or not all(isinstance(url, str) for url in self.seed_urls):
+        if not isinstance(self._seed_urls, list) or not all(isinstance(url, str) for url in self._seed_urls):
             raise IncorrectSeedURLError("Seed URLs must be a list of strings.")
 
-        if not all(url.startswith('https://pravdasevera.ru/') for url in self.seed_urls):
+        if not all(url.startswith('https://pravdasevera.ru/') for url in self._seed_urls):
             raise IncorrectSeedURLError("Each seed URL must start with 'https://pravdasevera.ru/'")
 
-        if not isinstance(self.encoding, str):
+        if not isinstance(self._encoding, str):
             raise IncorrectEncodingError("Encoding must be a string.")
 
-        if not isinstance(self.headers, dict) or not all(
-                isinstance(k, str) and isinstance(v, str) for k, v in self.headers.items()
+        if not isinstance(self._headers, dict) or not all(
+                isinstance(k, str) and isinstance(v, str) for k, v in self._headers.items()
         ):
             raise IncorrectHeadersError("Headers must be a dictionary with string keys and values.")
 
-        if not isinstance(self.verify, bool):
+        if not isinstance(self._verify, bool):
             raise IncorrectVerifyError("Should verify certificate must be either True or False.")
 
-        if not isinstance(self.headless, bool):
+        if not isinstance(self._headless, bool):
             raise IncorrectVerifyError("Headless mode must be either True or False.")
 
-        if not isinstance(self.timeout, int) or self.timeout < 0 or self.timeout > 60:
+        if not isinstance(self._timeout, int) or self._timeout < 0 or self._timeout > 60:
             raise IncorrectTimeoutError("Timeout must be an integer between 0 and 60.")
 
-        if not isinstance(self.num_articles, int) or not (1 <= self.num_articles <= 150):
+        if not isinstance(self._num_articles, int) or not (1 <= self._num_articles <= 150):
             raise IncorrectNumberOfArticlesError("Number of articles must be an integer between 1 and 150.")
 
     def get_seed_urls(self) -> list[str]:
@@ -125,7 +125,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
-        return self.seed_urls
+        return self._seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -134,7 +134,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self.num_articles
+        return self._num_articles
 
 
     def get_headers(self) -> dict[str, str]:
@@ -144,7 +144,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
-        return self.headers
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -153,7 +153,7 @@ class Config:
         Returns:
             str: Encoding
         """
-        return self.encoding
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
@@ -162,7 +162,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
-        return self.timeout
+        return self._timeout
 
     def get_verify_certificate(self) -> bool:
         """
@@ -171,7 +171,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self.verify
+        return self._verify
 
     def get_headless_mode(self) -> bool:
         """
@@ -180,7 +180,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-        return self.headless
+        return self._headless
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
