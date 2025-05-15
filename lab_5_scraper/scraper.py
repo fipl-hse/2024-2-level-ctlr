@@ -226,15 +226,13 @@ class Crawler:
         self.config = config
         self.urls = []
 
-    from urllib.parse import urljoin
-
     def _extract_url(self, article_bs: Tag) -> str:
         """
         Find and retrieve url from HTML.
         """
         preview = article_bs.find('div', class_='post-card__thumbnail')
         if preview:
-            link_tag = preview.find('a', href=True)
+            link_tag = article_bs.find('a', href=True)
             if link_tag:
                 href = link_tag['href']
                 full_url = urljoin('https://pravdasevera.ru', href)
@@ -349,10 +347,15 @@ class HTMLParser:
             'октября': 'Oct', 'ноября': 'Nov', 'декабря': 'Dec'
         }
 
-        parts = date_str.strip().split()
-        parts[1] = months.get(parts[1].rstrip(','), 'Jan')
-        new_date = ' '.join(parts)
-        return datetime.datetime.strptime(new_date, '%d %b %Y')
+        try:
+            parts = date_str.strip().split()
+            if len(parts) < 3:
+                raise ValueError("Unexpected date format")
+            parts[1] = months.get(parts[1].rstrip(','), 'Jan')
+            new_date = ' '.join(parts)
+            return datetime.datetime.strptime(new_date, '%d %b %Y')
+        except Exception:
+            return datetime.datetime.now()
 
     def parse(self) -> Union[Article, bool, list]:
         """
