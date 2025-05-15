@@ -32,6 +32,12 @@ class StanzaDocument(Protocol):
     """
 
 
+class CoNLLUDocument(UDPipeDocument, StanzaDocument, Protocol):
+    """
+    Utility class to mimic analyzer document classes.
+    """
+
+
 @dataclass
 class ConLLUWord:
     """
@@ -55,7 +61,7 @@ class ConLLUSentence:
 
 
 @dataclass
-class CoNLLUDocument:
+class UnifiedCoNLLUDocument:
     """
     Interface definition for sentence class of unified analyzer document.
     """
@@ -106,7 +112,7 @@ class LibraryWrapper(Protocol):
             AbstractCoNLLUAnalyzer: Instance of analyzer.
         """
 
-    def analyze(self, texts: list[str]) -> list[UDPipeDocument | StanzaDocument | str]:
+    def analyze(self, texts: list[str]) -> list[CoNLLUDocument | str]:
         """
         Analyze given texts.
 
@@ -114,7 +120,7 @@ class LibraryWrapper(Protocol):
             texts (list[str]): Texts to analyze.
 
         Returns:
-            list[UDPipeDocument | StanzaDocument | str]: Collection of processed documents.
+            list[CoNLLUDocument | str]: Collection of processed documents.
         """
 
     def to_conllu(self, article: Article) -> None:
@@ -125,7 +131,7 @@ class LibraryWrapper(Protocol):
             article (Article): Article to save
         """
 
-    def from_conllu(self, article: Article) -> UDPipeDocument | StanzaDocument:
+    def from_conllu(self, article: Article) -> CoNLLUDocument:
         """
         Load ConLLU content from article stored on disk.
 
@@ -133,18 +139,18 @@ class LibraryWrapper(Protocol):
             article (Article): Article to load
 
         Returns:
-            UDPipeDocument | StanzaDocument: Document ready for parsing
+            CoNLLUDocument: Document ready for parsing
         """
 
-    def get_document(self, doc: UDPipeDocument | StanzaDocument) -> CoNLLUDocument:
+    def get_document(self, doc: CoNLLUDocument) -> UnifiedCoNLLUDocument:
         """
         Present ConLLU document's sentence tokens as a unified structure.
 
         Args:
-            doc (UDPipeDocument | StanzaDocument): ConLLU document from analyzer.
+            doc (CoNLLUDocument): ConLLU document from analyzer.
 
         Returns:
-            CoNLLUDocument: Unified document of token features within document sentences
+            UnifiedCoNLLUDocument: Unified document of token features within document sentences
         """
 
 
