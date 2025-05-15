@@ -336,11 +336,13 @@ class HTMLParser:
                     class_name and class_name.startswith('Typography_text__WDByQ '
                                                          'Typography_size__14')
             ))
-            if found_author:
-                text = found_author.get_text(strip=True)
-                if not text.isdigit() and len(text) > 2:
-                    article_author = text
-                    break
+            if not found_author:
+                continue
+            text = found_author.get_text(strip=True)
+            if text.isdigit() or len(text) <= 2:
+                continue
+            article_author = text
+            break
 
         self.article.author = ["NOT FOUND"]
         if article_author:
