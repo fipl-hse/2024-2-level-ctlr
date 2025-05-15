@@ -321,8 +321,7 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.title = article_soup.find("h1", class_="article__title").text.strip()
-        date = article_soup.find("div", class_="article-attributes-item__value"
-                                               " article-attributes-item--time").text
+        date = json.loads(article_soup.find('script', type='application/ld+json').text)["@graph"][1]['datePublished']
         self.article.date = self.unify_date_format(date)
         if 'https://tuvapravda.ru/natsionalnye-proekty/' in self.article.url:
             self.article.topics = ['Национальные проекты']
@@ -344,24 +343,8 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        translated_months = {
-            'января': 'Jan',
-            'февраля': 'Feb',
-            'марта': 'Mar',
-            'апреля': 'Apr',
-            'мая': 'May',
-            'июня': 'Jun',
-            'июля': 'Jul',
-            'августа': 'Aug',
-            'сентября': 'Sep',
-            'октября': 'Oct',
-            'ноября': 'Nov',
-            'декабря': 'Dec'
-        }
-        date_list = date_str.split()
-        date_list[1] = translated_months[date_list[1]]
-        nice_date = ' '.join(date_list)
-        return datetime.datetime.strptime(nice_date, '%d %b %Y')
+        nice_date = date_str.split("T")
+        return datetime.datetime.strptime(" ".join(nice_date), "%Y-%m-%d %H:%M:%S")
 
     def parse(self) -> Union[Article, bool, list]:
         """
