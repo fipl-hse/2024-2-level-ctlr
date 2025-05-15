@@ -235,7 +235,7 @@ class Crawler:
         """
         self.config = config
         self.urls = []
-        self.url_pattern = re.compile(r'https://moyaokruga\.ru/mayakdelty/.*')
+        self.url_pattern = re.compile(r'https://moyaokruga\.ru/mayakdelty/Articles\.aspx\?articleId=\d+')
 
     def _extract_url(self, article_bs: BeautifulSoup) -> str:
         """
@@ -330,7 +330,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title_tag = article_soup.find('h1')
+        title_tag = article_soup.find('a', id='MainMasterContentPlaceHolder_InsidePlaceHolder_articleHeader')
         self.article.title = title_tag.get_text().strip() if title_tag else "NO TITLE"
 
         author = article_soup.find('a', class_='red', id=re.compile(r'.*_authorName$'))
