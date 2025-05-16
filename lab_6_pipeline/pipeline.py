@@ -8,6 +8,7 @@ import pathlib
 from networkx import DiGraph
 
 from core_utils.article.article import Article
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +19,14 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+
+class EmptyDirectoryError(Exception):
+    pass
+
+
+class InconsistentDatasetError(Exception):
+    pass
 
 
 class CorpusManager:
@@ -32,11 +41,44 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self._storage:
+            raise FileNotFoundError('File does not exist.')
+
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError('Path does not lead to directory.')
+
+        files = {f.stem.split('_')[0]: [] for f in self.path_to_raw_txt_data.iterdir()
+                 if f.is_file() and len(f.stem.split('_')) == 2}
+
+        if not files:
+            raise EmptyDirectoryError('Directory is empty.')
+
+        for file in self.path_to_raw_txt_data.iterdir():
+            if file.is_file() and file.stat().st_size == 0:
+                raise InconsistentDatasetError('There is an empty file.')
+
+            parts = file.stem.split('_')
+            if len(parts) == 2 and parts[0].isdigit():
+                files.setdefault(parts[0], []).append(parts[1])
+
+        for file_id, types in files.items():
+            if not file_id.isdigit():
+                continue
+
+            if len(types) != 2 or sorted(types) != ['meta', 'raw']:
+                raise InconsistentDatasetError('Number of meta and raw files is not equal.')
+
+        ids = sorted(int(k) for k in files.keys() if k.isdigit())
+        if ids and any(b - a != 1 for a, b in zip(ids, ids[1:])):
+            raise InconsistentDatasetError('There is an ID which contains slips.')
 
     def _scan_dataset(self) -> None:
         """
@@ -293,6 +335,7 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
 
 
 if __name__ == "__main__":
