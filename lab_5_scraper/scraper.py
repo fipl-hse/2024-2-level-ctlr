@@ -227,6 +227,7 @@ class Crawler:
             str: Url from HTML
         """
         href = article_bs.get('href')
+
         if not href:
             return ""
 
@@ -239,8 +240,8 @@ class Crawler:
         base = seed_list[0]
         parts = base.split('/')
         domain = parts[0] + '//' + parts[2]
-
-        return str(domain + href)
+        print(type(href))
+        return domain + href
 
     def find_articles(self) -> None:
         """
@@ -304,15 +305,15 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        body = article_soup.find("div", itemprop="articleBody")
+        body = article_soup.find("div", attrs={"itemprop": "articleBody"})
         if not body:
             self.article.text = ""
 
-        html_field = body.find("div", class_="field ft_html f_content auto_field")
+        html_field = body.find("div", attrs={"class": "field ft_html f_content auto_field"})
         if not html_field:
             self.article.text = ""
 
-        value_div = html_field.find("div", class_="value")
+        value_div = html_field.find("div", attrs={"class": "value"})
         if not value_div:
             self.article.text = ""
 
