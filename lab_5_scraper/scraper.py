@@ -333,42 +333,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        # h1_tag = article_soup.find('h1')
-        # if h1_tag:
-        #     headline_html = h1_tag.decode_contents(formatter="html").strip()
-        #     self.article.title = headline_html
-        # else:
-        #     self.article.title = "NOT FOUND"
-        #
-        # self.article.author = ['NOT FOUND']
-        # time_tag = article_soup.find('time')
-        # raw_date = time_tag.get_text(strip=True) if time_tag else ''
-        # self.article.date = self.unify_date_format(raw_date)
-        #
-        # print(article_soup)
-        # start = article_soup.find('<h1')
-        # end = article_soup.find('</h1>', start) + len('</h1>')
-        # if start != -1 and end != -1:
-        #     block = article_soup[start:end]
-        #     # вырезаем всё внутри тегов
-        #     inner = block[block.find('>') + 1: block.rfind('<')].strip()
-        #     self.article.title = inner
-        # else:
-        #     self.article.title = "NOT FOUND"
-        # topics = []
-        # about_ul = article_soup.find('ul', itemprop='about')
-        # if about_ul:
-        #     for li in about_ul.find_all('li', itemprop='itemListElement'):
-        #         meta = li.find('meta', itemprop='name')
-        #         if meta and meta.has_attr('content'):
-        #             topics.append(meta['content'].strip())
-        # self.article.topics = topics or ['NOT FOUND']
-
         h1_tag = article_soup.find('h1')
         if h1_tag:
             # decode_contents() вернёт «inner HTML» вместе с сущностями (&laquo;, &raquo; и т.п.)
             headline_html = h1_tag.decode_contents().strip()
-            fixed = headline_html.replace('«', '"').replace('»', '"')
+            fixed = headline_html.replace('«', '&laquo;').replace('»', '&raquo;')
             self.article.title = fixed
         else:
             self.article.title = "NOT FOUND"
