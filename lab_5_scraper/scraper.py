@@ -72,14 +72,14 @@ class Config:
             path_to_config (pathlib.Path): Path to configuration.
         """
         self.path_to_config = path_to_config
-        self.config = self._extract_config_content()
-        self._seed_urls = self.config.seed_urls
-        self._headers = self.get_headers()
-        self._num_articles = self.get_num_articles()
-        self._timeout = self.config.timeout
-        self._encoding = self.get_encoding()
-        self.headless_mode = self.get_headless_mode()
-        self._should_verify_certificate = self.get_verify_certificate()
+        config = self._extract_config_content()
+        self._seed_urls = config.seed_urls
+        self._headers = config.headers
+        self._num_articles = config.total_articles
+        self._timeout = config.timeout
+        self._encoding = config.encoding
+        self._headless_mode = config.headless_mode
+        self._should_verify_certificate = config.should_verify_certificate
         self._validate_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
@@ -118,8 +118,8 @@ class Config:
         if not isinstance(self._timeout, int) or not self._timeout in range(0, 61):
             raise IncorrectTimeoutError("Timeout has wrong format ot timeout is out of range")
 
-        if (not isinstance(self.config.should_verify_certificate, bool)
-                or not isinstance(self.config.headless_mode, bool)):
+        if (not isinstance(self._should_verify_certificate, bool)
+                or not isinstance(self._headless_mode, bool)):
             raise IncorrectVerifyError('Verify certificate value must either be True or False')
 
     def get_seed_urls(self) -> list[str]:
@@ -136,7 +136,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self.config.total_articles
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -144,7 +144,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
-        return self.config.headers
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -152,7 +152,7 @@ class Config:
         Returns:
             str: Encoding
         """
-        return self.config.encoding
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
@@ -160,7 +160,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
-        return self.config.timeout
+        return self._timeout
 
     def get_verify_certificate(self) -> bool:
         """
@@ -168,7 +168,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self.config.should_verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -176,7 +176,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-        return self.config.headless_mode
+        return self._headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
@@ -217,15 +217,15 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        all_posts = article_bs.find(class_="col").find_all(class_="article-middle__media")
-        for elem in all_posts:
-            link_tag = elem.find('a')
-            if link_tag and 'href' in link_tag.attrs:
-                link = "https://www.iguides.ru/" + link_tag.get("href")
-                if link not in self.urls:
-                    return str(link)
+        # all_posts = article_bs.find(class_="col").find_all(class_="article-middle__media")
+        # for elem in all_posts:
+        #     link_tag = elem.find('a')
+        #     if link_tag and 'href' in link_tag.attrs:
+        #         link = "https://www.iguides.ru/" + link_tag.get("href")
+        #         if link not in self.urls:
+        #             return str(link)
 
-        return "EXTRACTION ERROR"
+        return "https://www.iguides.ru/" + article_bs["href"]
 
     def find_articles(self) -> None:
         """
@@ -269,18 +269,40 @@ class Crawler:
                 if not query.ok:
                     continue
 
-                while (len(self.urls) < self.config.get_num_articles() and
-                       url_attempts < max_url_attempts):
-                    link = self._extract_url(soup)
-                    if link == "EXTRACTION ERROR":
+                all_posts = soup.find(class_="col").find_all(class_="article-middle__media")
+                for elem in all_posts:
+                    if len(self.urls) >= self.config.get_num_articles():
+                        break
+                    link_tag = elem.find("a")
+                    if not link_tag or "href" not in link_tag.attrs:
+                        url_attempts += 1
+                        if url_attempts >= max_url_attempts:
+                            break
+                        continue
+
+                    try:
+                        url = self._extract_url(link_tag)
+                        if url not in self.urls:
+                            self.urls.append(url)
+                            url_attempts = 0
+                    except RequestException:
                         url_attempts += 1
                         continue
-                    if link not in self.urls:
-                        self.urls.append(link)
-                    url_attempts += 1
-
                 if len(self.urls) >= self.config.get_num_articles():
                     break
+
+                # while (len(self.urls) < self.config.get_num_articles() and
+                #        url_attempts < max_url_attempts):
+                #     link = self._extract_url(soup)
+                #     if link == "EXTRACTION ERROR":
+                #         url_attempts += 1
+                #         continue
+                #     if link not in self.urls:
+                #         self.urls.append(link)
+                #     url_attempts += 1
+                #
+                # if len(self.urls) >= self.config.get_num_articles():
+                #     break
 
         finally:
             driver.quit()
@@ -288,7 +310,6 @@ class Crawler:
                 shutil.rmtree(data_dir)
             except FileNotFoundError:
                 pass
-
 
     def get_search_urls(self) -> list:
         """
