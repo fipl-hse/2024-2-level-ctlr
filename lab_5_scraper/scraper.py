@@ -464,8 +464,10 @@ def prepare_environment(base_path: Union[Path, str]) -> None:
     if base_path.exists():
         shutil.rmtree(base_path)
     base_path.mkdir(parents=True)
-    open(base_path / "article_urls.txt", "w", encoding="utf-8")
-    open(base_path / "seed_urls.txt", "w", encoding="utf-8")
+    with open(base_path / "article_urls.txt", "w", encoding="utf-8"):
+        pass
+    with open(base_path / "seed_urls.txt", "w", encoding="utf-8"):
+        pass
 
 
 def main() -> None:
@@ -476,7 +478,8 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = CrawlerRecursive(config=config)
     crawler.find_articles()
-    open(ASSETS_PATH / "session_ended.txt", "w", encoding="utf-8")
+    with open(ASSETS_PATH / "session_ended.txt", "w", encoding="utf-8"):
+        pass
     with open(ASSETS_PATH / "article_urls.txt", "r", encoding="utf-8") as art_file:
         crawler.urls = art_file.readlines()
     for art_id, art_url in enumerate(crawler.urls):
