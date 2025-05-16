@@ -13,8 +13,11 @@
         "https://www.universalinternetlibrary.ru/content/category/poleznoe/page/11/",
         "https://www.universalinternetlibrary.ru/content/category/poleznoe/page/12/"
     ],
-    "headers": {},
-    "total_articles_to_find_and_parse": 100,
+    "headers": {"Accept":  "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "Cookie": "_ym_uid=1744194830864044946; _ym_d=1744194830; _ym_isad=2",
+    "Accept-Language": "ru,en;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 YaBrowser/25.4.0.0 Safari/537.36"},
+    "total_articles_to_find_and_parse": 4,
     "encoding": "utf-8",
     "timeout": 50,
     "should_verify_certificate": true,

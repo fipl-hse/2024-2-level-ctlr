@@ -107,11 +107,13 @@ class Config:
                    self._seed_urls):
             raise IncorrectSeedURLError('Invalid seed URL pattern')
 
-        if not isinstance(self._num_articles, int) or self._num_articles <= 0:
+        if (not isinstance(self._num_articles, int)
+                or isinstance(self._num_articles, bool)
+                or self._num_articles < 0):
             raise IncorrectNumberOfArticlesError("Number of articles must be integer")
 
-        if not (1 <= self._num_articles <= 150):
-            raise NumberOfArticlesOutOfRangeError("Number of articles must be 1-150")
+        if self._num_articles > 150:
+            raise NumberOfArticlesOutOfRangeError("Number of articles cannot be more than 150")
 
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError("Headers must be a dictionary")
@@ -241,7 +243,6 @@ class Crawler:
         block = article_bs.find('div', {'class': 'post-card__thumbnail'})
         if not block:
             return ''
-
         urls = block.find_all('a', href=True)
         for url in urls:
             href = url.get('href', '')
