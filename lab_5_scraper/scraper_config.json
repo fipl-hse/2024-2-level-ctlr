@@ -1,9 +1,14 @@
 {
-    "seed_urls": [],
-    "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
-    "timeout": 0,
+    "seed_urls": ["https://sakh.online"],
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ru",
+        "Cookie": "domain_sid=UEB-uYZqp5U4UyVdmmrLV%3A1747387971657; tmr_detect=0%7C1747387967219; tmr_lvid=33f248df6291d80bfa0db68174000bae; tmr_lvidTS=1746169522220; _ga=GA1.2.850424106.1746169522; _gid=GA1.2.522388899.1747387963; _ym_visorc=w; _ym_isad=2; _ym_d=1746169522; _ym_uid=1746169522963076057"
+},
+    "total_articles_to_find_and_parse": 100,
+    "encoding": "utf-8",
+    "timeout": 10,
     "should_verify_certificate": true,
     "headless_mode": true
 }
