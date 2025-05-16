@@ -391,7 +391,7 @@ class HTMLParser:
         try:
             response = requests.get(self.full_url, headers=self.config._headers, timeout=self.config._timeout)
             response.raise_for_status()
-            response.encoding = self.config._encoding
+            response.encoding = self.config.get_encoding()
 
             soup = BeautifulSoup(response.text, 'html.parser')
 
