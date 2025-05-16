@@ -4,7 +4,12 @@
         "https://v-life.ru/index.php?area=news&action=category&id=3",
         "https://v-life.ru/index.php?area=news&action=category&id=4",
         "https://v-life.ru/index.php?area=news&action=category&id=5"],
-    "headers": {},
+    "headers": {
+        "Accept-Language": "ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
+        "Cookie": "PHPSESSID=dt9ku9sde1gf9nurkgkevdos87; warning=true",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0"
+    },
     "total_articles_to_find_and_parse": 10,
     "encoding": "utf-8",
     "timeout": 10,
