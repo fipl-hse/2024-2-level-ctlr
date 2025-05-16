@@ -1,9 +1,6 @@
 {
-    "seed_urls": [
-      "https://pravdasevera.ru/society/",
-      "https://pravdasevera.ru/politics/",
-      "https://pravdasevera.ru/economics/"],
-    "total_articles_to_find_and_parse": 10,
+    "seed_urls": ["https://pravdasevera.ru/2025"],
+    "total_articles_to_find_and_parse": 9,
     "headers": {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 OPR/118.0.0.0 (Edition Yx GX)"
   },

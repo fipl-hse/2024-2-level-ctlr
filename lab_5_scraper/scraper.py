@@ -8,7 +8,6 @@ import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
-from pathlib import Path
 from typing import Pattern, Union
 from urllib.parse import urljoin
 
@@ -72,7 +71,6 @@ class Config:
         self.urls = []
         self.path_to_config = path_to_config
         config_data = self._load_config_from_file()
-
         self._seed_urls = config_data["seed_urls"]
         self._num_articles = config_data["total_articles_to_find_and_parse"]
         self._headers = config_data["headers"]
@@ -249,9 +247,9 @@ class Crawler:
             if full_url not in self.urls:
                 return full_url
         return ''
+
     def is_valid_article_url(self, url: str) -> bool:
-        return url.startswith(
-            "https://pravdasevera.ru/") and "/society/" in url or "/politics/" in url or "/economics/" in url
+        return url.endswith('.html') and 'pravdasevera.ru' in url
 
     def find_articles(self) -> None:
         """
@@ -280,6 +278,7 @@ class Crawler:
                             self.urls.append(full_url)
                         if len(self.urls) >= total_needed:
                             return
+
             except requests.RequestException:
                 continue
 
@@ -390,23 +389,38 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         try:
-            response = make_request(self.full_url, self.config)
-        except requests.RequestException as e:
-            print(f"Request failed for {self.full_url}: {e}")
-            return False
+            response = requests.get(self.full_url, headers=self.config._headers, timeout=self.config._timeout)
+            response.raise_for_status()
+            response.encoding = self.config._encoding
 
-        if not response.ok:
-            print(f"Bad response ({response.status_code}) from {self.full_url}")
-            return False
-
-        try:
             soup = BeautifulSoup(response.text, 'html.parser')
-            self._fill_article_with_text(soup)
-            self._fill_article_with_meta_information(soup)
-            return self.article
+
+            self.article.title = soup.find('h1').text.strip()
+
+            author_tag = soup.find('span', class_='article-author')
+            self.article.author = author_tag.text.strip() if author_tag else 'NOT FOUND'
+
+            date_tag = soup.find('time')
+            if date_tag and date_tag.get('datetime'):
+                try:
+                    self.article.date = datetime.fromisoformat(date_tag.get('datetime').replace('Z', '+00:00'))
+                except Exception:
+                    self.article.date = None
+            else:
+                self.article.date = None
+
+            article_div = soup.find('div', class_='article-text')
+            if article_div:
+                paragraphs = article_div.find_all('p')
+                text = '\n'.join(p.text.strip() for p in paragraphs)
+                self.article.text = text
+            else:
+                self.article.text = 'NOT FOUND'
+
         except Exception as e:
-            print(f"Error parsing article from {self.full_url}: {e}")
-            return False
+            print(f'[ERROR] Failed to parse {self.full_url}: {e}')
+            self.article.text = 'NOT FOUND'
+        return self.article
 
 
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
@@ -416,17 +430,16 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    path = pathlib.Path(base_path)
-    if path.exists():
-        shutil.rmtree(path)
-    path.mkdir(parents=True)
+    if base_path.exists():
+        shutil.rmtree(base_path)
+    base_path.mkdir(parents=True)
+
 
 
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    CRAWLER_CONFIG_PATH = Path("path/to/crawler_config.json")
     config = Config(path_to_config=CRAWLER_CONFIG_PATH)
 
     prepare_environment(ASSETS_PATH)
@@ -440,6 +453,7 @@ def main() -> None:
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
+    print("ASSETS_PATH:", ASSETS_PATH)
 
 
 if __name__ == "__main__":
