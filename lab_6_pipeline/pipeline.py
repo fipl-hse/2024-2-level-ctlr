@@ -4,10 +4,10 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-
+import spacy_udpipe
 from networkx import DiGraph
 
-from core_utils.article.article import Article
+from core_utils.article.article import Article, ArtifactType
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +18,27 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+from core_utils.article.io import to_cleaned
+from core_utils.constants import UDPIPE_MODEL_PATH
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Given directory is empty
+    """
+
+
+class InconsistentDatasetError(Exception):
+    """
+    Dataset numeration is inconsistent
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    Given file is empty
+    """
 
 
 class CorpusManager:
@@ -32,16 +53,49 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path.exists():
+            raise FileNotFoundError('File cannot be found')
+        if not self.path.is_dir():
+            raise NotADirectoryError('Given path does not lead to a directory')
+        if not any(self.path.iterdir()):
+            raise EmptyDirectoryError
+        meta = set()
+        raw = set()
+        for file in self.path.iterdir():
+            if not file.stat().st_size:
+                raise InconsistentDatasetError
+            if file.name.endswith('_meta.json'):
+                meta.add(file.name)
+            elif file.name.endswith('_raw.txt'):
+                raw.add(file.name)
+        if len(meta) != len(raw):
+            raise InconsistentDatasetError
+        true_meta = {f'{n}_meta.json' for n in range(1, len(meta) + 1)}
+        true_raw = {f'{n}_raw.txt' for n in range(1, len(raw) + 1)}
+        if meta != true_meta or raw != true_raw:
+            raise InconsistentDatasetError
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for file in self.path.iterdir():
+            if not file.name.endswith('_raw.txt'):
+                continue
+            article = Article(url=None, article_id=int(file.name[:-8]))
+            with open(file, 'r') as f:
+                file_text = f.read()
+            article.text = file_text
+            self._storage[int(file.name[:-8])] = article
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +104,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,11 +122,15 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self._corpus = corpus_manager
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = self._corpus.get_articles()
+        for article_id in articles:
+            to_cleaned(articles[article_id])
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -86,6 +145,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -94,6 +154,13 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        model = spacy_udpipe.load_from_path(lang="ru", path=str(UDPIPE_MODEL_PATH))
+        model.add_pipe(
+            "conll_formatter",
+            last=True,
+            config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+        )
+        return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -105,6 +172,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        return [self._analyzer(text)._.conll_str for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -113,6 +181,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), 'w') as file:
+            file.write(article.get_conllu_info())
+            file.write("\n")
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
