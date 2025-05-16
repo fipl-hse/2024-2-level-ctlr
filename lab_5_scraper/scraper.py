@@ -208,7 +208,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         verify=config.get_verify_certificate()
     )
     response.encoding = config.get_encoding()
-    #time.sleep(random.randint(1, 10))
+    #time.sleep(random.randint(1, 3))
+    #time.sleep(random.uniform(0.5, 1.5))
     return response
 
 
@@ -364,10 +365,9 @@ class HTMLParser:
             'p',
             class_=('Typography_text__WDByQ Typography_size__13__yGx1X Typography_'
                     'none__FajqV Typography_primary__29LdH Typography_bold__JQYIc'))
+        self.article.topics = []
         if topic:
-            self.article.topics = [topic.get_text(strip=True)]
-        else:
-            self.article.topics = []
+            self.article.topics.append(topic.get_text(strip=True))
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
