@@ -334,7 +334,6 @@ class HTMLParser:
         else:
             self.article.topics = ['NOT FOUND']
         self.article.author = [article_soup.find("span", class_="author__name").text]
-        self.article.watches_info = article_soup.find("div", class_="article-attributes-item__value article-attributes-item--views").text.strip()
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
