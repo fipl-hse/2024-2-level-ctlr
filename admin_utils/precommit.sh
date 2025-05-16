@@ -1,5 +1,7 @@
 set -ex
 
+source venv/bin/activate
+
 echo $1
 if [[ "$1" == "smoke" ]]; then
   DIRS_TO_CHECK=(
@@ -7,7 +9,6 @@ if [[ "$1" == "smoke" ]]; then
     "seminars"
     "admin_utils"
     "core_utils"
-    "lab_5_scraper"
   )
 else
   DIRS_TO_CHECK=(
@@ -16,6 +17,7 @@ else
     "admin_utils"
     "core_utils"
     "lab_5_scraper"
+    "lab_6_pipeline"
   )
 fi
 
