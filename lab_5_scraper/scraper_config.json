@@ -1,8 +1,8 @@
 {
-    "seed_urls": ["https://daily-nn.ru"
-    ],
+    "seed_urls": ["https://daily-nn.ru", "https://daily-nn.ru/society/", "https://daily-nn.ru/business/",
+    "https://daily-nn.ru/economics/", "https://daily-nn.ru/realty/"],
     "headers": {},
-    "total_articles_to_find_and_parse": 15,
+    "total_articles_to_find_and_parse": 100,
     "encoding": "UTF-8",
     "timeout": 30,
     "should_verify_certificate": true,
