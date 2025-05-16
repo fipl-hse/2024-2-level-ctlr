@@ -428,5 +428,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    print(f"Запуск из консоли: __name__ = {__name__}")
+    print("все работает аааааааааааааа")
     main()
