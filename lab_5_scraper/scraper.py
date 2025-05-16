@@ -3,6 +3,12 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
+import sys
+from pathlib import Path
+
+project_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(project_root))
+
 import datetime
 import json
 import pathlib
@@ -419,4 +425,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    print(f"Запуск из консоли: __name__ = {__name__}")
     main()
