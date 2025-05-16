@@ -6,7 +6,6 @@ Crawler implementation.
 import datetime
 import json
 import pathlib
-from pathlib import Path
 import shutil
 from random import randint
 from time import sleep
@@ -296,6 +295,7 @@ class HTMLParser:
             config (Config): Configuration
         """
         self.full_url = full_url
+        self.article_id = article_id
         self.config = config
         self.article = Article(url=full_url, article_id=article_id)
 
@@ -327,9 +327,9 @@ class HTMLParser:
         source_url = 'https://tuvapravda.ru/'
         if f'{source_url}natsionalnye-proekty/' in self.article.url:
             self.article.topics = ['Национальные проекты']
-        elif f'{source_url}novosti/' in self.article.url:
+        elif f'{source_url}https://tuvapravda.ru/novosti/' in self.article.url:
             self.article.topics = ['Новости']
-        elif f'{source_url}fotofakt/' in self.article.url:
+        elif f'{source_url}https://tuvapravda.ru/fotofakt/' in self.article.url:
             self.article.topics = ['Фотофакт']
         else:
             self.article.topics = ['NOT FOUND']
@@ -370,9 +370,9 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if Path(base_path).exists():
+    if pathlib.Path(base_path).exists():
         shutil.rmtree(base_path)
-    Path(base_path).mkdir(parents=True)
+    pathlib.Path(base_path).mkdir(parents=True)
 
 
 def main() -> None:
