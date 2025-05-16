@@ -84,7 +84,7 @@ class Config:
         """
         Load config from json file.
         """
-        with open(self.path_to_config, 'r', encoding='utf-8') as file:
+        with open(self.path_to_config, 'r', encoding='cp1251') as file:
             config_dict = json.load(file)
         return config_dict
 
@@ -453,7 +453,6 @@ def main() -> None:
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
-    print("ASSETS_PATH:", ASSETS_PATH)
 
 
 if __name__ == "__main__":
