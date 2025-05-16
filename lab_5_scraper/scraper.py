@@ -112,9 +112,10 @@ class Config:
             raise IncorrectHeadersError('incorrect type of headers')
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('incorrect type of encoding')
-        if not isinstance(self._timeout, int) or not (0 < self._timeout < 60):
+        if not isinstance(self._timeout, int) or not 0 < self._timeout < 60:
             raise IncorrectTimeoutError('incorrect timeouts')
-        if not isinstance(self._should_verify_certificate, bool) or not isinstance(self._headless_mode, bool):
+        if (not isinstance(self._should_verify_certificate, bool) or
+                not isinstance(self._headless_mode, bool)):
             raise IncorrectVerifyError('type is not bool')
 
     def get_seed_urls(self) -> list[str]:
@@ -239,7 +240,7 @@ class Crawler:
         parts = base.split('/')
         domain = parts[0] + '//' + parts[2]
 
-        return domain + href
+        return str(domain + href)
 
     def find_articles(self) -> None:
         """
@@ -305,18 +306,15 @@ class HTMLParser:
         """
         body = article_soup.find("div", itemprop="articleBody")
         if not body:
-            self.article.text = ""  # ничего не найдено
-            return
+            self.article.text = ""
 
         html_field = body.find("div", class_="field ft_html f_content auto_field")
         if not html_field:
             self.article.text = ""
-            return
 
         value_div = html_field.find("div", class_="value")
         if not value_div:
             self.article.text = ""
-            return
 
         paragraphs = [
             p.get_text(strip=True)
