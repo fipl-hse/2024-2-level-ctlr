@@ -291,19 +291,6 @@ class Crawler:
                 if len(self.urls) >= self.config.get_num_articles():
                     break
 
-                # while (len(self.urls) < self.config.get_num_articles() and
-                #        url_attempts < max_url_attempts):
-                #     link = self._extract_url(soup)
-                #     if link == "EXTRACTION ERROR":
-                #         url_attempts += 1
-                #         continue
-                #     if link not in self.urls:
-                #         self.urls.append(link)
-                #     url_attempts += 1
-                #
-                # if len(self.urls) >= self.config.get_num_articles():
-                #     break
-
         finally:
             driver.quit()
             try:
