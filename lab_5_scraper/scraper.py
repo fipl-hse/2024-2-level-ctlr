@@ -236,58 +236,58 @@ class Crawler:
 
         if self.config.get_headless_mode():
             opts.add_argument("--headless")
-
         opts.add_argument(f"--user-data-dir={data_dir}")
 
         driver = webdriver.Chrome(options=opts)
         try:
             driver.get("https://www.iguides.ru/")
-            remaining_clicks = 1
 
+            remaining_clicks = 1
             while remaining_clicks > 0:
                 try:
-                    buttons = driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")
-                    if not buttons:
+                    btns = driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")
+                    if not btns:
                         break
-                    button = buttons[0]
-                    button.click()
+                    btns[0].click()
                     time.sleep(random.randint(3, 10))
                     remaining_clicks -= 1
-                except RequestException as e:
-                    print(f"Button click error: {e}")
+                except Exception as e:
+                    print(f"Ошибка при клике: {e}")
                     break
-
 
             src = driver.page_source
             soup = BeautifulSoup(src, "lxml")
 
-            max_url_attempts = self.config.get_num_articles() * 2
-            url_attempts = 0
+            max_attempts = self.config.get_num_articles() * 2
+            attempts = 0
 
-            for i in self.get_search_urls():
-                query = make_request(i, self.config)
-                if not query.ok:
+            for url in self.get_search_urls():
+                query_response = make_request(url, self.config)
+                if not query_response.ok:
                     continue
 
                 all_posts = soup.find(class_="col").find_all(class_="article-middle__media")
                 for elem in all_posts:
                     if len(self.urls) >= self.config.get_num_articles():
                         break
+
                     link_tag = elem.find("a")
                     if not link_tag or "href" not in link_tag.attrs:
-                        url_attempts += 1
-                        if url_attempts >= max_url_attempts:
+                        attempts += 1
+                        if attempts >= max_attempts:
                             break
                         continue
 
                     try:
-                        url = self._extract_url(link_tag)
-                        if url not in self.urls:
-                            self.urls.append(url)
-                            url_attempts = 0
+                        url_extracted = self._extract_url(link_tag)
+                        if url_extracted not in self.urls:
+                            self.urls.append(url_extracted)
+                            attempts = 0
                     except RequestException:
-                        url_attempts += 1
-                        continue
+                        attempts += 1
+                        if attempts >= max_attempts:
+                            break
+
                 if len(self.urls) >= self.config.get_num_articles():
                     break
 
