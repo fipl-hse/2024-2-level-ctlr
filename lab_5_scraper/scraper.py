@@ -217,15 +217,14 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        # all_posts = article_bs.find(class_="col").find_all(class_="article-middle__media")
-        # for elem in all_posts:
-        #     link_tag = elem.find('a')
-        #     if link_tag and 'href' in link_tag.attrs:
-        #         link = "https://www.iguides.ru/" + link_tag.get("href")
-        #         if link not in self.urls:
-        #             return str(link)
-
-        return "https://www.iguides.ru/" + article_bs["href"]
+        all_posts = article_bs.find(class_="col").find_all(class_="article-middle__media")
+        for elem in all_posts:
+            link_tag = elem.find('a')
+            if link_tag and 'href' in link_tag.attrs:
+                link = "https://www.iguides.ru/" + link_tag.get("href")
+                if link not in self.urls:
+                    return str(link)
+        return "EXTRACTION ERROR"
 
     def find_articles(self) -> None:
         """
@@ -233,64 +232,44 @@ class Crawler:
         """
         data_dir = tempfile.mkdtemp()
         opts = Options()
-
         if self.config.get_headless_mode():
             opts.add_argument("--headless")
         opts.add_argument(f"--user-data-dir={data_dir}")
-
         driver = webdriver.Chrome(options=opts)
         try:
             driver.get("https://www.iguides.ru/")
-
             remaining_clicks = 1
             while remaining_clicks > 0:
                 try:
-                    btns = driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")
-                    if not btns:
+                    buttons = driver.find_elements(by=By.CLASS_NAME, value="i-btn-loadmore")
+                    if not buttons:
                         break
-                    btns[0].click()
+                    button = buttons[0]
+                    button.click()
                     time.sleep(random.randint(3, 10))
                     remaining_clicks -= 1
-                except Exception as e:
-                    print(f"Ошибка при клике: {e}")
+                except RequestException as e:
+                    print(f"Button click error: {e}")
                     break
-
             src = driver.page_source
             soup = BeautifulSoup(src, "lxml")
-
-            max_attempts = self.config.get_num_articles() * 2
-            attempts = 0
-
-            for url in self.get_search_urls():
-                query_response = make_request(url, self.config)
-                if not query_response.ok:
+            max_url_attempts = self.config.get_num_articles() * 2
+            url_attempts = 0
+            for i in self.get_search_urls():
+                query = make_request(i, self.config)
+                if not query.ok:
                     continue
-
-                all_posts = soup.find(class_="col").find_all(class_="article-middle__media")
-                for elem in all_posts:
-                    if len(self.urls) >= self.config.get_num_articles():
-                        break
-
-                    link_tag = elem.find("a")
-                    if not link_tag or "href" not in link_tag.attrs:
-                        attempts += 1
-                        if attempts >= max_attempts:
-                            break
+                while (len(self.urls) < self.config.get_num_articles() and
+                       url_attempts < max_url_attempts):
+                    link = self._extract_url(soup)
+                    if link == "EXTRACTION ERROR":
+                        url_attempts += 1
                         continue
-
-                    try:
-                        url_extracted = self._extract_url(link_tag)
-                        if url_extracted not in self.urls:
-                            self.urls.append(url_extracted)
-                            attempts = 0
-                    except RequestException:
-                        attempts += 1
-                        if attempts >= max_attempts:
-                            break
-
+                    if link not in self.urls:
+                        self.urls.append(link)
+                    url_attempts += 1
                 if len(self.urls) >= self.config.get_num_articles():
                     break
-
         finally:
             driver.quit()
             try:
