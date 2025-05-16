@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH, PROJECT_ROOT
 
 
 class IncorrectSeedURLError(Exception):
@@ -406,25 +406,33 @@ class CrawlerRecursive(Crawler):
         """
         super().__init__(config)
         self.start_url = 'https://sovsakh.ru/'
-        self.recursive_path = ASSETS_PATH.parent / "recursive_articles.json"
+        self.folder_path = PROJECT_ROOT / "recursive_articles.json"
         self.urls = []
-        self.previous_len = 0
+        self.loaded_urls = []
+        self.data = {
+            'all_urls': [],
+            'looked_urls': []
+        }
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        path = pathlib.Path(self.recursive_path)
+        path = pathlib.Path(self.folder_path)
         if path.exists() and path.stat().st_size > 0:
-            with open(self.recursive_path, 'r', encoding=self.config.get_encoding()) as file:
-                self.urls = json.load(file)
-        if self.urls and len(self.urls) == self.config.get_num_articles():
+            with open(self.folder_path, 'r', encoding=self.config.get_encoding()) as file:
+                self.data = json.load(file)
+        self.loaded_urls = self.data['all_urls']
+        if len(self.urls) == self.config.get_num_articles():
             return None
-        if not self.urls:
+        if not self.urls and not self.loaded_urls:
             url = self.start_url
+        elif not self.urls and self.loaded_urls:
+            url = self.loaded_urls[-1]
         else:
             n = randint(0, len(self.urls) - 1)
             url = self.urls[n]
+        self.data['looked_urls'].append(url)
         response = make_request(url, self.config)
         if not response.ok:
             return None
@@ -435,10 +443,12 @@ class CrawlerRecursive(Crawler):
         blocks = blocks1 + blocks2 + blocks3
         for block in blocks:
             got_url = self._extract_url(block)
-            if got_url and got_url not in self.urls and got_url.count('/') == 4:
+            if (got_url and got_url not in self.urls and got_url not in self.loaded_urls
+                    and got_url.count('/') == 4):
                 self.urls.append(got_url)
-                with open(self.recursive_path, 'w', encoding=self.config.get_encoding()) as file:
-                    json.dump(self.urls, file, indent=4)
+                self.data['all_urls'].append(got_url)
+                with open(self.folder_path, 'w', encoding=self.config.get_encoding()) as file:
+                    json.dump(self.data, file, indent=4)
             if len(self.urls) == self.config.get_num_articles():
                 return None
         self.find_articles()
@@ -471,7 +481,7 @@ def recursive_main() -> None:
     """
     config = Config(CRAWLER_CONFIG_PATH)
     crawler = CrawlerRecursive(config)
-    prepare_recursive_environment(ASSETS_PATH)
+    prepare_environment(ASSETS_PATH)
     crawler.find_articles()
     article_id = 1
     for url in crawler.urls:
