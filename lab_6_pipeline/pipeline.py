@@ -23,18 +23,6 @@ from core_utils.pipeline import (
 )
 
 
-class FileNotFoundError(Exception):
-    """
-    File does not exist
-    """
-
-
-class NotADirectoryError(Exception):
-    """
-    Path does not lead to directory
-    """
-
-
 class InconsistentDatasetError(Exception):
     """
     IDs contain slips, number of meta and raw files is not equal, files are empty
@@ -84,8 +72,8 @@ class CorpusManager:
                                 start=1):
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError('file is empty')
-        if len(list(self.path_to_raw_txt_data.glob('*.json'))) != \
-            len(list(self.path_to_raw_txt_data.glob('*.txt'))):
+        if len(list(self.path_to_raw_txt_data.glob('*_meta.json'))) != \
+            len(list(self.path_to_raw_txt_data.glob('*_raw.txt'))):
             raise InconsistentDatasetError('numbers of meta and txt are not equal')
 
     def _scan_dataset(self) -> None:
@@ -93,7 +81,9 @@ class CorpusManager:
         Register each dataset entry.
         """
         for i, file_path in enumerate(self.path_to_raw_txt_data.glob('*_raw.txt')):
-                self._storage[i+1] = Article(url=None, article_id=i+1)
+            self._storage[i + 1] = from_raw(file_path,
+                                            Article(url=None,
+                                                    article_id=i + 1))
 
 
     def get_articles(self) -> dict:
@@ -129,9 +119,7 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         articles = self.corpus_manager.get_articles()
-        for id, article in articles.items():
-            file_path = self.corpus_manager.path_to_raw_txt_data / f"{id}_raw.txt"
-            article = from_raw(file_path, article)
+        for i, article in articles.items():
             to_cleaned(article)
 
 

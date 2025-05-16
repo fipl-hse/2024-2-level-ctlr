@@ -5,7 +5,8 @@
         "https://aif.ru/politics",
         "https://aif.ru/sport",
         "https://aif.ru/techno",
-        "https://aif.ru/society"
+        "https://aif.ru/society",
+        "https://aif.ru/society/science"
     ],
     "headers": {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36",
@@ -13,7 +14,7 @@
         "Accept-Language": "ru,en;q=0.9",
         "Cookie": "__ddg1_=OrZODVxn5KttspdOnqqV; tmr_lvid=9a96603fd61f204be0a9cae710ff2e8c; tmr_lvidTS=1743764054838; _ym_uid=1743764055870290052; _ym_d=1743764055; fid=6c030550-2b27-469a-90a3-25837e810c69; ma_id=6397350741740843534002; __upin=jmKxtHlGqKKAQS+ZrxqCIQ; _ain_uid=1744357709654.750380291.9061584; current_user=%7B%22id%22%3A0%2C%22login%22%3A%22%22%2C%22email%22%3A%220%22%2C%22is_logged%22%3A0%2C%22has_unpublished_comments%22%3Afalse%7D; chash=ts0F4YHN51; top100_id=t1.-1.1807956750.1744956847661; adrcid=ARgl9DEcZZFOqv3Fu7mVHgw; __ai_fp_uuid=6d42b20a66f24376%3A2; adtech_uid=d295bf18-5b1f-4db1-80e4-e687a28e4044%3Aaif.ru; subscription_popup_state=%7B%22key%22%3A%22week2_view1%22%2C%22timeout%22%3A1746772765513%7D; subscription_popup_min_state=week2_view1; gnezdo_uid=1966bb8297fc034bc6712d96; CookieMessenger=; betweenx=1; _ym_isad=2; _ohmybid_cmf=1; _ac_oid=a5e8a27eabeb18b436c4f185033b0490%3A1746021064675; t3_sid_7627570=s1.1517266889.1746017464390.1746017464962.4.5.1.0; acs_3=%7B%22hash%22%3A%221aa3f9523ee6c2690cb34fc702d4143056487c0d%22%2C%22nst%22%3A1746103946009%2C%22sl%22%3A%7B%22224%22%3A1746017546009%2C%221228%22%3A1746017546009%7D%7D; adrdel=1746017546086; __ddg9_=5.166.211.126; aif_sid=916300f5d0090a6c59f1608147abce90; domain_sid=vdNDm7DGQCBa3kG8bkfoK%3A1746030818773; __ddg8_=VJP2QIjlmFNRXgth; __ddg10_=1746030818; _ym_visorc=b; tmr_detect=0%7C1746030821353"
     },
-    "total_articles_to_find_and_parse": 5,
+    "total_articles_to_find_and_parse": 20,
     "encoding": "UTF-8",
     "timeout": 30,
     "should_verify_certificate": true,
