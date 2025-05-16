@@ -1,6 +1,6 @@
 {
     "seed_urls": [
-        "https://krassever.ru/news",
+        "https://krassever.ru",
         "https://krassever.ru/rubric/society",
         "https://krassever.ru/rubric/%D1%81ulture",
         "https://krassever.ru/rubric/sport"
@@ -10,7 +10,7 @@
     },
     "total_articles_to_find_and_parse": 5,
     "encoding": "utf-8",
-    "timeout": 6,
+    "timeout": 10,
     "should_verify_certificate": true,
     "headless_mode": true
 }

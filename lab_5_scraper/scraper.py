@@ -224,7 +224,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    time.sleep(randint(1, 3))
+    time.sleep(randint(3, 8))
     response = requests.get(url,
         headers=config.get_headers(),
         timeout=config.get_timeout())
@@ -300,6 +300,70 @@ class Crawler:
         return self.config.get_seed_urls()
 
 
+class CrawlerRecursive(Crawler):
+    """
+    Recursive crawler implementation.
+    """
+
+    def __init__(self, config: Config) -> None:
+        """
+        Initialize an instance of the CrawlerRecursive class.
+
+        Args:
+            config (Config): Configuration
+        """
+        super().__init__(config)
+        self.start_url = self.get_search_urls()[0]
+
+    def find_articles(self) -> None:
+        """
+        Find articles.
+        """
+        current_seed_url = self.start_url
+        loaded_html = make_request(current_seed_url, self.config)
+        if loaded_html.status_code >= 400:
+            return
+        soup = BeautifulSoup(loaded_html.text, "html.parser")
+        links = soup.find_all("a", href=True)
+        for link in links:
+            if any(not_seed in link["href"] for not_seed in (
+                "#", ".png", "javascript:", "mailto:", "tel:", "http"
+            )):
+                continue
+            link_soup = BeautifulSoup(str(link), "html.parser")
+            link_str = (str(urlparse(current_seed_url).scheme) + "://" +
+                        str(urlparse(current_seed_url).netloc) +
+                        self._extract_url(link_soup))
+            if any(art_prefix in link["href"] for art_prefix in (
+                    "news/", "article/", "blog/", "history"
+            )):
+                with open(ASSETS_PATH / "article_urls.txt", "r", encoding="utf-8") as art_file:
+                    url_list = art_file.readlines()
+                # For testing
+                if len(url_list) >= self.config.get_num_articles():
+                    return
+                # Will be removed
+                if not link_str in url_list:
+                    print("Found a new article")
+                    with open(ASSETS_PATH / "article_urls.txt", "a", encoding="utf-8") as art_file:
+                        art_file.write(link_str + "\n")
+            else:
+                with open(ASSETS_PATH / "seed_urls.txt", "r", encoding="utf-8") as seed_file:
+                    seed_url_list = seed_file.readlines()
+                if not link_str in seed_url_list:
+                    # For testing
+                    with open(ASSETS_PATH / "article_urls.txt", "r", encoding="utf-8") as art_file:
+                        url_list = art_file.readlines()
+                    if len(url_list) >= self.config.get_num_articles():
+                        return
+                    # Will be removed
+                    print("Found a new seed:", link_str)
+                    with open(ASSETS_PATH / "seed_urls.txt", "a", encoding="utf-8") as seed_file:
+                        seed_file.write(link_str + "\n")
+                    self.start_url = link_str
+                    self.find_articles()
+
+
 # 10
 # 4, 6, 8, 10
 
@@ -331,8 +395,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        text_blocks = article_soup.find_all("p", style=re.compile("text-align: ?justify"))
-        self.article.text = " ".join([block.text for block in text_blocks])
+        text_blocks = article_soup.find_all("p")
+        self.article.text = " ".join([
+            block.text for block in text_blocks
+            if not block.has_attr("style") or not "right" in block["style"]
+        ])
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -341,7 +408,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        self.article.title = article_soup.find("h1").text
+        title_exists = article_soup.find("h1")
+        if title_exists:
+            self.article.title = title_exists.text
+        else:
+            self.article.title = "NO TITLE"
         self.article.date = self.unify_date_format("01.01.1000 00:00")
         author = article_soup.find("a", class_="italic")
         if author:
@@ -388,9 +459,13 @@ def prepare_environment(base_path: Union[Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    if not (base_path / "session_ended.txt").exists:
+        return
     if base_path.exists():
         shutil.rmtree(base_path)
     base_path.mkdir(parents=True)
+    open(base_path / "article_urls.txt", "w")
+    open(base_path / "seed_urls.txt", "w")
 
 
 def main() -> None:
@@ -399,8 +474,11 @@ def main() -> None:
     """
     config = Config(CRAWLER_CONFIG_PATH)
     prepare_environment(ASSETS_PATH)
-    crawler = Crawler(config=config)
+    crawler = CrawlerRecursive(config=config)
     crawler.find_articles()
+    open(ASSETS_PATH / "session_ended.txt", "w")
+    with open(ASSETS_PATH / "article_urls.txt", "r", encoding="utf-8") as art_file:
+        crawler.urls = art_file.readlines()
     for art_id, art_url in enumerate(crawler.urls):
         parser = HTMLParser(full_url=art_url, article_id=art_id+1, config=config)
         parsed_article = parser.parse()
