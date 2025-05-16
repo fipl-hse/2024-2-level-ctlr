@@ -11,6 +11,7 @@ from typing import Pattern, Union
 
 import requests
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
@@ -226,10 +227,12 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        href = article_bs.get('href')
-
-        if not href:
+        raw_href = article_bs.get('href')
+        if isinstance(raw_href, list):
+            raw_href = raw_href[0]
+        if not isinstance(raw_href, str) or not raw_href:
             return ""
+        href: str = raw_href
 
         if href.startswith(('http://', 'https://')):
             return href
@@ -240,7 +243,6 @@ class Crawler:
         base = seed_list[0]
         parts = base.split('/')
         domain = parts[0] + '//' + parts[2]
-        print(type(href))
         return domain + href
 
     def find_articles(self) -> None:
@@ -306,14 +308,23 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         body = article_soup.find("div", attrs={"itemprop": "articleBody"})
+        if not isinstance(body, Tag):
+            self.article.text = ""
+            return
         if not body:
             self.article.text = ""
 
         html_field = body.find("div", attrs={"class": "field ft_html f_content auto_field"})
+        if not isinstance(html_field, Tag):
+            self.article.text = ""
+            return
         if not html_field:
             self.article.text = ""
 
         value_div = html_field.find("div", attrs={"class": "value"})
+        if not isinstance(value_div, Tag):
+            self.article.text = ""
+            return
         if not value_div:
             self.article.text = ""
 
