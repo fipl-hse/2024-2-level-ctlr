@@ -328,11 +328,10 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         div = article_soup.find('div', class_='col-md-6 col-md-push-3')
-        if not (isinstance(div, Tag) and div.find('h1', class_='entry-title')):
+        found_title = div.find('h1', class_='entry-title')
+        if not (isinstance(div, Tag) and found_title):
             return
-        entry_title = div.find('h1', class_='entry-title')
-        if entry_title:
-            self.article.title = entry_title.get_text(strip=True)
+        self.article.title = found_title.get_text(strip=True)
 
         article_author = div.find('h3', class_='user-name')
         if article_author:
@@ -404,8 +403,8 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    for i, full_url in enumerate(crawler.urls):
-        parser = HTMLParser(full_url=full_url, article_id=i+1, config=configuration)
+    for i, full_url in enumerate(crawler.urls, start=1):
+        parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
