@@ -2,13 +2,7 @@
 Crawler implementation.
 """
 
-# pylint: disable=C0413
-
-import sys
-from pathlib import Path
-
-project_root = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_root))
+# pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 
 import datetime
 import json
@@ -24,8 +18,6 @@ from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-
-# pylint: enable=C0413
 
 
 class IncorrectSeedURLError(Exception):
