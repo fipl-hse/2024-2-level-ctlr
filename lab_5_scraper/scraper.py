@@ -101,7 +101,6 @@ class Config:
         if not isinstance(self._seed_urls, list):
             raise IncorrectSeedURLError('incorrect url')
         for url in self._seed_urls:
-            # <-- updated line:
             if not isinstance(url, str) or not url.startswith(('http://', 'https://')):
                 raise IncorrectSeedURLError('incorrect url')
 
@@ -277,9 +276,6 @@ class Crawler:
         """
         return self.config.get_seed_urls()
 
-# 10
-# 4, 6, 8, 10
-
 
 class HTMLParser:
     """
@@ -410,20 +406,16 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
     prepare_environment(ASSETS_PATH)
-    crawler = Crawler(config=configuration)
+    config = Config(CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config)
     crawler.find_articles()
-    i = 1
-    for full_url in crawler.urls:
-        parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
+    for idx, url in enumerate(crawler.urls, 1):
+        parser = HTMLParser(url, idx, config)
         article = parser.parse()
-        if not article.text:
-            continue
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
-        i += 1
 
 
 if __name__ == "__main__":
