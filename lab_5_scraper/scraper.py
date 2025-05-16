@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
-from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH, PROJECT_ROOT
 
 
 class IncorrectSeedURLError(Exception):
@@ -105,19 +105,25 @@ class Config:
                 or not all(isinstance(seed_url, str) for seed_url in self._seed_urls)
                 or any('https://pravda-nn.ru/' not in seed_url for seed_url in self._seed_urls)):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern.')
+
         if (not isinstance(self._num_articles, int) or isinstance(self._num_articles, bool)
                 or self._num_articles <= 0):
             raise IncorrectNumberOfArticlesError('Number of articles is either not integer \
             or less than 0.')
+
         if self._num_articles not in range(1, 151):
             raise NumberOfArticlesOutOfRangeError('Number of articles is out of range.')
+
         if not isinstance(self._headers, dict):
             raise IncorrectHeadersError('Headers do not have a form of dictionary.')
+
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('Encoding is not a string.')
+
         if (not isinstance(self._timeout, int) or isinstance(self._timeout, bool)
                 or self._timeout not in range(1, 61)):
             raise IncorrectTimeoutError('Timeout is either not positive integer or more than 60.')
+
         if (not isinstance(self._should_verify_certificate, bool)
                 or not isinstance(self._headless_mode, bool)):
             raise IncorrectVerifyError('Verify certificate value or headless mode value \
@@ -235,9 +241,12 @@ class Crawler:
             str: Url from HTML
         """
         url_for_extraction = article_bs.get('href')
+
         if not url_for_extraction.startswith('https://pravda-nn.ru/'):
             url_for_extraction = 'https://pravda-nn.ru/' + url_for_extraction
-        if url_for_extraction not in self.urls and isinstance(url_for_extraction, str):
+
+        if (url_for_extraction not in self.urls and isinstance(url_for_extraction, str)
+                and not url_for_extraction.startswith('https://pravda-nn.ru/long/')):
             return url_for_extraction
         return ''
 
@@ -246,16 +255,19 @@ class Crawler:
         Find articles.
         """
         num_urls = math.ceil(self.config.get_num_articles() / len(self.config.get_seed_urls()))
+
         for seed_url in self.get_search_urls():
             response = make_request(seed_url, self.config)
             if not response.ok:
                 continue
+
             bs = BeautifulSoup(response.content, 'html.parser')
             for article_bs in bs.find_all('a', class_=["content",
                                                        "article-news__wrapper nx-flex-col",
                                                        "nx-flex-row-btw"], href=True,
                                           limit=num_urls):
                 extracted_url = self._extract_url(article_bs)
+
                 if extracted_url == '':
                     continue
                 self.urls.append(extracted_url)
@@ -319,19 +331,25 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         self.article.article_id = self.article_id
+
         title = article_soup.find('meta', property="og:title").get('content')
         if not title:
             self.article.title = "NOT FOUND"
-        else:
+        if title and isinstance(title, str):
             self.article.title = title
-        self.article.author = [author.text for author in article_soup.find_all(rel_='author')]
+
+        authors = article_soup.find(class_="author nx-flex-row-l-c")
+        if authors is not None:
+            self.article.author = [author.text for author in authors]
         if not self.article.author:
             self.article.author = ["NOT FOUND"]
+
         topics = article_soup.find(class_="articles-tags__wrapper nx-flex-row")
         if topics is None:
             self.article.topics = []
         else:
             self.article.topics = topics.get_text(separator=', ', strip=True).split(', ')
+
         date = article_soup.find(class_="date")
         if date is None:
             self.article.date = datetime.datetime.now()
@@ -370,11 +388,19 @@ class CrawlerRecursive(Crawler):
     """
     def __init__(self, config: Config) -> None:
         super().__init__(config)
-        self.start_url = self.get_search_urls()[0]
+        self.start_url = 'https://pravda-nn.ru/'
         self.urls = [self.start_url]
         self.visited_urls = set()
 
     def find_articles(self) -> None:
+
+        if len(self.urls) == 1:
+            with open(PROJECT_ROOT / "lab_5_scraper" / "cash.json", "r",
+                      encoding='utf-8') as file_to_read:
+                data_urls = json.load(file_to_read)
+            self.urls = data_urls['urls']
+            self.visited_urls = set(data_urls['visited_urls'])
+
         for base_url in self.urls:
             if base_url in self.visited_urls:
                 continue
@@ -382,19 +408,40 @@ class CrawlerRecursive(Crawler):
             if not response.ok:
                 continue
             bs = BeautifulSoup(response.content, 'html.parser')
-            for article_bs in bs.find_all('a',
-                                          class_=["content", "article-news__wrapper nx-flex-col",
-                                                  "nx-flex-row-btw"], href=True):
-                extracted_url = self._extract_url(article_bs)
-                if extracted_url == '' or extracted_url in self.visited_urls:
-                    continue
-                self.urls.append(extracted_url)
 
-                if len(self.urls) - 2 >= self.config.get_num_articles():
-                    self.urls = self.urls[1::]
+            if base_url == self.start_url:
+                for article_bs in bs.find_all('a',
+                                              class_=["choice-title", "nx-flex-row-btw"],
+                                              href=True):
+                    extracted_url = self._extract_url(article_bs)
+                    if extracted_url == '' or extracted_url in self.visited_urls:
+                        continue
+                    self.urls.append(extracted_url)
+                    continue
+            for article_bs in bs.find_all(class_=["article-news__wrapper nx-flex-col"]):
+                a_href = article_bs.find_all('a')
+                for href in a_href:
+                    extracted_url = self._extract_url(href)
+                    if extracted_url == '' or extracted_url in self.visited_urls:
+                        continue
+                    self.urls.append(extracted_url)
+
+                if len(self.urls) - 1 >= self.config.get_num_articles():
+                    self.urls.remove(self.start_url)
+                    self.urls = self.urls[:self.config.get_num_articles() + 1]
                     return
+
             self.visited_urls.add(base_url)
-        if len(self.urls) - 2 < self.config.get_num_articles():
+
+            with open(PROJECT_ROOT / "lab_5_scraper" / "cash.json", "r",
+                      encoding='utf-8') as file_to_read:
+                data_visited = json.load(file_to_read)
+                data_visited.update({'urls': self.urls, 'visited_urls': list(self.visited_urls)})
+            with open(PROJECT_ROOT / "lab_5_scraper" / "cash.json", 'w',
+                      encoding='utf-8') as file_to_save:
+                json.dump(data_visited, file_to_save, indent=4)
+
+        if len(self.urls) - 1 < self.config.get_num_articles():
             self.find_articles()
 
 
@@ -418,6 +465,7 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
+
     for i, full_url in enumerate(crawler.urls, 1):
         parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
         article = parser.parse()
@@ -433,7 +481,15 @@ def main2() -> None:
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
     prepare_environment(ASSETS_PATH)
     crawler_rec = CrawlerRecursive(config=configuration)
+
+    if not pathlib.Path(PROJECT_ROOT / "lab_5_scraper" / "cash.json").exists():
+        data = {'urls': crawler_rec.urls, 'visited_urls': []}
+        with (open(PROJECT_ROOT / "lab_5_scraper" / "cash.json", 'w', encoding='utf-8')
+              as file_to_save):
+            json.dump(data, file_to_save, indent=4)
+
     crawler_rec.find_articles()
+
     for i, full_url in enumerate(crawler_rec.urls, 1):
         parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
         article = parser.parse()
