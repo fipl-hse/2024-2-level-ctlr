@@ -324,15 +324,14 @@ class HTMLParser:
         date = json.loads(article_soup.find('script', type='application/ld+json')
                           .text)["@graph"][1]['datePublished']
         self.article.date = self.unify_date_format(date)
-        source_url = 'https://tuvapravda.ru/'
-        if f'{source_url}natsionalnye-proekty/' in self.article.url:
-            self.article.topics = ['Национальные проекты']
-        elif f'{source_url}https://tuvapravda.ru/novosti/' in self.article.url:
-            self.article.topics = ['Новости']
-        elif f'{source_url}https://tuvapravda.ru/fotofakt/' in self.article.url:
-            self.article.topics = ['Фотофакт']
+        if 'https://tuvapravda.ru/natsionalnye-proekty/' in self.article.url:
+            self.article.topics = 'Национальные проекты'
+        elif 'https://tuvapravda.ru/novosti/' in self.article.url:
+            self.article.topics = 'Новости'
+        elif 'https://tuvapravda.ru/fotofakt/' in self.article.url:
+            self.article.topics = 'Фотофакт'
         else:
-            self.article.topics = ['NOT FOUND']
+            self.article.topics = 'NOT FOUND'
         self.article.author = [article_soup.find("span", class_="author__name").text]
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
