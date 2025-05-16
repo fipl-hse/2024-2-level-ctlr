@@ -335,13 +335,11 @@ class HTMLParser:
         """
         h1_tag = article_soup.find('h1')
         if h1_tag:
-            # decode_contents() вернёт «inner HTML» вместе с сущностями (&laquo;, &raquo; и т.п.)
             headline_html = h1_tag.decode_contents().strip()
             fixed = headline_html.replace('«', '&laquo;').replace('»', '&raquo;')
             self.article.title = fixed
         else:
             self.article.title = "NOT FOUND"
-        print(self.article.title)
 
         self.article.author = ['NOT FOUND']
         time_tag = article_soup.find('time')
