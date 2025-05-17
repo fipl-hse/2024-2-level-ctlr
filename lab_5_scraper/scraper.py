@@ -412,7 +412,7 @@ class HTMLParser:
         if title_exists:
             self.article.title = title_exists.text.strip()
         else:
-            self.article.title = "NO TITLE"
+            self.article.title = ""
         self.article.date = self.unify_date_format("01.01.1000 00:00")
         author = article_soup.find("a", class_="italic")
         if author:
