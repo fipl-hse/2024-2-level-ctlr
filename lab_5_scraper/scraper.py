@@ -10,7 +10,7 @@ import re
 import shutil
 import time
 from pathlib import Path
-from random import randint
+from random import uniform
 from typing import Pattern, Union
 from urllib.parse import urlparse
 
@@ -224,10 +224,12 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    time.sleep(randint(3, 8))
-    response = requests.get(url,
+    time.sleep(uniform(5, 8))
+    response = requests.get(
+        url,
         headers=config.get_headers(),
-        timeout=config.get_timeout())
+        timeout=config.get_timeout()
+    )
     response.encoding = config.get_encoding()
     return response
 
@@ -319,8 +321,7 @@ class CrawlerRecursive(Crawler):
         """
         Find articles.
         """
-        current_seed_url = self.start_url
-        loaded_html = make_request(current_seed_url, self.config)
+        loaded_html = make_request(self.start_url, self.config)
         if loaded_html.status_code >= 400:
             return
         soup = BeautifulSoup(loaded_html.text, "html.parser")
@@ -331,37 +332,36 @@ class CrawlerRecursive(Crawler):
             )):
                 continue
             link_soup = BeautifulSoup(str(link), "html.parser")
-            link_str = (str(urlparse(current_seed_url).scheme) + "://" +
-                        str(urlparse(current_seed_url).netloc) +
+            link_str = (str(urlparse(self.start_url).scheme) + "://" +
+                        str(urlparse(self.start_url).netloc) +
                         self._extract_url(link_soup))
             if any(art_prefix in link["href"] for art_prefix in (
-                    "news/", "article/", "blog/", "history"
+                    "news/", "article/", "blog/", "history", "contest/"
             )):
                 with open(ASSETS_PATH / "article_urls.txt", "r", encoding="utf-8") as art_file:
                     url_list = art_file.readlines()
-                # For testing
                 if len(url_list) >= self.config.get_num_articles():
                     return
-                # Will be removed
-                if not link_str in url_list:
-                    print("Found a new article")
+                if not link_str + "\n" in url_list:
                     with open(ASSETS_PATH / "article_urls.txt", "a", encoding="utf-8") as art_file:
                         art_file.write(link_str + "\n")
             else:
                 with open(ASSETS_PATH / "seed_urls.txt", "r", encoding="utf-8") as seed_file:
                     seed_url_list = seed_file.readlines()
-                if not link_str in seed_url_list:
-                    # For testing
-                    with open(ASSETS_PATH / "article_urls.txt", "r", encoding="utf-8") as art_file:
-                        url_list = art_file.readlines()
-                    if len(url_list) >= self.config.get_num_articles():
-                        return
-                    # Will be removed
-                    print("Found a new seed:", link_str)
+                if not link_str + "\n" in seed_url_list:
                     with open(ASSETS_PATH / "seed_urls.txt", "a", encoding="utf-8") as seed_file:
                         seed_file.write(link_str + "\n")
-                    self.start_url = link_str
-                    self.find_articles()
+        with open(ASSETS_PATH / "seed_urls_crawled.txt", "a", encoding="utf-8") as c_seed_file:
+            c_seed_file.write(self.start_url + "\n")
+        with open(ASSETS_PATH / "seed_urls.txt", "r", encoding="utf-8") as seed_file:
+            seed_url_list = seed_file.readlines()
+        with open(ASSETS_PATH / "seed_urls_crawled.txt", "r", encoding="utf-8") as c_seed_file:
+            crawled_url_list = c_seed_file.readlines()
+        for seed in seed_url_list:
+            if not seed + "\n" in crawled_url_list:
+                self.start_url = seed
+                self.find_articles()
+                return
 
 
 # 10
@@ -410,17 +410,17 @@ class HTMLParser:
         """
         title_exists = article_soup.find("h1")
         if title_exists:
-            self.article.title = title_exists.text
+            self.article.title = title_exists.text.strip()
         else:
             self.article.title = "NO TITLE"
         self.article.date = self.unify_date_format("01.01.1000 00:00")
         author = article_soup.find("a", class_="italic")
         if author:
-            self.article.author.append(author.text)
+            self.article.author.append(author.text.strip())
         else:
             lower_author = article_soup.find("p", style=re.compile("text-align: ?right"))
             if lower_author:
-                self.article.author.append(lower_author.text)
+                self.article.author.append(lower_author.text.strip())
             else:
                 self.article.author.append("NOT FOUND")
 
@@ -459,15 +459,9 @@ def prepare_environment(base_path: Union[Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
-    if not (base_path / "session_ended.txt").exists:
-        return
     if base_path.exists():
         shutil.rmtree(base_path)
     base_path.mkdir(parents=True)
-    with open(base_path / "article_urls.txt", "w", encoding="utf-8"):
-        pass
-    with open(base_path / "seed_urls.txt", "w", encoding="utf-8"):
-        pass
 
 
 def main() -> None:
@@ -475,11 +469,18 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
-    prepare_environment(ASSETS_PATH)
+    if (ASSETS_PATH / "session_ended.txt").exists:
+        prepare_environment(ASSETS_PATH)
+        with open(ASSETS_PATH / "article_urls.txt", "w", encoding="utf-8"):
+            pass
+        with open(ASSETS_PATH / "seed_urls.txt", "w", encoding="utf-8"):
+            pass
+        with open(ASSETS_PATH / "seed_urls_crawled.txt", "w", encoding="utf-8"):
+            pass
     crawler = CrawlerRecursive(config=config)
     crawler.find_articles()
-    with open(ASSETS_PATH / "session_ended.txt", "w", encoding="utf-8"):
-        pass
+    with open(ASSETS_PATH / "session_ended.txt", "w", encoding="utf-8") as lock_file:
+        lock_file.write("If this file exists, all articles have been collected.")
     with open(ASSETS_PATH / "article_urls.txt", "r", encoding="utf-8") as art_file:
         crawler.urls = art_file.readlines()
     for art_id, art_url in enumerate(crawler.urls):

@@ -1,16 +1,19 @@
 {
     "seed_urls": [
-        "https://krassever.ru",
+        "https://krassever.ru/",
         "https://krassever.ru/rubric/society",
         "https://krassever.ru/rubric/%D1%81ulture",
         "https://krassever.ru/rubric/sport"
     ],
     "headers": {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0",
+        "cookie": "FCCDCF=%5Bnull%2Cnull%2Cnull%2C%5B%22CQQyG4AQQyG4AEsACBENBpFoAP_gAEPgAACgINJD7C7FbSFCyD5zaLsAMAhHRsAAQoQAAASBAmABQAKQIAQCgkAYFASgBAACAAAAICRBIQIECAAAAUAAQAAAAAAEAAAAAAAIIAAAgAEAAAAIAAACAIAAEAAIAAAAEAAAmAgAAIIACAAAgAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAQNVSD2F2K2kKFkHCmwXYAYBCujYAAhQgAAAkCBMACgAUgQAgFJIAgCIFAAAAAAAAAQEiCQAAQABAAAIACgAAAAAAIAAAAAAAQQAABAAIAAAAAAAAEAQAAIAAQAAAAIAABEhAAAQQAEAAAAAAAQAAA%22%2C%222~70.89.93.108.122.149.184.196.236.259.311.313.314.323.358.415.442.486.494.495.540.574.609.864.981.1029.1048.1051.1095.1097.1126.1205.1276.1301.1365.1415.1449.1514.1570.1577.1598.1651.1716.1735.1753.1765.1870.1878.1889.1958.1960.2072.2253.2299.2373.2415.2506.2526.2531.2568.2571.2575.2624.2677.2778~dv.%22%2C%22E6BB8C6B-6794-473F-9858-9F9A57BF9E91%22%5D%5D; __gads=ID=803e108c80dc0784:T=1746047706:RT=1747336900:S=ALNI_Ma96VFadD4Qj_Z5iX73vtiWtaj-PA; __eoi=ID=f3c9e1a57827abb2:T=1746047706:RT=1747336900:S=AA-AfjZ0WqrB-ShggLnjMZjjgdrL; FCNEC=%5B%5B%22AKsRol9GrTBqle_-rbI_rWTBKTo_R72HmBF3BnpEwWgvmfJ68TtoYLS9tJWTQ8WBg5WiokuaPsZ7J31G8GWK3YimB7S_Qd68rm_f9lYCJa5RbjG-M_XR_DTJQYD2V86LswXdOTC_Rvg6TLUd_jqOdhKbXqb42V1_Lg%3D%3D%22%5D%5D",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "accept-language": "ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7"
     },
     "total_articles_to_find_and_parse": 5,
     "encoding": "utf-8",
-    "timeout": 10,
+    "timeout": 20,
     "should_verify_certificate": true,
     "headless_mode": true
 }
