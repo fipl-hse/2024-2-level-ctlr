@@ -4,10 +4,12 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+import re
 
 from networkx import DiGraph
 
 from core_utils.article.article import Article
+from core_utils.article.io import to_cleaned
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +20,24 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+
+class InconsistentDatasetError(Exception):
+    """
+    IDs contain slips, number of meta and raw files is not equal, files are empty.
+    """
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Directory is empty.
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    The file is empty.
+    """
 
 
 class CorpusManager:
@@ -32,16 +52,69 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self._path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self._path_to_raw_txt_data.exists():
+            raise FileNotFoundError(f'This path doesnt exist: {self._path_to_raw_txt_data} :(')
+
+        if not self._path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError(f'This isnt a directory: {self._path_to_raw_txt_data} :(')
+
+        raw_files = list(self._path_to_raw_txt_data.glob('*_raw.txt'))
+        meta_files = list(self._path_to_raw_txt_data.glob('*_meta.json'))
+
+        if not raw_files and not meta_files:
+            raise EmptyDirectoryError(f'Directory is empty: {self._path_to_raw_txt_data} :(')
+
+        raw_ids = set()
+        for file in raw_files:
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f'Empty file: {file} :(')
+            match = re.match(r'(\d+)_raw\.txt', file.name)
+            if match:
+                raw_ids.add(int(match.group(1)))
+
+        meta_ids = set()
+        for file in meta_files:
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f'Empty file: {file} :(')
+            match = re.match(r'(\d+)_meta\.json', file.name)
+            if match:
+                meta_ids.add(int(match.group(1)))
+
+        if not raw_ids or not meta_ids:
+            raise InconsistentDatasetError('Empty or missing files :(')
+
+        if raw_ids != meta_ids:
+            raise InconsistentDatasetError('Mismatch between raw and meta file IDs :(')
+
+        if sorted(raw_ids) != list(range(1, len(raw_ids) + 1)):
+            raise InconsistentDatasetError('IDs are inconsistent :(')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for file in self._path_to_raw_txt_data.glob('*_raw.txt'):
+            match = re.match(r'(\d+)_raw\.txt', file.name)
+            if not match:
+                continue
+
+            article_id = int(match.group(1))
+
+            with open(file, 'r', encoding='utf-8') as f:
+                text = f.read()
+
+            article = Article(url=None, article_id=article_id)
+            article.text = text
+            self._storage[article_id] = article
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +123,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,11 +141,24 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        for article in self._corpus.get_articles().values():
+            raw_text_path = self._corpus._path_to_raw_txt_data / f'{article.article_id}_raw.txt'
+            raw_text = raw_text_path.read_text(encoding='utf-8')
+
+            cleaned_text = re.sub(r'[^\w\s]', '', raw_text.lower())
+
+            if len(cleaned_text.strip()) < 50:
+                continue
+
+            article._cleaned_text = cleaned_text
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
