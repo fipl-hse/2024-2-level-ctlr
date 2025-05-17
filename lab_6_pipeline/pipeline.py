@@ -20,6 +20,16 @@ from core_utils.pipeline import (
     UnifiedCoNLLUDocument,
 )
 
+class EmptyDirectoryError:
+    """
+    Raised when dataset directory is empty.
+    """
+
+class InconsistentDatasetError(Exception):
+    """
+    Raised when the dataset is inconsistent: IDs contain slips, number of meta and raw files is not equal, files are empty.
+    """
+
 
 class CorpusManager:
     """
@@ -33,11 +43,36 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path.exists():
+            raise FileNotFoundError
+        if not self.path.is_dir():
+            raise NotADirectoryError
+
+        txt_files = sorted([f for f in self.path.glob("*.txt") if f.is_file()])
+        json_files = sorted([f for f in self.path.glob("*.json") if f.is_file()])
+        if len(txt_files) != len(json_files):
+            raise InconsistentDatasetError(f"Number of meta and raw files is not equal:"
+                             f"{len(txt_files)} texts != {len(json_files)} jsons")
+        for txt_file, json_file in zip(txt_files, json_files):
+            if txt_file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"The txt file is empty: {txt_file}")
+            if json_file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"The json file is empty: {json_file}")
+            meta_id = json_file.stem.split("_")[0]
+            raw_id = txt_file.stem.split("_")[0]
+            if meta_id != raw_id:
+                raise InconsistentDatasetError(f"Mismatched IDs: {meta_id} != {raw_id}")
+
+        if not any(self.path.iterdir()):
+            raise EmptyDirectoryError
 
     def _scan_dataset(self) -> None:
         """
