@@ -469,7 +469,7 @@ def main() -> None:
     Entrypoint for scrapper module.
     """
     config = Config(CRAWLER_CONFIG_PATH)
-    if (ASSETS_PATH / "session_ended.txt").exists():
+    if (ASSETS_PATH / "session_ended.txt").exists() or not ASSETS_PATH.exists():
         prepare_environment(ASSETS_PATH)
         with open(ASSETS_PATH / "article_urls.txt", "w", encoding="utf-8"):
             pass
