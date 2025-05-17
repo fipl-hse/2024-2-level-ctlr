@@ -103,7 +103,7 @@ class Config:
         if (not isinstance(self._seed_urls, list) or
                 not all(isinstance(url, str) for url in self._seed_urls)):
             raise IncorrectSeedURLError('Wrong parameters of _seed_urls in Config')
-        if not all(url.startswith('https://literaturno.com') for url in self._seed_urls):
+        if not all(url.startswith('http://dengoroda-nn.ru') for url in self._seed_urls):
             raise IncorrectSeedURLError('Seed URL does not match standard pattern')
         if not isinstance(self._num_articles, int) or self._num_articles <= 0:
             raise IncorrectNumberOfArticlesError('Number of articles is not int or less than 0')
@@ -199,7 +199,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(),
                             verify=config.get_verify_certificate())
     response.encoding = config.get_encoding()
-    sleep(randint(3, 10))
+    sleep(randint(3, 7))
     return response
 
 
@@ -231,12 +231,13 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        all_links = article_bs.find_all(class_='description')
+        all_links = article_bs.find_all('h2', class_='catItemTitle')
         if all_links:
             for link in all_links:
-                href = link['href']
-                if href not in self.urls and isinstance(href, str):
-                    return href
+                href = link.find('a')['href']
+                full_link = 'http://dengoroda-nn.ru' + href
+                if full_link not in self.urls and isinstance(full_link, str):
+                    return full_link
         return ''
 
     def find_articles(self) -> None:
@@ -247,7 +248,7 @@ class Crawler:
             if len(self.urls) == self.config.get_num_articles():
                 break
             response = make_request(seed_url, self.config)
-            if not response or not response.ok:
+            if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
             divs = soup.find_all('div')
@@ -298,13 +299,10 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         full_text = []
-        extract = article_soup.find('p', class_='description').text
+        extract = article_soup.find('div', class_='itemIntroText').text
         full_text.append(extract)
-        article_body = article_soup.find('div', class_='entry-content')
-        for part in article_body.find_all(['p', 'ol', 'ul']):
-            link = part.find('a')
-            if link and 'Читайте «Литературно»' in part.text:
-                break
+        article_body = article_soup.find('div', class_='itemFullText')
+        for part in article_body.find_all('p'):
             text = part.text
             if text:
                 full_text.append(text)
@@ -317,7 +315,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title = article_soup.find('p', class_='single-news-title').text
+        title = article_soup.find('p', class_='single-news-title').text.strip()
         self.article.title = title
         self.article.author = ['NOT FOUND']
         date_json = article_soup.find(
@@ -351,7 +349,7 @@ class HTMLParser:
             return False
         article_bs = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(article_bs)
-        self._fill_article_with_meta_information(article_bs)
+        # self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
