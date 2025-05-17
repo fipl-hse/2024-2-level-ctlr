@@ -1,5 +1,7 @@
 set -ex
 
+source venv/bin/activate
+
 echo $1
 if [[ "$1" == "smoke" ]]; then
   DIRS_TO_CHECK=(
