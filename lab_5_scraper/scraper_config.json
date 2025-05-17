@@ -11,7 +11,7 @@
         "Cookie" : "_ga=GA1.2.1227832442.1744355101; _ym_uid=1744355102876803542; _ym_d=1744355102; _gid=GA1.2.711067577.1746881287; _gat=1; _ym_isad=2; _ym_visorc=w",
         "Accept-Encoding" : "gzip, deflate, br, zstd"
     },
-    "total_articles_to_find_and_parse": 3,
+    "total_articles_to_find_and_parse": 100,
     "encoding": "UTF-8",
     "timeout": 20,
     "should_verify_certificate": true,

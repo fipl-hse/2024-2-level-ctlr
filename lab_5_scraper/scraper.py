@@ -299,8 +299,9 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         full_text = []
-        extract = article_soup.find('div', class_='itemIntroText').text
-        full_text.append(extract)
+        extract = article_soup.find('div', class_='itemIntroText')
+        if extract:
+            full_text.append(extract.text)
         article_body = article_soup.find('div', class_='itemFullText')
         for part in article_body.find_all('p'):
             text = part.text
