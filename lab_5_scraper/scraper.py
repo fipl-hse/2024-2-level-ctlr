@@ -207,14 +207,11 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    #sleep(uniform(0.1, 0.5))
-    timeout = config.get_timeout()
-    headers = config.get_headers()
-    verify = config.get_verify_certificate()
-    response = requests.get(url, headers=headers, timeout=timeout, verify=verify)
-    requests.encoding = config.get_encoding()
-    response.raise_for_status()
-    return response
+    request = requests.get(url, headers=config.get_headers(), timeout=config.get_timeout(),
+                           verify=config.get_verify_certificate())
+    request.encoding = config.get_encoding()
+    sleep(uniform(0, 5))
+    return request
 
 
 class Crawler:
@@ -248,18 +245,20 @@ class Crawler:
         extracted_hrefs = {link['href'] for link in article_bs.find_all('a', href=True)}
         url_pattern = r'^(https?://(www\.)?zvezdaaltaya\.ru/\d{4}/\d{2}/.*)$'
 
-        valid_urls = [url_href if url_href.startswith('http') else
-                      f"https://zvezdaaltaya.ru{url_href}" for
-                      url_href in extracted_hrefs if isinstance(url_href, str) and
-                      re.match(url_pattern, url_href) and url_href not in self.urls]
-
-        return valid_urls[0] if valid_urls else ""
+        for url_href in extracted_hrefs:
+            if isinstance(url_href, str) and re.match(url_pattern, url_href) and url_href not in self.urls:
+                if not url_href.startswith('http'):
+                    url_href = f"https://zvezdaaltaya.ru{url_href}"
+                return url_href
+        return ""
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
+        num = self.config.get_num_articles()
         seed_urls = self.config.get_seed_urls()
+
         for url in seed_urls:
             try:
                 response = make_request(url, self.config)
@@ -268,15 +267,18 @@ class Crawler:
 
             article_bs = BeautifulSoup(response.text, 'lxml')
             extracted_count = 0
-            while True:
+
+            while extracted_count < num:
                 article_url = self._extract_url(article_bs)
-                if extracted_count >= 100:
-                    break
                 if not article_url:
                     break
                 if article_url not in self.urls:
                     self.urls.append(article_url)
                     extracted_count += 1
+                else:
+                    break
+            if len(self.urls) >= num:
+                break
 
     def get_search_urls(self) -> list:
         """

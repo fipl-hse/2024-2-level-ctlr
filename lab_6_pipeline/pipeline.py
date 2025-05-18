@@ -180,12 +180,12 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        spacy_udpipe.download("ru")
-        nlp = spacy_udpipe.load_from_path(
-            lang="ru",
-            path="lab_6_pipeline/assets/model/your_model.udpipe"
-        )
-        return AbstractCoNLLUAnalyzer
+        #spacy_udpipe.download("ru")
+        #nlp = spacy_udpipe.load_from_path(
+        #    lang="ru",
+        #    path="lab_6_pipeline/assets/russian-syntagrus-ud-2.0-170801.udpipe"
+        #)
+        #return AbstractCoNLLUAnalyzer
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -197,6 +197,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        return [self._analyzer(text)._.conll_str for text in texts]
 
 
     def to_conllu(self, article: Article) -> None:
