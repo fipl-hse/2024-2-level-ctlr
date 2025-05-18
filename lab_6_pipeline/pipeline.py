@@ -9,6 +9,7 @@ from networkx import DiGraph
 
 from core_utils.article.article import Article, get_article_id_from_filepath
 from core_utils.article.io import to_cleaned
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -135,10 +136,8 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         articles = self._corpus.get_articles()
-        for article in articles.values():
-            cleaned = article.get_cleaned_text()
-            article._cleaned_text = cleaned
-            to_cleaned(article)
+        for article_id in articles:
+            to_cleaned(articles[article_id])
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -360,6 +359,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(ASSETS_PATH)
+    pipeline = TextProcessingPipeline(corpus_manager)
+    pipeline.run()
 
 
 if __name__ == "__main__":
