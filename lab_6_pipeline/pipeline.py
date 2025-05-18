@@ -135,9 +135,14 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = self._corpus.get_articles()
-        for article_id in articles:
-            to_cleaned(articles[article_id])
+        symbols_to_remove = set("!\"#$%&'()*+,-./:;<=>?@[\\]^_{|}~")
+
+        for article in self._corpus.get_articles().values():
+            normalized_text = article.text.lower()
+            cleaned_text = ''.join(char for char in normalized_text
+                                   if char not in symbols_to_remove)
+            article._cleaned_text = cleaned_text
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
