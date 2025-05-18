@@ -135,8 +135,10 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         articles = self._corpus.get_articles()
-        for article_id in articles:
-            to_cleaned(articles[article_id])
+        for article in articles.values():
+            cleaned = article.get_cleaned_text()
+            article._cleaned_text = cleaned
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
