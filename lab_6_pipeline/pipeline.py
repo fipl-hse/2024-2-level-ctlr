@@ -18,6 +18,24 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.article.io import to_cleaned
+
+class EmptyDirectoryError(Exception):
+    """
+    Directory doesn't have any files
+    """
+
+
+class InconsistentDatasetError(Exception):
+    """
+    Ids are inconsisten
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    File is empty
+    """
 
 
 class CorpusManager:
@@ -32,16 +50,50 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path.exists():
+            raise FileNotFoundError
+        if not self.path.is_dir():
+            raise NotADirectoryError
+        if not any(self.path.iterdir()):
+            raise EmptyDirectoryError
+        meta_list = []
+        raw_list = []
+        for file in self.path.iterdir():
+            if not file.stat().st_size:
+                raise InconsistentDatasetError('Something is empty')
+            if file.name.endswith('raw.txt'):
+                raw_list.append(file.name)
+            elif file.name.endswith('meta.json'):
+                meta_list.append(file.name)
+        if len(raw_list) != len(meta_list):
+            raise InconsistentDatasetError('Meta and text amounts are different')
+        raw_ids_list = [raw.split('_')[0] for raw in raw_list]
+        meta_ids_list = [meta.split('_')[0] for meta in meta_list]
+        if raw_ids_list != meta_ids_list:
+            raise InconsistentDatasetError('Numering of files is inconsistent')
+        return None
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for file in self.path.iterdir():
+            if file.name.endswith('raw.txt'):
+                article = Article(url=None, article_id=int(file.name.split('_')[0]))
+                with open(file, 'r', encoding="UTF-8") as read_file:
+                    raw = read_file.read()
+                article.text = raw
+                self._storage[int(file.name.split('_')[0])] = article
+
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +102,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,11 +120,16 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self._corpus = corpus_manager
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        got_articles = self._corpus.get_articles()
+        for article_id in got_articles:
+            to_cleaned(got_articles[article_id])
+
 
 
 class UDPipeAnalyzer(LibraryWrapper):
