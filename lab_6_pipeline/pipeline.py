@@ -8,6 +8,8 @@ import pathlib
 from networkx import DiGraph
 
 from core_utils.article.article import Article
+from core_utils.article.io import to_cleaned
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +20,25 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Raised when dataset directory is empty.
+    """
+
+
+class InconsistentDatasetError(Exception):
+    """
+    Raised when the dataset is inconsistent: IDs contain slips, number of meta and raw files is not equal,
+    files are empty.
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    Check when an article file is empty.
+    """
 
 
 class CorpusManager:
@@ -32,16 +53,45 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path.exists():
+            raise FileNotFoundError("File does not exist")
+        if not self.path.is_dir():
+            raise NotADirectoryError("Path does not lead to directory")
+        if not any(self.path.iterdir()):
+            raise EmptyDirectoryError("Directory is empty")
+        raw = set()
+        for file in self.path.iterdir():
+            if not file.stat().st_size:
+                raise InconsistentDatasetError(f'File {file} is empty')
+            if file.name.endswith('_raw.txt'):
+                raw.add(file.name)
+        ideal_raw = {f'{n}_raw.txt' for n in range(1, len(raw) + 1)}
+        if raw != ideal_raw:
+            raise InconsistentDatasetError('IDs of raw files have slips')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        index = 1
+        for file in self.path.iterdir():
+            if not file.name.endswith('_raw.txt'):
+                continue
+            with open(file, encoding='utf-8') as f:
+                raw_text = f.read()
+            article = Article(url=None, article_id=index)
+            article.text = raw_text
+            self._storage[index] = article
+            index += 1
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +100,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,11 +118,17 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus = corpus_manager
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        for article in self.corpus.get_articles().values():
+            article.text = article.text.lower()
+            for symbol in "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~":
+                article.text = article.text.replace(symbol, '')
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -293,6 +350,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    pipeline = TextProcessingPipeline(corpus_manager)
+    pipeline.run()
 
 
 if __name__ == "__main__":
