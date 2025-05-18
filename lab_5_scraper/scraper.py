@@ -384,18 +384,6 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     base_path.mkdir(parents=True)
 
 
-def prepare_recursive_environment(base_path: Union[pathlib.Path, str]) -> None:
-    """
-    Create ASSETS_PATH folder if no created and remove existing folder.
-
-    Args:
-        base_path (Union[pathlib.Path, str]): Path where articles stores
-    """
-    base_path = pathlib.Path(base_path)
-    if not base_path.exists():
-        base_path.mkdir(parents=True)
-
-
 class CrawlerRecursive(Crawler):
     """
     Recursive Crawler implementation.
@@ -424,6 +412,8 @@ class CrawlerRecursive(Crawler):
                 self.data = json.load(file)
         self.loaded_urls = self.data['all_urls']
         if len(self.urls) == self.config.get_num_articles():
+            return None
+        if self.data['looked_urls'] and len(self.data['looked_urls']) == len(self.loaded_urls):
             return None
         if not self.urls and not self.loaded_urls:
             url = self.start_url
