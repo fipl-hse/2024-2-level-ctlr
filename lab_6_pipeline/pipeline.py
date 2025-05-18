@@ -18,6 +18,21 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.constants import ASSETS_PATH
+from core_utils.article.io import from_raw
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Raises when directory is empty
+    """
+
+
+class InconsistentDatasetError(Exception):
+    """
+    Raises whn IDs contain slips, number of meta
+    and raw files is not equal, files are empty
+    """
 
 
 class CorpusManager:
@@ -32,16 +47,46 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError('File does not exist')
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError('Path does not lead to directory')
+        raw = [file.name for file in self.path_to_raw_txt_data.iterdir() if file.name.endswith("_raw.txt")]
+        meta = [file.name for file in self.path_to_raw_txt_data.iterdir() if file.name.endswith("_meta.json")]
+        if len(raw) != len(meta):
+            raise (InconsistentDatasetError
+                   (f'Number of meta and raw files is not equal: {len(meta)} != {len(raw)}'))
+        meta_id = [f'{number}_meta.json' for number in range(1, len(meta) + 1)]
+        raw_id = [f'{number}_raw.txt' for number in range(1, len(raw) + 1)]
+        if set(meta) != set(meta_id) or set(raw) != set(raw_id):
+            raise InconsistentDatasetError('IDs of files are inconsistent.')
+        for filepath in self.path_to_raw_txt_data.iterdir():
+            if filepath.stat().st_size == 0:
+                raise InconsistentDatasetError(f'File {filepath} is empty.')
+        if not any(self.path_to_raw_txt_data.iterdir()):
+            raise EmptyDirectoryError('Directory is empty')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        index = 1
+        for filepath in self.path_to_raw_txt_data.iterdir():
+            if not filepath.name.endswith('_raw.txt'):
+                continue
+            article = Article(url=None, article_id=index)
+            new_article = from_raw(filepath, article)
+            self._storage[index] = new_article
+            index += 1
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +95,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -293,6 +339,7 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
 
 
 if __name__ == "__main__":
