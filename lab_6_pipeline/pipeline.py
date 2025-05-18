@@ -6,10 +6,18 @@ Pipeline for CONLL-U formatting.
 import pathlib
 import re
 
+try:
+    import spacy_udpipe
+except ImportError:
+    print("No libraries installed. Failed to import.")
+
+from typing import cast
+
 from networkx import DiGraph
 
-from core_utils.article.article import Article
-from core_utils.article.io import to_cleaned
+from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
+from core_utils.article.io import from_raw, to_cleaned
+from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -52,7 +60,7 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
-        self._path_to_raw_txt_data = path_to_raw_txt_data
+        self.path_to_raw_txt_data = path_to_raw_txt_data
         self._storage = {}
         self._validate_dataset()
         self._scan_dataset()
@@ -61,17 +69,17 @@ class CorpusManager:
         """
         Validate folder with assets.
         """
-        if not self._path_to_raw_txt_data.exists():
-            raise FileNotFoundError(f'This path doesnt exist: {self._path_to_raw_txt_data} :(')
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError(f'This path doesnt exist: {self.path_to_raw_txt_data} :(')
 
-        if not self._path_to_raw_txt_data.is_dir():
-            raise NotADirectoryError(f'This isnt a directory: {self._path_to_raw_txt_data} :(')
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError(f'This isnt a directory: {self.path_to_raw_txt_data} :(')
 
-        raw_files = list(self._path_to_raw_txt_data.glob('*_raw.txt'))
-        meta_files = list(self._path_to_raw_txt_data.glob('*_meta.json'))
+        raw_files = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
+        meta_files = list(self.path_to_raw_txt_data.glob('*_meta.json'))
 
         if not raw_files and not meta_files:
-            raise EmptyDirectoryError(f'Directory is empty: {self._path_to_raw_txt_data} :(')
+            raise EmptyDirectoryError(f'Directory is empty: {self.path_to_raw_txt_data} :(')
 
         raw_ids = set()
         for file in raw_files:
@@ -102,19 +110,9 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        for file in self._path_to_raw_txt_data.glob('*_raw.txt'):
-            match = re.match(r'(\d+)_raw\.txt', file.name)
-            if not match:
-                continue
-
-            article_id = int(match.group(1))
-
-            with open(file, 'r', encoding='utf-8') as f:
-                text = f.read()
-
-            article = Article(url=None, article_id=article_id)
-            article.text = text
-            self._storage[article_id] = article
+        for file in list(self.path_to_raw_txt_data.glob("*_raw.txt")):
+            index = get_article_id_from_filepath(file)
+            self._storage[index] = from_raw(file, Article(None, index))
 
     def get_articles(self) -> dict:
         """
@@ -149,16 +147,21 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         for article in self._corpus.get_articles().values():
-            raw_text_path = self._corpus._path_to_raw_txt_data / f'{article.article_id}_raw.txt'
+            raw_text_path = self._corpus.path_to_raw_txt_data / f'{article.article_id}_raw.txt'
             raw_text = raw_text_path.read_text(encoding='utf-8')
 
-            cleaned_text = re.sub(r'[^\w\s]', '', raw_text.lower())
+            cleaned_text = re.sub(r'[^\w\s\-,\'".!?]', '', raw_text)
 
             if len(cleaned_text.strip()) < 50:
                 continue
 
             article._cleaned_text = cleaned_text
             to_cleaned(article)
+
+            if self._analyzer:
+                conllu_output = self._analyzer.analyze([cleaned_text])[0]
+                article.set_conllu_info(conllu_output)
+                self._analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -173,6 +176,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        super().__init__()
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -181,6 +186,11 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        model = spacy_udpipe.load_from_path(lang="ru", path=str(UDPIPE_MODEL_PATH))
+
+        model.add_pipe("conll_formatter", last=True,
+                       config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True})
+        return cast(AbstractCoNLLUAnalyzer, model)
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -192,6 +202,11 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        results = []
+        for text in texts:
+            doc = self._analyzer(text)
+            results.append(doc._.conll_str)
+        return results
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -200,6 +215,10 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        conllu_path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
+        with open(conllu_path, 'w', encoding='utf-8') as conllu_file:
+            conllu_file.write(article.get_conllu_info())
+            conllu_file.write("\n")
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -211,6 +230,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        return article.get_conllu_info()
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -222,6 +242,38 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UnifiedCoNLLUDocument: Dictionary of token features within document sentences
         """
+        conllu_str = doc.get_conllu() if hasattr(doc, 'get_conllu') else str(doc)
+
+        sentences = conllu_str.strip().split("\n\n")
+        parsed = []
+
+        for sentence in sentences:
+            tokens = []
+            for line in sentence.strip().split("\n"):
+                if line.startswith("#") or not line.strip():
+                    continue
+                cols = line.split("\t")
+                if len(cols) != 10:
+                    continue
+                token = {
+                    "id": cols[0],
+                    "form": cols[1],
+                    "lemma": cols[2],
+                    "upos": cols[3],
+                    "xpos": cols[4],
+                    "feats": cols[5],
+                    "head": cols[6],
+                    "deprel": cols[7],
+                    "deps": cols[8],
+                    "misc": cols[9],
+                }
+                tokens.append(token)
+            parsed.append(tokens)
+
+        return cast(UnifiedCoNLLUDocument, {
+            "metadata": {},
+            "sentences": parsed
+        })
 
 
 class StanzaAnalyzer(LibraryWrapper):
@@ -380,6 +432,10 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    udpipe_analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
+    pipeline.run()
 
 
 if __name__ == "__main__":
