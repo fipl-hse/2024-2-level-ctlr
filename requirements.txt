@@ -1,5 +1,7 @@
 beautifulsoup4==4.13.3
 networkx==3.4.2
 requests==2.32.3
+spacy==3.7.4
+spacy-conll==4.0.1
 spacy-udpipe==1.0.0
 stanza==1.10.1
