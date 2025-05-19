@@ -347,6 +347,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    cmn = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    pline = TextProcessingPipeline(cmn)
+    pline.run()
 
 
 if __name__ == "__main__":
