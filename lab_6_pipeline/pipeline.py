@@ -7,6 +7,8 @@ import pathlib
 import re
 from builtins import FileNotFoundError, NotADirectoryError
 
+import spacy
+import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
@@ -22,9 +24,6 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
-
-import spacy_udpipe
-import spacy
 
 
 class InconsistentDatasetError(Exception):
