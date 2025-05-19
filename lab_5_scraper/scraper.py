@@ -19,7 +19,8 @@ from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-
+import html
+import re
 
 class IncorrectSeedURLError(Exception):
     """
@@ -84,7 +85,7 @@ class Config:
         """
         Load config from json file.
         """
-        with open(self.path_to_config, 'r', encoding='cp1251') as file:
+        with open(self.path_to_config, 'r', encoding='utf-8') as file:
             config_dict = json.load(file)
         return config_dict
 
@@ -249,7 +250,7 @@ class Crawler:
         return ''
 
     def is_valid_article_url(self, url: str) -> bool:
-        return url.endswith('.html') and 'pravdasevera.ru' in url
+        return 'pravdasevera.ru' in url and '/202' in url
 
     def find_articles(self) -> None:
         """
@@ -267,7 +268,7 @@ class Crawler:
                 response.raise_for_status()
                 response.encoding = self.config._encoding
 
-                soup = BeautifulSoup(response.text, 'html.parser')
+                soup = BeautifulSoup(response.content, 'html.parser', from_encoding='utf-8')
                 links = soup.find_all('a', href=True)
 
                 for link in links:
@@ -321,16 +322,12 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        content = article_soup.find('div', class_='site-content-inner')
-        if content:
-            paragraphs = [
-                tag.get_text(strip=True)
-                for tag in content.find_all(recursive=True)
-                if isinstance(tag, Tag) and tag.get_text(strip=True)
-            ]
-            self.article.text = "\n\n".join(paragraphs)
+        text_div = article_soup.find('div', class_='block--article__text')
+        if text_div:
+            paragraphs = [p.get_text(strip=True) for p in text_div.find_all('p') if p.get_text(strip=True)]
+            self.article.text = '\n\n'.join(paragraphs) if paragraphs else 'NOT FOUND'
         else:
-            self.article.text = "No content found."
+            self.article.text = 'NOT FOUND'
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -339,17 +336,19 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title_tag = article_soup.find('h1', class_='entry-title')
-        self.article.title = title_tag.text.strip() if title_tag else "NOT FOUND"
-
-        date_tag = article_soup.find('time', itemprop='dateModified')
-        if date_tag:
-            self.article.date = self.unify_date_format(date_tag.text)
+        article_top = article_soup.find('div', class_='block--article_top')
+        if article_top:
+            title_tag = article_top.find('h1')
+            self.article.title = html.unescape(title_tag.text.strip()) if title_tag else "NOT FOUND"
+        else:
+            self.article.title = "NOT FOUND"
+        self.article.topics = []
+        match = re.search(r'/(\d{4})/(\d{2})/(\d{2})/', self.full_url)
+        if match:
+            year, month, day = match.groups()
+            self.article.date = datetime.datetime(int(year), int(month), int(day))
         else:
             self.article.date = datetime.datetime.now()
-
-        self.article.author = ['NOT FOUND']
-        self.article.topics = []
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -389,37 +388,27 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         try:
-            response = requests.get(self.full_url, headers=self.config._headers, timeout=self.config._timeout)
+            response = requests.get(
+                self.full_url,
+                headers=self.config.get_headers(),
+                timeout=self.config.get_timeout(),
+                verify=self.config.get_verify_certificate()
+            )
             response.raise_for_status()
             response.encoding = self.config.get_encoding()
 
             soup = BeautifulSoup(response.text, 'html.parser')
 
-            self.article.title = soup.find('h1').text.strip()
-
-            author_tag = soup.find('span', class_='article-author')
-            self.article.author = author_tag.text.strip() if author_tag else 'NOT FOUND'
-
-            date_tag = soup.find('time')
-            if date_tag and date_tag.get('datetime'):
-                try:
-                    self.article.date = datetime.fromisoformat(date_tag.get('datetime').replace('Z', '+00:00'))
-                except Exception:
-                    self.article.date = None
-            else:
-                self.article.date = None
-
-            article_div = soup.find('div', class_='article-text')
-            if article_div:
-                paragraphs = article_div.find_all('p')
-                text = '\n'.join(p.text.strip() for p in paragraphs)
-                self.article.text = text
-            else:
-                self.article.text = 'NOT FOUND'
+            self._fill_article_with_meta_information(soup)
+            self._fill_article_with_text(soup)
 
         except Exception as e:
             print(f'[ERROR] Failed to parse {self.full_url}: {e}')
+            self.article.title = 'NOT FOUND'
+            self.article.author = ['NOT FOUND']
+            self.article.date = datetime.datetime.now()
             self.article.text = 'NOT FOUND'
+
         return self.article
 
 
@@ -430,6 +419,7 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     Args:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
+    base_path = pathlib.Path(base_path)
     if base_path.exists():
         shutil.rmtree(base_path)
     base_path.mkdir(parents=True)
@@ -440,15 +430,13 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    config = Config(path_to_config=CRAWLER_CONFIG_PATH)
-
     prepare_environment(ASSETS_PATH)
 
-    crawler = Crawler(config)
+    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config=configuration)
     crawler.find_articles()
-
-    for i, url in enumerate(crawler.urls, start=1):
-        parser = HTMLParser(url, i, config)
+    for i, full_url in enumerate(crawler.urls, start=1):
+        parser = HTMLParser(full_url=full_url, article_id=i, config=configuration)
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
