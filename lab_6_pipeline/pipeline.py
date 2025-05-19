@@ -23,7 +23,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
-from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 
 class InconsistentDatasetError(Exception):
     '''Data in directory is inconsistent'''
@@ -170,8 +170,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-
-        nlp = spacy_udpipe.load_from_path(lang='ru', path='C:\\Users\shahg\Proga\KILI\\2024-2-level-ctlr\lab_6_pipeline\\assets\module\\russian-syntagrus-ud-2.0-170801.udpipe')
+        path = PROJECT_ROOT / "lab_6_pipeline" / "assets" / "module" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        nlp = spacy_udpipe.load_from_path(lang='ru', path=str(path))
         nlp.add_pipe(
             "conll_formatter",
             last=True,
