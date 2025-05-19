@@ -30,8 +30,14 @@ class EmptyDirectoryError(Exception):
 
 class InconsistentDatasetError(Exception):
     """
-    Raises whn IDs contain slips, number of meta
+    Raises when IDs contain slips, number of meta
     and raw files is not equal, files are empty
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    Raises when an article file is empty
     """
 
 
