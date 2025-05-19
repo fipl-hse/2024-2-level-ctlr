@@ -4,6 +4,7 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from pathlib import Path
 from string import punctuation
 from core_utils.constants import ASSETS_PATH
 import spacy_udpipe
