@@ -79,14 +79,11 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        index = 1
         for filepath in self.path_to_raw_txt_data.iterdir():
             if not filepath.name.endswith('_raw.txt'):
                 continue
-            article = Article(url=None, article_id=index)
-            new_article = from_raw(filepath, article)
-            self._storage[index] = new_article
-            index += 1
+            article = from_raw(filepath, article=None)
+            self._storage[article.article_id] = article
 
     def get_articles(self) -> dict:
         """
