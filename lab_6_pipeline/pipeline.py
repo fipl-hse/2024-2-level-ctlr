@@ -22,19 +22,19 @@ from core_utils.pipeline import (
 )
 
 
-class ErEmpDir(Exception):
+class EmptyDirectoryError(Exception):
     """
     Target directory is empty.
     """
 
 
-class ErFxDSet(Exception):
+class InconsistentDatasetError(Exception):
     """
     Target dataset is faulty and/or contains incorrect information.
     """
 
 
-class ErEmpFil(Exception):
+class EmptyFileError(Exception):
     """
     Target file is empty.
     """
@@ -66,16 +66,16 @@ class CorpusManager:
         if not self.path.is_dir():
             raise NotADirectoryError("Incorrect file path")
         if not any(self.path.iterdir()):
-            raise ErEmpDir("Empty directory")
+            raise EmptyDirectoryError("Empty directory")
         raw = set()
         for el in self.path.iterdir():
             if not el.stat().st_size:
-                raise ErFxDSet(f'File {el} is empty')
+                raise InconsistentDatasetError(f'File {el} is empty')
             if el.name.endswith('_raw.txt'):
                 raw.add(el.name)
         rawc = {f'{n}_raw.txt' for n in range(1, len(raw) + 1)}
         if raw != rawc:
-            raise ErFxDSet('Incorrect ID data')
+            raise InconsistentDatasetError('Incorrect ID data')
 
     def _scan_dataset(self) -> None:
         """
