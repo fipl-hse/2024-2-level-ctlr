@@ -404,8 +404,8 @@ def main() -> None:
     print(f"It is needed to find {configuration.get_num_articles()} articles")
     print(f"Crawler has found {len(crawler.urls)} urls")
 
-    for i in range(len(crawler.urls)):
-        parser = HTMLParser(crawler.urls[i], i+1, configuration)
+    for i, url in enumerate(crawler.urls):
+        parser = HTMLParser(url, i + 1, configuration)
         parsed_article = parser.parse()
         if isinstance(parsed_article, Article):
             to_raw(parsed_article)
