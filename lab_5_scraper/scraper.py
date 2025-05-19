@@ -8,11 +8,13 @@ import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
-from typing import Pattern, Union
-from urllib.parse import urljoin
 import html
 import re
 import requests
+
+from typing import Pattern, Union
+from urllib.parse import urljoin
+
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
