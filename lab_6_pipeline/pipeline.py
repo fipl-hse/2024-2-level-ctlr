@@ -186,7 +186,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
-        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), 'w') as file:
+        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), 'w', encoding='UTF-8') as file:
             file.write(article.get_conllu_info())
             file.write("\n")
 
@@ -204,9 +204,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         if not path.stat().st_size:
             raise EmptyFileError
         parser = ConllParser(self._analyzer)
-        with open(path, 'r') as file:
+        with open(path, 'r', encoding='UTF-8') as file:
             conllu = file.read()
-        data = parser.parse_conll_text_as_spacy(conllu[:-1])
+        data: UDPipeDocument = parser.parse_conll_text_as_spacy(conllu[:-1])
         return data
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
