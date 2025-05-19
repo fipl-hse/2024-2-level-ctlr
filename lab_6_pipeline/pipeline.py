@@ -359,7 +359,7 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    corpus_manager = CorpusManager(ASSETS_PATH)
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     pipeline = TextProcessingPipeline(corpus_manager)
     pipeline.run()
 
