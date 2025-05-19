@@ -7,7 +7,6 @@ import pathlib
 import re
 
 import spacy_udpipe
-
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
@@ -172,9 +171,12 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        model_path = (pathlib.Path(__file__).parent / 'assets' / 'model'
+                      / 'russian-syntagrus-ud-2.0-170801.udpipe')
+
         model = spacy_udpipe.load_from_path(
             lang="ru",
-            path='lab_6_pipeline/assets/model/russian-syntagrus-ud-2.0-170801.udpipe')
+            path=str(model_path))
 
         model.add_pipe("conll_formatter", last=True,
                        config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True})
