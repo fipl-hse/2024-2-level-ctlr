@@ -2,5 +2,5 @@ beautifulsoup4==4.13.3
 lxml==5.3.1
 networkx==3.4.2
 requests==2.32.3
-stanza==1.10.1
 spacy-udpipe==1.0.0
+stanza==1.10.1

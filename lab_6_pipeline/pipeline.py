@@ -382,7 +382,7 @@ def main() -> None:
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     pipeline = TextProcessingPipeline(corpus_manager)
-    #udpipe_analyzer = UDPipeAnalyzer()
+    udpipe_analyzer = UDPipeAnalyzer()
 
 
 if __name__ == "__main__":
