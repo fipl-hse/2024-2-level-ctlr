@@ -134,14 +134,16 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        for idx, article in self.corpus_manager.get_articles().items():
+        conllu = self._analyzer.analyze([article.text for article
+                                         in self.corpus_manager.get_articles().values()])
+        for idx, article in enumerate(self.corpus_manager.get_articles().values()):
             article.text = article.text.lower()
             for symbol in punctuation:
                 article.text = article.text.replace(symbol, '')
             article.text = article.text.replace('NBSP', '')
             to_cleaned(article)
-            # article.set_conllu_info(self._analyzer.analyze(article.text))
-
+            article.set_conllu_info(conllu[idx])
+            self._analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -165,11 +167,16 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        nlp = spacy_udpipe.load_from_path(
+        model = spacy_udpipe.load_from_path(
             lang='ru',
             path='lab_6_pipeline/assets/model/russian-syntagrus-ud-2.0-170801.udpipe'
         )
-        return AbstractCoNLLUAnalyzer
+        model.add_pipe(
+            "conll_formatter",
+            last=True,
+            config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+        )
+        return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -181,6 +188,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        return [f'{self._analyzer(text)._.conll_str}\n' for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
