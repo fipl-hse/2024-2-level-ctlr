@@ -59,52 +59,33 @@ class CorpusManager:
         self._scan_dataset()
 
     def _validate_dataset(self) -> None:
+        """
+        Validate folder with assets.
+        """
         if not self.path.exists():
-            raise FileNotFoundError(f"Directory {self.path} does not exist")
+            raise FileNotFoundError(f" Directory {self.path} does not exist")
         if not self.path.is_dir():
-            raise NotADirectoryError(f"{self.path} is not a directory")
+            raise NotADirectoryError(f" {self.path} is not a directory")
         if not any(self.path.iterdir()):
             raise EmptyDirectoryError
 
-        meta_files = []
-        raw_files = []
-
-        for filepath in self.path.iterdir():
-            if filepath.name.endswith('_meta.json'):
-                if filepath.stat().st_size == 0:
-                    raise InconsistentDatasetError(f"Empty metainfo file: {filepath.name}")
-                meta_files.append(filepath)
-            elif filepath.name.endswith('_raw.txt'):
-                if filepath.stat().st_size == 0:
-                    raise InconsistentDatasetError(f"Empty text file: {filepath.name}")
-                raw_files.append(filepath)
-        if len(meta_files) != len(raw_files):
-            raise InconsistentDatasetError(
-                f"Number of meta and raw files is not equal: "
-                f"{len(raw_files)} texts != {len(meta_files)} jsons")
-        meta_ids = set()
-        for m in meta_files:
-            parts = m.stem.split('_')
-            if len(parts) != 2 or parts[1] != 'meta' or not parts[0].isdigit():
-                raise InconsistentDatasetError(f"Invalid meta file name format: {m.name}")
-            meta_ids.add(int(parts[0]))
-        raw_ids = set()
-        for r in raw_files:
-            parts = r.stem.split('_')
-            if len(parts) != 2 or parts[1] != 'raw' or not parts[0].isdigit():
-                raise InconsistentDatasetError(f"Invalid raw file name format: {r.name}")
-            raw_ids.add(int(parts[0]))
-        if meta_ids != raw_ids:
-            missing_meta = raw_ids - meta_ids
-            missing_raw = meta_ids - raw_ids
-            raise InconsistentDatasetError(
-                f"Inconsistent IDs. Missing meta for: {missing_meta}, "
-                f"missing raw for: {missing_raw}")
-        if meta_ids:
-            expected_range = set(range(1, max(meta_ids) + 1))
-            if meta_ids != expected_range:
-                missing = expected_range - meta_ids
-                raise InconsistentDatasetError(f"Missing consecutive IDs: {missing}")
+        meta = set()
+        raw = set()
+        for file in self.path.iterdir():
+            if file.name.endswith('_meta.json'):
+                if not file.stat().st_size:
+                    raise InconsistentDatasetError
+                meta.add(file.name)
+            elif file.name.endswith('_raw.txt'):
+                if not file.stat().st_size:
+                    raise InconsistentDatasetError
+                raw.add(file.name)
+        if len(meta) != len(raw):
+            raise InconsistentDatasetError
+        true_meta = {f'{n}_meta.json' for n in range(1, len(meta) + 1)}
+        true_raw = {f'{n}_raw.txt' for n in range(1, len(raw) + 1)}
+        if meta != true_meta or raw != true_raw:
+            raise InconsistentDatasetError
 
     def _scan_dataset(self) -> None:
         """
