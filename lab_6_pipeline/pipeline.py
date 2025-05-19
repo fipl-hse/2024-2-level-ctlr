@@ -6,7 +6,7 @@ Pipeline for CONLL-U formatting.
 import pathlib
 from string import punctuation
 from core_utils.constants import ASSETS_PATH
-
+import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article
@@ -27,6 +27,7 @@ class EmptyDirectoryError(Exception):
     """
     Raised when dataset directory is empty.
     """
+
 
 class InconsistentDatasetError(Exception):
     """
