@@ -6,11 +6,13 @@ Pipeline for CONLL-U formatting.
 import pathlib
 import os
 import re
+import spacy_udpipe
+import spacy
 
 from networkx import DiGraph
 
-from core_utils.article.article import Article
-from core_utils.article.io import to_cleaned
+from core_utils.article.article import Article, ArtifactType
+from core_utils.article.io import to_cleaned, from_raw
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -21,7 +23,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
-from core_utils.constants import ASSETS_PATH
+from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
 
 class InconsistentDatasetError(Exception):
     '''Data in directory is inconsistent'''
@@ -127,17 +129,26 @@ class TextProcessingPipeline(PipelineProtocol):
             analyzer (LibraryWrapper | None): Analyzer instance
         """
         self.corpus_manager = corpus_manager
-        self.analyzer = analyzer
+        self._analyzer = analyzer
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
         articles = self.corpus_manager.get_articles()
+        texts_to_conllu = []
         for _, article in articles.items():
             article.text = article.text.lower()
             article.text = re.sub(r'[^\w\s]', '', article.text)
             article.text = re.sub(r' ', '', article.text)
             to_cleaned(article)
+            path = article.get_raw_text_path()
+            article_to_conllu = from_raw(path)
+            texts_to_conllu.append(article_to_conllu.get_raw_text())
+        conllu_docs = self._analyzer.analyze(texts_to_conllu)
+        for article_id, article in articles.items():
+            article.set_conllu_info(conllu_docs[article_id - 1])
+            self._analyzer.to_conllu(article)
+
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
@@ -151,7 +162,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
-
+        self._analyzer = self._bootstrap()
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
         Load and set up the UDPipe model.
@@ -159,6 +170,14 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+
+        nlp = spacy_udpipe.load_from_path(lang='ru', path='C:\\Users\shahg\Proga\KILI\\2024-2-level-ctlr\lab_6_pipeline\\assets\module\\russian-syntagrus-ud-2.0-170801.udpipe')
+        nlp.add_pipe(
+            "conll_formatter",
+            last=True,
+            config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+        )
+        return nlp
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -170,6 +189,13 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        result = []
+        nlp = self._analyzer
+        for text in texts:
+            analyzed_text = nlp(text)
+            conllu_annotation = analyzed_text._.conll_str
+            result.append(conllu_annotation)
+        return result
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -178,6 +204,12 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        info = article.get_conllu_info()
+        f = open(path, 'w', encoding="UTF-8")
+        f.write(info)
+        f.write('\n')
+        f.close()
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -359,8 +391,10 @@ def main() -> None:
     Entrypoint for pipeline module.
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
-    pipeline = TextProcessingPipeline(corpus_manager)
+    udpipe_analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
     pipeline.run()
+
 
 if __name__ == "__main__":
     main()
