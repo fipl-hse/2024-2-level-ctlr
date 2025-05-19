@@ -4,8 +4,12 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+import re
 
 from networkx import DiGraph
+from core_utils.constants import (
+    ASSETS_PATH
+)
 
 from core_utils.article.article import Article
 from core_utils.pipeline import (
@@ -20,6 +24,18 @@ from core_utils.pipeline import (
 )
 
 
+class InconsistentDatasetError(Exception):
+    """
+    Raised when file IDs contain slips, number of meta and raw files is not equal, or files are empty.
+    """
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Raised when the directory is empty.
+    """
+
+
 class CorpusManager:
     """
     Work with articles and store them.
@@ -32,16 +48,49 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw.exists():
+            raise FileNotFoundError
+        if not self.path_to_raw.is_dir():
+            raise NotADirectoryError
+        if not self.path_to_raw.iterdir():
+            raise EmptyDirectoryError
+        raw_index = 1
+        meta_index = 1
+        files_to_check = [file.stem + file.suffix for file in self.path_to_raw.iterdir()
+                          if re.match("[0-9]+_raw", file.stem) or
+                          re.match("[0-9]+_meta", file.stem)]
+        for file_name in sorted(files_to_check,
+                                key=lambda name: int(name[:name.index("_")])):
+            if re.match("[0-9]+_raw.txt", file_name):
+                if str(raw_index) in file_name and raw_index == meta_index-1:
+                    raw_index += 1
+                else:
+                    raise InconsistentDatasetError
+            elif re.match("[0-9]+_meta.json", file_name):
+                if str(meta_index) in file_name and raw_index == meta_index:
+                    meta_index += 1
+                else:
+                    raise InconsistentDatasetError
+            if not (self.path_to_raw / file_name).stat().st_size:
+                raise InconsistentDatasetError
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for file in self.path_to_raw.iterdir():
+            if re.match("[0-9]+_raw", file.stem):
+                article_id = int(file.stem[:file.stem.index("_")])
+                self._storage[article_id] = Article(None, article_id)
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +99,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -293,6 +343,8 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    print(manager.get_articles())
 
 
 if __name__ == "__main__":
