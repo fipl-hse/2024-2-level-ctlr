@@ -12,6 +12,7 @@ from core_utils.constants import (
 )
 
 from core_utils.article.article import Article
+from core_utils.article import io
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -90,7 +91,8 @@ class CorpusManager:
         for file in self.path_to_raw.iterdir():
             if re.match("[0-9]+_raw", file.stem):
                 article_id = int(file.stem[:file.stem.index("_")])
-                self._storage[article_id] = Article(None, article_id)
+                article = io.from_raw(file)
+                self._storage[article_id] = article
 
     def get_articles(self) -> dict:
         """
@@ -117,11 +119,16 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self.analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = self._corpus.get_articles()
+        for article in articles.values():
+            io.to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -344,7 +351,8 @@ def main() -> None:
     Entrypoint for pipeline module.
     """
     manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
-    print(manager.get_articles())
+    pipeline = TextProcessingPipeline(manager)
+    pipeline.run()
 
 
 if __name__ == "__main__":
