@@ -67,7 +67,7 @@ class CorpusManager:
             raise FileNotFoundError
         if not self.path_to_raw.is_dir():
             raise NotADirectoryError
-        if not self.path_to_raw.iterdir():
+        if not any(self.path_to_raw.iterdir()):
             raise EmptyDirectoryError
         raw_index = 1
         meta_index = 1
