@@ -8,6 +8,8 @@ import pathlib
 from networkx import DiGraph
 
 from core_utils.article.article import Article
+from core_utils.constants import ASSETS_PATH
+from core_utils.article.io import to_cleaned
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +20,24 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+
+class ErEmpDir(Exception):
+    """
+    Target directory is empty.
+    """
+
+
+class ErFxDSet(Exception):
+    """
+    Target dataset is faulty and/or contains incorrect information.
+    """
+
+
+class ErEmpFil(Exception):
+    """
+    Target file is empty.
+    """
 
 
 class CorpusManager:
@@ -32,16 +52,43 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path = path_to_raw_txt_data
+        self.store = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path.exists():
+            raise FileNotFoundError("File does not exist")
+        if not self.path.is_dir():
+            raise NotADirectoryError("Incorrect file path")
+        if not any(self.path.iterdir()):
+            raise ErEmpDir("Empty directory")
+        raw = set()
+        for el in self.path.iterdir():
+            if not el.stat().st_size:
+                raise ErFxDSet(f'File {el} is empty')
+            if el.name.endswith('_raw.txt'):
+                raw.add(el.name)
+        rawc = {f'{n}_raw.txt' for n in range(1, len(raw) + 1)}
+        if raw != rawc:
+            raise ErFxDSet('Incorrect ID data')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for el in self.path.iterdir():
+            if not el.name.endswith('_raw.txt'):
+                continue
+            with open(el, encoding='utf-8') as f:
+                rtxt = f.read()
+            ar = Article(url=None, article_id=int(el.name[:-8]))
+            ar.text = rtxt
+            self.store[int(el.name[:-8])] = ar
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +97,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self.store
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -58,7 +106,7 @@ class TextProcessingPipeline(PipelineProtocol):
     """
 
     def __init__(
-        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
+            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
     ) -> None:
         """
         Initialize an instance of the TextProcessingPipeline class.
@@ -67,11 +115,17 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corp = corpus_manager
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        for a in self.corp.get_articles().values():
+            a.text = a.text.lower()
+            for s in "!\"#$%&'«»–()*+,-./:;<=>?@[\\]^_`{|}~":
+                a.text = a.text.replace(s, '')
+            to_cleaned(a)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -237,7 +291,7 @@ class PatternSearchPipeline(PipelineProtocol):
     """
 
     def __init__(
-        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
+            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
     ) -> None:
         """
         Initialize an instance of the PatternSearchPipeline class.
@@ -260,7 +314,7 @@ class PatternSearchPipeline(PipelineProtocol):
         """
 
     def _add_children(
-        self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
+            self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
     ) -> None:
         """
         Add children to TreeNode.
