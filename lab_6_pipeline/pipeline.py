@@ -383,7 +383,7 @@ def main() -> None:
     path = pathlib.Path(__file__).parent.parent / "tmp" / "articles"
     corpus_manager = CorpusManager(path)
     pipeline = TextProcessingPipeline(corpus_manager)
-    #udpipe_analyzer = UDPipeAnalyzer()
+    udpipe_analyzer = UDPipeAnalyzer()
 
 
 if __name__ == "__main__":
