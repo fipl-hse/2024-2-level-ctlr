@@ -1,7 +1,6 @@
 """
 Crawler implementation.
 """
-
 import datetime
 import json
 
@@ -11,6 +10,7 @@ import shutil
 import html
 import re
 import requests
+
 from typing import Pattern, Union
 from urllib.parse import urljoin
 
@@ -21,6 +21,7 @@ from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+
 
 class IncorrectSeedURLError(Exception):
     """
