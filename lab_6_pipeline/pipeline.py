@@ -6,18 +6,13 @@ Pipeline for CONLL-U formatting.
 import pathlib
 import re
 
-try:
-    import spacy_udpipe
-except ImportError:
-    print("No libraries installed. Failed to import.")
-
-from typing import cast
+import spacy_udpipe
 
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
 from core_utils.article.io import from_raw, to_cleaned
-from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
+from core_utils.constants import ASSETS_PATH  # UDPIPE_MODEL_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -81,21 +76,14 @@ class CorpusManager:
         if not raw_files and not meta_files:
             raise EmptyDirectoryError(f'Directory is empty: {self.path_to_raw_txt_data} :(')
 
-        raw_ids = set()
-        for file in raw_files:
+        for file in raw_files + meta_files:
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f'Empty file: {file} :(')
-            match = re.match(r'(\d+)_raw\.txt', file.name)
-            if match:
-                raw_ids.add(int(match.group(1)))
 
-        meta_ids = set()
-        for file in meta_files:
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f'Empty file: {file} :(')
-            match = re.match(r'(\d+)_meta\.json', file.name)
-            if match:
-                meta_ids.add(int(match.group(1)))
+        raw_ids = {int(re.match(r'(\d+)_raw\.txt', f.name).group(1)) for f in
+                   raw_files if re.match(r'(\d+)_raw\.txt', f.name)}
+        meta_ids = {int(re.match(r'(\d+)_meta\.json', f.name).group(1)) for f in
+                    meta_files if re.match(r'(\d+)_meta\.json', f.name)}
 
         if not raw_ids or not meta_ids:
             raise InconsistentDatasetError('Empty or missing files :(')
@@ -147,10 +135,8 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         for article in self._corpus.get_articles().values():
-            raw_text_path = self._corpus.path_to_raw_txt_data / f'{article.article_id}_raw.txt'
-            raw_text = raw_text_path.read_text(encoding='utf-8')
 
-            cleaned_text = re.sub(r'[^\w\s\-,\'".!?]', '', raw_text)
+            cleaned_text = re.sub(r'[^\w\s\-,\'".!?]', '', article.text)
 
             if len(cleaned_text.strip()) < 50:
                 continue
@@ -186,11 +172,13 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model = spacy_udpipe.load_from_path(lang="ru", path=str(UDPIPE_MODEL_PATH))
+        model = spacy_udpipe.load_from_path(
+            lang="ru",
+            path='lab_6_pipeline/assets/model/russian-syntagrus-ud-2.0-170801.udpipe')
 
         model.add_pipe("conll_formatter", last=True,
                        config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True})
-        return cast(AbstractCoNLLUAnalyzer, model)
+        return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -202,11 +190,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
-        results = []
-        for text in texts:
-            doc = self._analyzer(text)
-            results.append(doc._.conll_str)
-        return results
+        return [self._analyzer(text)._.conll_str for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -230,7 +214,6 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
-        return article.get_conllu_info()
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -242,38 +225,6 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UnifiedCoNLLUDocument: Dictionary of token features within document sentences
         """
-        conllu_str = doc.get_conllu() if hasattr(doc, 'get_conllu') else str(doc)
-
-        sentences = conllu_str.strip().split("\n\n")
-        parsed = []
-
-        for sentence in sentences:
-            tokens = []
-            for line in sentence.strip().split("\n"):
-                if line.startswith("#") or not line.strip():
-                    continue
-                cols = line.split("\t")
-                if len(cols) != 10:
-                    continue
-                token = {
-                    "id": cols[0],
-                    "form": cols[1],
-                    "lemma": cols[2],
-                    "upos": cols[3],
-                    "xpos": cols[4],
-                    "feats": cols[5],
-                    "head": cols[6],
-                    "deprel": cols[7],
-                    "deps": cols[8],
-                    "misc": cols[9],
-                }
-                tokens.append(token)
-            parsed.append(tokens)
-
-        return cast(UnifiedCoNLLUDocument, {
-            "metadata": {},
-            "sentences": parsed
-        })
 
 
 class StanzaAnalyzer(LibraryWrapper):
