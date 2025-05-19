@@ -8,6 +8,7 @@ import pathlib
 from networkx import DiGraph
 
 from core_utils.article.article import Article
+from core_utils.article.io import from_raw, from_meta, to_cleaned
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +19,27 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.constants import ASSETS_PATH
+import re
+from builtins import FileNotFoundError, NotADirectoryError
+
+
+class InconsistentDatasetError(Exception):
+    """
+    Raised when the dataset is inconsistent.
+    """
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Raised when a directory is empty.
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    Raised when an article file is empty
+    """
 
 
 class CorpusManager:
@@ -32,16 +54,66 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError("File does not exist")
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError("Path does not lead to directory")
+
+        files = list(self.path_to_raw_txt_data.iterdir())
+        if not files:
+            raise EmptyDirectoryError("Directory is empty")
+
+        meta_pattern = re.compile(r'^(\d+)_meta\.json$')
+        raw_pattern = re.compile(r'^(\d+)_raw\.txt$')
+        meta_files = {}
+        raw_files = {}
+
+        for file in files:
+            if match := meta_pattern.match(file.name):
+                idx = int(match.group(1))
+                meta_files[idx] = file
+            elif match := raw_pattern.match(file.name):
+                idx = int(match.group(1))
+                raw_files[idx] = file
+
+        if not meta_files:
+            raise InconsistentDatasetError("No meta files found")
+        if not raw_files:
+            raise InconsistentDatasetError("No raw files found")
+
+        if len(meta_files.keys()) != len(raw_files.keys()):
+            raise InconsistentDatasetError("Number of meta and raw files is not equal")
+        if sorted(meta_files.keys()) != list(range(1, len(meta_files) + 1)):
+            raise InconsistentDatasetError("IDs contain slips")
+
+        for file in list(meta_files.values()) + list(raw_files.values()):
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"File {file.name} is empty")
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        raw_pattern = re.compile(r'^(\d+)_raw\.txt$')
+        raw_files = {}
+        for file in self.path_to_raw_txt_data.iterdir():
+            if match := raw_pattern.match(file.name):
+                idx = int(match.group(1))
+                raw_files[idx] = file
+
+        for idx, raw_file in raw_files.items():
+            article = Article(url=None, article_id=idx)
+            from_raw(raw_file, article)
+            self._storage[idx] = article
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +122,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -58,7 +131,7 @@ class TextProcessingPipeline(PipelineProtocol):
     """
 
     def __init__(
-        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
+            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
     ) -> None:
         """
         Initialize an instance of the TextProcessingPipeline class.
@@ -67,11 +140,17 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self._corpus = corpus_manager
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = self._corpus.get_articles()
+        for idx, article in articles.items():
+            # regex removes all except (^...) letters and digits (\w), spaces (\s)
+            article.text = re.sub(r'[^\w\s]', '', article.text, flags=re.UNICODE).lower()
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -237,7 +316,7 @@ class PatternSearchPipeline(PipelineProtocol):
     """
 
     def __init__(
-        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
+            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
     ) -> None:
         """
         Initialize an instance of the PatternSearchPipeline class.
@@ -260,7 +339,7 @@ class PatternSearchPipeline(PipelineProtocol):
         """
 
     def _add_children(
-        self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
+            self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
     ) -> None:
         """
         Add children to TreeNode.
@@ -293,6 +372,8 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    pipeline = TextProcessingPipeline(corpus_manager)
 
 
 if __name__ == "__main__":
