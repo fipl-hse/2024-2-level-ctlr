@@ -316,16 +316,12 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title = article_soup.find('p', class_='single-news-title').text.strip()
+        title = article_soup.find('h2', class_='itemTitle').text.strip()
         self.article.title = title
         self.article.author = ['NOT FOUND']
-        date_json = article_soup.find(
-            'script', {'type': 'application/ld+json', 'class': 'yoast-schema-graph'}).text
-        date = json.loads(date_json)
-        for elem in date.get('@graph'):
-            if elem.get('@type') == 'WebPage':
-                date_published = elem.get('datePublished')
-                self.article.date = self.unify_date_format(date_published)
+        span = article_soup.find('span', class_='itemExtraFieldsValue')
+        date = span.find(string=True, recursive=False).strip()
+        self.article.date = self.unify_date_format(date)
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -337,7 +333,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        return datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S%z")
+        return datetime.datetime.strptime(date_str, "%d.%m.%Y")
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -350,7 +346,7 @@ class HTMLParser:
             return False
         article_bs = BeautifulSoup(make_request(self.article.url, self.config).text, 'lxml')
         self._fill_article_with_text(article_bs)
-        # self._fill_article_with_meta_information(article_bs)
+        self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
