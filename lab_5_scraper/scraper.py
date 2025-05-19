@@ -269,7 +269,7 @@ class Crawler:
                     continue
 
                 article_bs = BeautifulSoup(response.text, 'lxml')
-                if len(self.urls) < max_num_articles:
+                if len(self.urls) <= max_num_articles:
                     while True:
                         article_url = self._extract_url(article_bs)
                         if article_url == '':
@@ -399,10 +399,10 @@ def main() -> None:
     crawler.find_articles()
 
     article_id = 1
-    for url in crawler.urls:
+    for url in crawler.urls[:configuration.get_num_articles()]:
         parser = HTMLParser(url, article_id, configuration)
         article = parser.parse()
-        if len(article.text) <= 100 or not article.text:
+        if not article.text:
             continue
         article_id += 1
         if isinstance(article, Article):
