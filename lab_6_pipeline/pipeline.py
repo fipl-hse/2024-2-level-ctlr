@@ -82,16 +82,15 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        index = 1
+
         for file in self.path.iterdir():
             if not file.name.endswith('_raw.txt'):
                 continue
             with open(file, encoding='utf-8') as f:
                 raw_text = f.read()
-            article = Article(url=None, article_id=index)
+            article = Article(url=None, article_id=int(file.name[:-8]))
             article.text = raw_text
-            self._storage[index] = article
-            index += 1
+            self._storage[int(file.name[:-8])] = article
 
     def get_articles(self) -> dict:
         """
@@ -126,7 +125,7 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         for article in self.corpus.get_articles().values():
             article.text = article.text.lower()
-            for symbol in "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~":
+            for symbol in "!\"#$%&'«»–()*+,-./:;<=>?@[\\]^_`{|}~":
                 article.text = article.text.replace(symbol, '')
             to_cleaned(article)
 

@@ -370,7 +370,7 @@ def main() -> None:
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     for i, url in enumerate(crawler.urls):
-        sleep(randint(5, 15))
+        sleep(randint(1, 5))
         parser = HTMLParser(url, i + 1, configuration)
         article = parser.parse()
         if isinstance(article, Article):
