@@ -4,11 +4,12 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-
-from networkx import DiGraph
+import re
+from builtins import FileNotFoundError, NotADirectoryError
 
 from core_utils.article.article import Article
-from core_utils.article.io import from_raw, from_meta, to_cleaned
+from core_utils.article.io import from_raw, to_cleaned
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -19,9 +20,9 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
-from core_utils.constants import ASSETS_PATH
-import re
-from builtins import FileNotFoundError, NotADirectoryError
+
+# from networkx import DiGraph
+
 
 
 class InconsistentDatasetError(Exception):
@@ -141,13 +142,14 @@ class TextProcessingPipeline(PipelineProtocol):
             analyzer (LibraryWrapper | None): Analyzer instance
         """
         self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
         articles = self._corpus.get_articles()
-        for idx, article in articles.items():
+        for article in articles.values():
             # regex removes all except (^...) letters and digits (\w), spaces (\s)
             article.text = re.sub(r'[^\w\s]', '', article.text, flags=re.UNICODE).lower()
             to_cleaned(article)
@@ -374,6 +376,7 @@ def main() -> None:
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     pipeline = TextProcessingPipeline(corpus_manager)
+    pipeline.run()
 
 
 if __name__ == "__main__":
