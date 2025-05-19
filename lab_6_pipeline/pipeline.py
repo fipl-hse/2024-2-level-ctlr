@@ -30,7 +30,7 @@ class EmptyDirectoryError(Exception):
 
 class InconsistentDatasetError(Exception):
     """
-    Target dataset is faulty and/or contains incorrect information.
+    Target dataset is faulty or contains incorrect information.
     """
 
 
