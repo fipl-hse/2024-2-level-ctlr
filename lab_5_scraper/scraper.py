@@ -343,6 +343,9 @@ class HTMLParser:
         self.article.url = self.full_url
         self.article.author = ["NOT FOUND"]
         self.article.title = article_soup.find("h1", attrs={"itemprop": "headline"}).text
+        # container = article_soup.find("div", id="front_news_main_center")
+        # if container:
+        #     self.article.number_of_links = len(container.find_all("div", class_="news-item"))
 
         time_tag = article_soup.find("span", class_="news-date-time").find("time")
         self.article.date = self.unify_date_format(time_tag.text.strip())
