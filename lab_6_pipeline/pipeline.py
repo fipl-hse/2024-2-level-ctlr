@@ -69,23 +69,42 @@ class CorpusManager:
         if not any(self.path.iterdir()):
             raise EmptyDirectoryError
 
-        meta = set()
-        raw = set()
-        for file in self.path.iterdir():
-            if file.name.endswith('_meta.json'):
-                if not file.stat().st_size:
-                    raise InconsistentDatasetError
-                meta.add(file.name)
-            elif file.name.endswith('_raw.txt'):
-                if not file.stat().st_size:
-                    raise InconsistentDatasetError
-                raw.add(file.name)
-        if len(meta) != len(raw):
-            raise InconsistentDatasetError
-        true_meta = {f'{n}_meta.json' for n in range(1, len(meta) + 1)}
-        true_raw = {f'{n}_raw.txt' for n in range(1, len(raw) + 1)}
-        if meta != true_meta or raw != true_raw:
-            raise InconsistentDatasetError
+        meta_files = []
+        raw_files = []
+        for filepath in self.path.iterdir():
+            if filepath.name.endswith('_meta.json'):
+                if filepath.stat().st_size == 0:
+                    raise InconsistentDatasetError(f"Empty metainfo file: {filepath.name}")
+                meta_files.append(filepath)
+            elif filepath.name.endswith('_raw.txt'):
+                if filepath.stat().st_size == 0:
+                    raise InconsistentDatasetError(f"Empty text file: {filepath.name}")
+                raw_files.append(filepath)
+        if len(meta_files) != len(raw_files):
+            raise InconsistentDatasetError(f"Number of meta and raw files is not equal:"
+                                           f"{len(raw_files)} texts != {len(meta_files)} jsons")
+        meta_ids = set()
+        for m in meta_files:
+            if '_' not in m.stem:
+                continue
+            file_id = m.stem.split('_')[0]
+            if not file_id.isdigit():
+                continue
+            meta_ids.add(int(file_id))
+        raw_ids = set()
+        for r in raw_files:
+            if '_' not in r.stem:
+                continue
+            file_id = r.stem.split('_')[0]
+            if not file_id.isdigit():
+                continue
+            raw_ids.add(int(file_id))
+        expected_ids = set(range(1, len(meta_files) + 1))
+        if meta_ids != expected_ids or raw_ids != expected_ids:
+            missing_meta = expected_ids - meta_ids
+            missing_raw = expected_ids - raw_ids
+            raise InconsistentDatasetError(f"Inconsistent IDs."
+                                           f"Missing meta: {missing_meta}, missing raw: {missing_raw}")
 
     def _scan_dataset(self) -> None:
         """
@@ -154,6 +173,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -361,7 +381,7 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    path = pathlib.Path(__file__).parent.parent / "tmp" / "articles"
+    path = Path("tmp/articles").absolute()
     corpus_manager = CorpusManager(path)
     pipeline = TextProcessingPipeline(corpus_manager)
     udpipe_analyzer = UDPipeAnalyzer()
