@@ -8,7 +8,7 @@ import pathlib
 from networkx import DiGraph
 
 from core_utils.article.article import Article
-from core_utils.article.io import from_raw, from_meta
+from core_utils.article.io import from_raw, from_meta, to_cleaned
 from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -71,30 +71,31 @@ class CorpusManager:
         meta_actual = []
         raw_actual = []
         for file in self.path_to_raw_txt_data.iterdir():
-            if file.stat().st_size:
-                raise InconsistentDatasetError('Empty file(s) in the directory.')
             if '_raw.txt' in file.name:
                 raw_actual.append(file.name)
             elif '_meta.json' in file.name:
                 meta_actual.append(file.name)
+            if not file.stat().st_size:
+                raise InconsistentDatasetError('Empty file(s) in the directory.')
+        if len(meta_actual) != len(raw_actual):
+            raise InconsistentDatasetError('Number of raw and meta files is not equal.')
         raw_ideal = [f'{num}_raw.txt' for num in range(1, len(raw_actual) + 1)]
         meta_ideal = [f'{num}_meta.json' for num in range(1, len(meta_actual) + 1)]
-        if meta_actual != meta_ideal or raw_actual != raw_ideal:
-            raise InconsistentDatasetError('inconsistent ids')
+        if set(meta_actual) != set(meta_ideal) or set(raw_actual) != set(raw_ideal):
+            raise InconsistentDatasetError('Inconsistent IDs of raw and/or meta files.')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
         for file in self.path_to_raw_txt_data.iterdir():
-            if '_raw.txt' or '_meta.json' not in file.name:
+            if '_raw.txt' not in file.name:
                 continue
             article_id = int(file.name.split('_')[0])
+            with open(file, 'r', encoding='utf-8') as in_file:
+                article_text = in_file.read()
             article = Article(url=None, article_id=article_id)
-            if '_meta.json' in file.name:
-                article = from_meta(path=ASSETS_PATH / file.name, article=article)
-            if '_raw.txt' in file.name:
-                article = from_raw(path=ASSETS_PATH / file.name, article=article)
+            article.text = article_text
             self._storage[article_id] = article
 
     def get_articles(self) -> dict:
@@ -122,11 +123,15 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus_manager = corpus_manager
+        self.analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        for article in self.corpus_manager.get_articles().values():
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
