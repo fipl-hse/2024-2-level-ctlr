@@ -403,11 +403,13 @@ def main() -> None:
     crawler.find_articles()
     print(f"It is needed to find {configuration.get_num_articles()} articles")
     print(f"Crawler has found {len(crawler.urls)} urls")
-    parser = HTMLParser("https://www.baikal-daily.ru/news/20/497902/", 1, configuration)
-    parsed_article = parser.parse()
-    if isinstance(parsed_article, Article):
-        to_raw(parsed_article)
-        to_meta(parsed_article)
+
+    for i in range(len(crawler.urls)):
+        parser = HTMLParser(crawler.urls[i], i+1, configuration)
+        parsed_article = parser.parse()
+        if isinstance(parsed_article, Article):
+            to_raw(parsed_article)
+            to_meta(parsed_article)
 
 
 if __name__ == "__main__":
