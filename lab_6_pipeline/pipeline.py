@@ -53,7 +53,7 @@ class CorpusManager:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
         self.path = path_to_raw_txt_data
-        self.store = {}
+        self._storage = {}
         self._validate_dataset()
         self._scan_dataset()
 
@@ -88,7 +88,7 @@ class CorpusManager:
                 rtxt = f.read()
             ar = Article(url=None, article_id=int(el.name[:-8]))
             ar.text = rtxt
-            self.store[int(el.name[:-8])] = ar
+            self._storage[int(el.name[:-8])] = ar
 
     def get_articles(self) -> dict:
         """
@@ -97,7 +97,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
-        return self.store
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
