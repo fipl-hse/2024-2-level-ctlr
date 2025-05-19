@@ -7,12 +7,16 @@ import pathlib
 import re
 from pathlib import Path
 import spacy_udpipe
+from spacy_conll.parser import ConllParser
+from conllu import parse
+from spacy.lang.ru import Russian
 
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import to_cleaned
-from core_utils.constants import ASSETS_PATH
+from core_utils.article.io import to_cleaned, to_meta
+from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
+from core_utils.visualizer import visualize
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -154,9 +158,12 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         for art in self.corpus_manager.get_articles().values():
-            lower_text = art.text.lower()
-            art.text = re.sub(r'[^\w\s]', '', lower_text, flags=re.UNICODE)
+            cleaned = re.sub(r'[^\w\s]', '', art.text.lower(), flags=re.UNICODE)
+            art.text = cleaned
             to_cleaned(art)
+            conllu_markup = self.analyzer.analyze([cleaned])[0]
+            art.set_conllu_info(conllu_markup)
+            self.analyzer.to_conllu(art)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -180,12 +187,20 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        #spacy_udpipe.download("ru")
-        #nlp = spacy_udpipe.load_from_path(
-        #    lang="ru",
-        #    path="lab_6_pipeline/assets/russian-syntagrus-ud-2.0-170801.udpipe"
-        #)
-        #return AbstractCoNLLUAnalyzer
+        nlp = spacy_udpipe.load_from_path(
+            lang="ru",
+            path=str(UDPIPE_MODEL_PATH)
+        )
+
+        nlp.add_pipe(
+            "conll_formatter",
+            last=True,
+            config={
+                "conversion_maps": {"XPOS": {"": "_"}},
+                "include_headers": True
+            }
+        )
+        return nlp
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -198,7 +213,6 @@ class UDPipeAnalyzer(LibraryWrapper):
             list[UDPipeDocument | str]: List of documents
         """
         return [self._analyzer(text)._.conll_str for text in texts]
-
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -222,6 +236,13 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        with open(path, 'r', encoding='utf-8') as file:
+            conllu_str = file.read()
+        nlp = Russian()
+        parser = ConllParser(nlp)
+        doc = parser.parse_conll_text_as_spacy(conllu_str)
+        return doc
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -311,6 +332,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -322,11 +345,43 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
+        conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        with open(conllu_path, "r", encoding="utf-8") as f:
+            data = f.read()
+        sentences = parse(data)
+
+        pos_list = []
+        for sentence in sentences:
+            for token in sentence:
+                pos = token.get('upostag')
+                if pos:
+                    pos_list.append(pos)
+
+        pos_counts = {}
+        for pos in pos_list:
+            if pos in pos_counts:
+                pos_counts[pos] += 1
+            else:
+                pos_counts[pos] = 1
+
+        return pos_counts
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
+        articles = self._corpus.get_articles().values()
+        for article in articles:
+            try:
+                frequencies = self._count_frequencies(article)
+            except EmptyFileError:
+                continue
+
+            article.set_pos_info(frequencies)
+            to_meta(article)
+
+            image = article.get_file_path(ArtifactType.CLEANED).parent / f"{article.article_id}_image.png"
+            visualize(article=article, path_to_save=image)
 
 
 class PatternSearchPipeline(PipelineProtocol):
