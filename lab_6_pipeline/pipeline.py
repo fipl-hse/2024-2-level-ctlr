@@ -6,7 +6,7 @@ Pipeline for CONLL-U formatting.
 import pathlib
 from pathlib import Path
 from string import punctuation
-from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
+from core_utils.constants import ASSETS_PATH
 import spacy_udpipe
 import string
 from networkx import DiGraph
@@ -198,9 +198,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        if UDPIPE_MODEL_PATH.exists():
-            spacy_udpipe.download("en")
-            model = spacy_udpipe.load_from_path(lang="ru", path=str(UDPIPE_MODEL_PATH))
+        if not Path('lab_6_pipeline/assets').exists():
+            spacy_udpipe.download("ru")
+            model = spacy_udpipe.load_from_path(lang="ru", path='lab_6_pipeline/assets')
             model.add_pipe("conllu_formatter",
                            config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True})
             return model
