@@ -2,3 +2,4 @@ beautifulsoup4==4.13.4
 lxml==5.4.0
 networkx==3.4.2
 requests==2.32.3
+spacy-udpipe==1.0.0
