@@ -389,8 +389,8 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    project_dir = Path(__file__).parent.parent
-    path = (project_dir / "tmp" / "articles").absolute()
+    repo_root = Path(__file__).parent.parent
+    path = repo_root / "tmp" / "articles"
     corpus_manager = CorpusManager(path)
     pipeline = TextProcessingPipeline(corpus_manager)
     udpipe_analyzer = UDPipeAnalyzer()
