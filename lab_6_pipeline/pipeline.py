@@ -8,7 +8,7 @@ import pathlib
 from networkx import DiGraph
 
 from core_utils.article.article import Article
-from core_utils.article.io import from_raw
+from core_utils.article.io import from_raw, to_cleaned
 from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -66,6 +66,8 @@ class CorpusManager:
             raise FileNotFoundError('File does not exist')
         if not self.path_to_raw_txt_data.is_dir():
             raise NotADirectoryError('Path does not lead to directory')
+        if not any(self.path_to_raw_txt_data.iterdir()):
+            raise EmptyDirectoryError('Directory is empty')
         raw = [file.name for file in self.path_to_raw_txt_data.iterdir() if file.name.endswith("_raw.txt")]
         meta = [file.name for file in self.path_to_raw_txt_data.iterdir() if file.name.endswith("_meta.json")]
         if len(raw) != len(meta):
@@ -78,8 +80,6 @@ class CorpusManager:
         for filepath in self.path_to_raw_txt_data.iterdir():
             if filepath.stat().st_size == 0:
                 raise InconsistentDatasetError(f'File {filepath} is empty.')
-        if not any(self.path_to_raw_txt_data.iterdir()):
-            raise EmptyDirectoryError('Directory is empty')
 
     def _scan_dataset(self) -> None:
         """
@@ -116,11 +116,18 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus_manager = corpus_manager
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        punctuation = "!\"#$%&'«»–()*+,-./:;<=>?@[\\]^_`{|}~\xa0"
+        for article in self.corpus_manager.get_articles().values():
+            article.text = article.text.lower()
+            for symbol in punctuation:
+                article.text = article.text.replace(symbol, '')
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -343,6 +350,8 @@ def main() -> None:
     Entrypoint for pipeline module.
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    pipeline = TextProcessingPipeline(corpus_manager)
+    pipeline.run()
 
 
 if __name__ == "__main__":
