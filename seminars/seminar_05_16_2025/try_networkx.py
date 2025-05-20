@@ -48,19 +48,6 @@ def simple_graph_example() -> nx.DiGraph:
     return simple_graph
 
 
-def simple_graph_task() -> nx.DiGraph:
-    """
-    1. Simple graph: task
-
-    Create a graph as in [/images/task_1_simple_graph.png]
-    using `networkx` library.
-
-    Returns:
-        nx.DiGraph: graph as in [/images/task_1_simple_graph.png]
-    """
-    # YOUR CODE GOES HERE
-
-
 def family_graph_example() -> nx.DiGraph:
     """
     1. Hard graph: example
