@@ -227,7 +227,7 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        url = article_bs.find("a", href=True)["href"]
+        url = article_bs.a["href"]
         link = f'https://www.riakchr.ru{str(url)}'
         return link
 
