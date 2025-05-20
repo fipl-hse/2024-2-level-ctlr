@@ -17,10 +17,12 @@ from pathlib import Path
 try:
     import spacy
     import spacy_udpipe
+    from spacy_conll import ConllParser  # type: ignore[import-not-found]
+
 except ImportError:
     print("No libraries installed. Failed to import.")
 
-from core_utils.constants import UDPIPE_MODEL_PATH
+from core_utils.constants import PROJECT_ROOT
 from core_utils.pipeline import AbstractCoNLLUAnalyzer
 
 
@@ -145,13 +147,39 @@ def export_conllu_annotation(annotation: str, path: Path) -> None:
         annotation_file.write("\n")
 
 
+def analyze_conllu_text(analyzer: spacy.Language, conllu_text: str) -> None:
+    """
+    6. Analyze CONLL-U text and return POS frequency using the UDPipe analyzer.
+
+    This is a necessary step for your work with lab 6.
+
+    Args:
+        analyzer (spacy.Language): UDPipe analyzer
+        conllu_text (str): The conllu file we got from the previous steps
+    """
+
+    # parse CONLL-U text
+    parser = ConllParser(analyzer)
+    doc = parser.parse_conll_text_as_spacy(conllu_text.strip())
+
+    # example of token POS
+    first_token = doc[0]
+    print(first_token.pos_)
+
+
 def main() -> None:
     """
     Entrypoint for a seminar's listing
     """
     # 1. Read the UDPipe model
     #    It is pre-downloaded for you from https://universaldependencies.org/
-    udpipe_model = load_model(UDPIPE_MODEL_PATH)
+    udpipe_model = load_model(
+        PROJECT_ROOT
+        / "lab_6_pipeline"
+        / "assets"
+        / "model"
+        / "russian-syntagrus-ud-2.0-170801.udpipe"
+    )
     assert isinstance(udpipe_model, spacy.Language)
 
     # 2. Explore the loaded UDPipe model and explain
@@ -160,8 +188,8 @@ def main() -> None:
     print(model_summary)
 
     # 3. Add CoNLL-U formatting pipeline to the model
-    enable_conllu_formatting(udpipe_model)
-    model_summary = explore_model(udpipe_model)
+    analyzer = enable_conllu_formatting(udpipe_model)
+    model_summary = explore_model(analyzer)
     print(model_summary)
     assert isinstance(model_summary, dict)
     assert "conll_formatter" in model_summary["summary"]
@@ -175,6 +203,12 @@ def main() -> None:
     # 5. Write extracted CoNLL-U annotation to the file
     conllu_file_path = Path("analyzed_text.conllu")
     export_conllu_annotation(annotation, conllu_file_path)
+
+    # 6. Read the file and analyze it
+    with open(conllu_file_path, "r", encoding="utf-8") as f:
+        conllu_text = f.read()
+
+    analyze_conllu_text(analyzer, conllu_text)
 
 
 if __name__ == "__main__":
