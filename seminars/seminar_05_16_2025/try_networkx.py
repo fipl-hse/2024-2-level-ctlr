@@ -48,6 +48,19 @@ def simple_graph_example() -> nx.DiGraph:
     return simple_graph
 
 
+def simple_graph_task() -> nx.DiGraph:
+    """
+    1. Simple graph: task
+
+    Create a graph as in [/images/task_1_simple_graph.png]
+    using `networkx` library.
+
+    Returns:
+        nx.DiGraph: graph as in [/images/task_1_simple_graph.png]
+    """
+    # YOUR CODE GOES HERE
+
+
 def family_graph_example() -> nx.DiGraph:
     """
     1. Hard graph: example
@@ -95,6 +108,26 @@ def family_graph_example() -> nx.DiGraph:
     return family_graph
 
 
+def family_graph_task() -> nx.DiGraph:
+    """
+    2. Hard graph: task
+
+    Create a graph as in [/images/task_2_family_graph.png]
+    using `networkx` library.
+
+    Returns:
+        nx.DiGraph: graph as in [/images/task_2_family_graph.png]
+    """
+    # relatives = {
+    #     "Настя": {"age": 66, "hair": "blonde"},
+    #     "Дима": {"age": 70, "hair": "ginger"},
+    #     "Степа": {"age": 41, "hair": "black"},
+    #     "Вика": {"age": 40, "hair": "ginger"},
+    #     "Лида": {"age": 15, "hair": "black"},
+    # }
+    # YOUR CODE GOES HERE
+
+
 def match_subgraph_example() -> list[dict[str, str]]:
     """
     3. Subgraph matching: example
@@ -135,6 +168,20 @@ def match_subgraph_example() -> list[dict[str, str]]:
     return list(matcher.subgraph_isomorphisms_iter())
 
 
+def match_subgraph_task() -> list[dict[str, str]]:
+    """
+    3. Subgraph matching: task
+
+    Match the specified hair color change pattern
+    as in [/images/task_3_subgraph_matching.png].
+
+    Returns:
+        list[dict[str, str]]: isomorphic match as in
+                              [/images/task_3_subgraph_matching.png]
+    """
+    # YOUR CODE GOES HERE
+
+
 def main() -> None:
     """
     Entrypoint for a seminar's listing
@@ -149,6 +196,15 @@ def main() -> None:
         3: {},
     }
 
+    # simple_graph = simple_graph_task()
+    # assert nx.to_dict_of_dicts(simple_graph) == {
+    #     2: {3: {}, 4: {}},
+    #     3: {},
+    #     4: {5: {}},
+    #     5: {},
+    #     1: {2: {}},
+    # }
+
     # 2. Hard graphs
     family_graph_sample = family_graph_example()
     assert nx.to_dict_of_dicts(family_graph_sample) == {
@@ -159,9 +215,21 @@ def main() -> None:
         "Костя": {},
     }
 
+    # family_graph = family_graph_task()
+    # assert nx.to_dict_of_dicts(family_graph) == {
+    #     "Настя": {"Степа": {"label": "mother"}},
+    #     "Дима": {"Вика": {"label": "father"}},
+    #     "Степа": {"Лида": {"label": "father"}},
+    #     "Вика": {"Лида": {"label": "mother"}},
+    #     "Лида": {},
+    # }
+
     # 3. Subgraph matching
     matches_sample = match_subgraph_example()
     assert matches_sample == [{"Оля": "grandparent", "Юля": "parent", "Костя": "child"}]
+
+    # matches = match_subgraph_task()
+    # assert matches == [{'Настя': 'grandparent', 'Степа': 'parent', 'Лида': 'child'}]
 
 
 if __name__ == "__main__":
