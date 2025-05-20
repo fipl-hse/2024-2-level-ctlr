@@ -75,11 +75,13 @@ class CorpusManager:
             elif file.name.endswith('meta.json'):
                 meta_list.append(file.name)
         if len(raw_list) != len(meta_list):
-            raise InconsistentDatasetError('Meta and text amounts are different')
-        raw_perfect = sorted([f'{i}_raw.txt' for i in range(1, len(raw_list) + 1)])
-        meta_perfect = sorted([f'{i}_meta.json' for i in range(1, len(meta_list) + 1)])
-        if raw_perfect != raw_list or meta_perfect != meta_list:
-            raise InconsistentDatasetError('Numbering of files is inconsistent')
+            raise InconsistentDatasetError(f'Meta and text amounts are different,'
+                                           f' {len(raw_list)}, {len(meta_list)}')
+        raw_perfect = [f'{i}_raw.txt' for i in range(1, len(raw_list) + 1)]
+        meta_perfect = [f'{i}_meta.json' for i in range(1, len(meta_list) + 1)]
+        if set(raw_perfect) != set(raw_list) or set(meta_perfect) != set(meta_list):
+            raise InconsistentDatasetError(f'Numbering of files is inconsistent'
+                                           f'{len(raw_perfect)}, {len(meta_perfect)}')
         return None
 
     def _scan_dataset(self) -> None:
