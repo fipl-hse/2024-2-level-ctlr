@@ -193,8 +193,6 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    a = random.randint(1, 3)
-    time.sleep(a)
     if not isinstance(url, str):
         raise ValueError('URL must be a string!')
     site_request = requests.get(url=url,
