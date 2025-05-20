@@ -352,9 +352,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
-    processing = TextProcessingPipeline(manager)
-    processing.run()
+    # manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    # processing = TextProcessingPipeline(manager)
+    # processing.run()
 
 
 if __name__ == "__main__":
