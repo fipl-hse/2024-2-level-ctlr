@@ -4,10 +4,13 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+import re
+from typing import List
 
 from networkx import DiGraph
 
-from core_utils.article.article import Article
+from core_utils.article.article import Article, split_by_sentence, get_article_id_from_filepath
+from core_utils.article.io import to_cleaned, from_raw
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +21,19 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.constants import ASSETS_PATH
+
+
+class InconsistentDatasetError(Exception):
+    """
+    IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
+
+
+class EmptyDirectoryError(Exception):
+    """
+    directory is empty
+    """
 
 
 class CorpusManager:
@@ -32,16 +48,44 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._meta_files = list(self.path_to_raw_txt_data.glob('*_meta.json'))
+        self._raw_files = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
+        self._validate_dataset()
+        self._storage = {}
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError('file does not exist')
+
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError('path does not lead to directory')
+
+        if not self._meta_files and not self._raw_files:
+            raise EmptyDirectoryError('directory is empty')
+
+        for raw, meta in zip(self._raw_files, self._meta_files):
+            if raw.stat().st_size == 0 or meta.stat().st_size == 0:
+                raise InconsistentDatasetError('files are empty')
+
+        data_ids = [get_article_id_from_filepath(i) for i in self._raw_files]
+        max_number = max(data_ids)
+        list_of_proper_ids = [ind for ind in range(1, max_number + 1)]
+
+        if sorted(data_ids) != sorted(list_of_proper_ids):
+            raise InconsistentDatasetError('files contain slip in ID')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for file in self._raw_files:
+            ind = get_article_id_from_filepath(file)
+            self._storage[ind] = from_raw(file)
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +94,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
