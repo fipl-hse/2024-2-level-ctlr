@@ -278,50 +278,54 @@ class Crawler:
         """
 
         for seed_url in self._seed_urls:
-            try:
-                response = make_request(seed_url, self._config)
+            page = 1
+            while len(self.urls) < self._config.get_num_articles():
+                try:
+                    # Handle pagination for seed URLs
+                    current_url = f"{seed_url}page/{page}/" if page > 1 else seed_url
+                    response = make_request(current_url, self._config)
 
-                if response.status_code != 200:
-                    continue
+                    if response.status_code != 200:
+                        break  # Stop if page not found
 
-                soup = BeautifulSoup(response.text, "lxml")
+                    soup = BeautifulSoup(response.text, "lxml")
 
-                # Ищем все статьи (пример для livennov.ru)
-                articles = soup.find_all("article", class_="post") or \
-                           soup.find_all("div", class_="post")
+                    # More flexible article detection
+                    articles = soup.find_all("article") or \
+                               soup.find_all("div", class_=re.compile(r'post|article|item|entry')) or \
+                               soup.find_all(class_=re.compile(r'post|article|item|entry'))
 
-                for article in articles:
-                    if len(self.urls) >= self._config.get_num_articles():
-                        return
+                    for article in articles:
+                        if len(self.urls) >= self._config.get_num_articles():
+                            return
 
-                    title_block = article.find("h2", class_="entry-title")
-                    if not title_block:
-                        continue
+                        # More flexible link extraction
+                        link = article.find("a", href=True)
+                        if not link:
+                            continue
 
-                    link = title_block.find("a", href=True)
-                    if not link:
-                        continue
+                        url = link["href"]
 
-                    url = link["href"]
+                        # Normalize URL
+                        if not url.startswith(("http", "www")):
+                            if url.startswith("/"):
+                                url = f"{seed_url.rstrip('/')}{url}"
+                            else:
+                                url = f"{seed_url.rstrip('/')}/{url.lstrip('/')}"
 
-                    if (not url.startswith("http") and
-                            not url.startswith("/")):
-                        continue
+                        # More flexible domain check
+                        if "livennov.ru" in url and url not in self.urls:
+                            self.urls.append(url)
 
-                    if url.startswith("/"):
-                        base_url = seed_url.rstrip("/")
-                        url = f"{base_url}{url}"
-                    elif not url.startswith("http"):
-                        url = f"{seed_url.rstrip('/')}/{url.lstrip('/')}"
+                    # Stop if no new articles found on this page
+                    if not articles:
+                        break
 
-                    if ("livennov.ru" in url and
-                            not url.startswith(("mailto:", "tel:", "javascript:")) and
-                            url not in self.urls):
-                        self.urls.append(url)
+                    page += 1
 
-            except Exception as e:
-                print(f"⚠️ Ошибка при обработке {seed_url}: {str(e)}")
-                continue
+                except Exception as e:
+                    print(f"Error processing {seed_url} page {page}: {str(e)}")
+                    break
     def get_search_urls(self) -> list:
         """
         Get seed_urls param.

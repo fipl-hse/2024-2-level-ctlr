@@ -12,7 +12,10 @@
       "https://livennov.ru/puteshestviya/gorodskie-marshruty/",
       "https://livennov.ru/puteshestviya/sady-i-parki/",
       "https://livennov.ru/puteshestviya/muzei-i-galerei/",
-      "https://livennov.ru/puteshestviya/interesno-o-nizhnem-novgorode/"
+      "https://livennov.ru/puteshestviya/interesno-o-nizhnem-novgorode/",
+      "https://livennov.ru/stroitelstvo-novoy-vetki-metro/",
+      "https://livennov.ru/skolko-stoit/",
+      "https://livennov.ru/fotoreportazhi/"
     ],
     "headers": {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
@@ -22,7 +25,7 @@
     },
     "total_articles_to_find_and_parse": 100,
     "encoding": "utf-8",
-    "timeout": 10,
+    "timeout": 30,
     "should_verify_certificate": true,
     "headless_mode": true
 }
