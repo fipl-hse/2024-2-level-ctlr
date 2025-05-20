@@ -72,8 +72,8 @@ class CorpusManager:
                                 start=1):
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError('file is empty')
-        if len(list(self.path_to_raw_txt_data.glob('*_meta.json'))) != \
-            len(list(self.path_to_raw_txt_data.glob('*_raw.txt'))):
+        if (len(list(self.path_to_raw_txt_data.glob('*_meta.json'))) !=
+            len(list(self.path_to_raw_txt_data.glob('*_raw.txt')))):
             raise InconsistentDatasetError('numbers of meta and txt are not equal')
 
     def _scan_dataset(self) -> None:
