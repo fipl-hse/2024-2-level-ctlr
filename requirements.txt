@@ -1,9 +1,4 @@
 beautifulsoup4==4.13.4
-bs4==0.0.2
-logging518==1.0.0
-pytest==8.3.5
-requests==2.32.3
-ghapi~=1.0.4
-pydantic~=2.9.2
 networkx==3.4.2
+requests==2.32.3
 stanza==1.10.1
