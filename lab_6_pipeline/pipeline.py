@@ -73,7 +73,7 @@ class CorpusManager:
                 raise InconsistentDatasetError('Something is empty')
             if file.name.endswith('_raw.txt'):
                 raw_list.append(file.name)
-            elif file.name.endswith('_meta.json'):
+            if file.name.endswith('_meta.json'):
                 meta_list.append(file.name)
         if len(raw_list) != len(meta_list):
             raise InconsistentDatasetError(f'Meta and text amounts are different,'
