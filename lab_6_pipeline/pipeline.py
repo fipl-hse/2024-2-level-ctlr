@@ -23,6 +23,12 @@ from core_utils.pipeline import (
 )
 
 
+class EmptyFileError(Exception):
+    """
+    Raises when file is empty.
+    """
+
+
 class EmptyDirectoryError(Exception):
     """
     Raises when directory is empty.
