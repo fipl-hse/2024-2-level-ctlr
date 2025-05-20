@@ -5,18 +5,20 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 
-from networkx import DiGraph
-from string import punctuation
-from pathlib import Path
-from typing import List
+import networkx
 import spacy_udpipe
+from networkx import DiGraph
+from networkx.algorithms.isomorphism import DiGraphMatcher
 from typing import cast
-from spacy.tokens import Doc
-Doc.set_extension("conll_str", getter=lambda doc: "")
+from spacy_conll import ConllParser
+from string import  punctuation
 
-from core_utils.constants import UDPIPE_MODEL_PATH
+from torch.utils.benchmark import Language
+import matplotlib.pyplot as plt
+
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import to_cleaned
+from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
+from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -27,6 +29,8 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.visualizer import visualize
+
 
 class InconsistentDatasetError(Exception):
     """
@@ -73,8 +77,8 @@ class CorpusManager:
         if not any(self.path_to_raw_txt_data.iterdir()):
             raise EmptyDirectoryError("Directory is empty")
 
-        raws: List[Path] = [doc for doc in self.path_to_raw_txt_data.glob("*_raw.txt")]
-        metas: List[Path] = [doc for doc in self.path_to_raw_txt_data.glob("*_meta.json")]
+        raws = [doc for doc in self.path_to_raw_txt_data.glob("*_raw.txt")]
+        metas = [doc for doc in self.path_to_raw_txt_data.glob("*_meta.json")]
 
         raw, meta = [], []
 
@@ -145,6 +149,12 @@ class CorpusManager:
 
             self._storage[n_id] = article
 
+        # for file in self.path_to_raw_txt_data.iterdir():
+        #     if not file.name.endswith('_raw.txt'):
+        #         continue
+        #     article = from_raw(file, Article(url=None, article_id=int(file.name[:-8])))
+        #     self._storage[int(file.name[:-8])] = article
+
     def get_articles(self) -> dict:
         """
         Get storage params.
@@ -171,18 +181,32 @@ class TextProcessingPipeline(PipelineProtocol):
             analyzer (LibraryWrapper | None): Analyzer instance
         """
         self._corpus = corpus_manager
-        self._analyzer =  analyzer
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
-        for i, val in self._corpus.get_articles().items():
-            val.text = val.text.lower()
-            for char in punctuation:
-                val.text = val.text.replace(char, "")
-            val.text = val.text.replace("NBSP", "")
-            to_cleaned(val)
+        # for i, val in self._corpus.get_articles().items():
+        #     val.text = val.text.lower()
+        #     for char in punctuation:
+        #         val.text = val.text.replace(char, "")
+        #     val.text = val.text.replace("NBSP", "")
+        #     to_cleaned(val)
+
+        # articles = self._corpus.get_articles().values()
+        # analyzed = self._analyzer.analyze([article.text for article in articles])
+        # for ind, article in enumerate(articles):
+        #     to_cleaned(article)
+        #     article.set_conllu_info(analyzed[ind])
+        #     self._analyzer.to_conllu(article)
+
+        articles = self._corpus.get_articles().values()
+        analyzed = self._analyzer.analyze([article.text for article in articles])
+        for ind, article in enumerate(articles):
+            to_cleaned(article)
+            article.set_conllu_info(analyzed[ind])
+            self._analyzer.to_conllu(article)
 
 
 
@@ -198,7 +222,6 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
-        super().__init__()
         self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
@@ -208,13 +231,25 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        if not Path(UDPIPE_MODEL_PATH).exists():
-            raise FileNotFoundError("UDpipe model is not found in expected place")
+        # if not Path(UDPIPE_MODEL_PATH).exists():
+        #     raise FileNotFoundError("UDpipe model is not found in expected place")
+        #
+        # nlp = spacy_udpipe.load_from_path(lang="ru", path=str(UDPIPE_MODEL_PATH))
+        # nlp.add_pipe(
+        #     "conll_formatter",
+        #     last=True,
+        #     config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+        # )
+        #
+        # return cast(AbstractCoNLLUAnalyzer, nlp)
 
-        nlp = spacy_udpipe.load_from_path(lang="ru", path=str(UDPIPE_MODEL_PATH))
-        nlp.add_pipe("conll_formatter", last=True)
-
-        return cast(AbstractCoNLLUAnalyzer, nlp)
+        model = spacy_udpipe.load_from_path(lang="ru", path=str(UDPIPE_MODEL_PATH))
+        model.add_pipe(
+            "conll_formatter",
+            last=True,
+            config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+        )
+        return cast(AbstractCoNLLUAnalyzer, model)
 
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
@@ -233,17 +268,17 @@ class UDPipeAnalyzer(LibraryWrapper):
         #     results.append(processed_text._.conll_str)
         # return results
 
-
+        return [self._analyzer(text)._.conll_str for text in texts]
 
         # return [cast(Doc, self._analyzer(text))._.conll_str for text in texts]
 
-        results = []
-        for i, text in enumerate(texts, start=1):
-            doc = cast(Doc, self._analyzer(text))
-            conllu_lines = [f"# sent_id = {i}", f"# text = {text}"]
-            conllu_lines.append(doc._.conll_str)
-            results.append("\n".join(conllu_lines))
-        return results
+        # results = []
+        # for i, text in enumerate(texts, start=1):
+        #     doc = cast(Doc, self._analyzer(text))
+        #     conllu_lines = [f"# sent_id = {i}", f"# text = {text}"]
+        #     conllu_lines.append(doc._.conll_str)
+        #     results.append("\n".join(conllu_lines))
+        # return results
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -252,15 +287,18 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
-        conllu_inf = article.get_conllu_info()
-
-        if not conllu_inf:
-            raise ValueError("ConLLU not found")
-
-        path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
-
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(str(path))
+        # conllu_inf = article.get_conllu_info()
+        #
+        # if not conllu_inf:
+        #     raise ValueError("ConLLU not found")
+        #
+        # path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
+        #
+        # with open(path, "w", encoding="utf-8") as f:
+        #     f.write(str(path))
+        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), 'w', encoding='UTF-8') as file:
+            file.write(article.get_conllu_info())
+            file.write("\n")
 
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
@@ -273,12 +311,35 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
-        path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
+        # path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
+        #
+        # with open(path, "r", encoding="utf-8") as f:
+        #     info = f.read()
+        #
+        # return info
 
-        with open(path, "r", encoding="utf-8") as f:
-            info = f.read()
+        # path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        # if not path.stat().st_size:
+        #     raise EmptyFileError
+        # parser = ConllParser(cast(Language, self._analyzer))
+        # with open(path, 'r', encoding='UTF-8') as file:
+        #     conllu = file.read()
+        # data: UDPipeDocument = parser.parse_conll_text_as_spacy(conllu[:-1])
+        # return data
 
-        return info
+        # path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        # if not path.stat().st_size:
+        #     raise EmptyFileError
+        # parser = ConllParser(cast(Language, self._analyzer))
+        # with open(path, 'r', encoding='UTF-8') as file:
+        #     conllu = file.read()
+        #
+        # data: UDPipeDocument = parser.parse_conll_text_as_spacy(conllu[:-1])
+        # return data
+
+        # if not path.stat().st_size:
+        #     raise EmptyFileError
+
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -290,26 +351,26 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UnifiedCoNLLUDocument: Dictionary of token features within document sentences
         """
-        sentences = []
-
-        if hasattr(doc, 'sents'):
-            for sent in doc.sents:
-                tokens = []
-                for token in sent:
-                    tokens.append({
-                        "id": str(token.i + 1),
-                        "form": token.text,
-                        "lemma": token.lemma_,
-                        "xpos": "_",
-                        "upos": token.pos_,
-                        "feats": str(token.morph),
-                        "head": str(token.head.i + 1),
-                        "deprel": token.dep_,
-                        "deps": "_",
-                        "misc": "_"
-                    })
-                sentences.append(tokens)
-        return cast(UnifiedCoNLLUDocument, sentences)
+        # sentences = []
+        #
+        # if hasattr(doc, 'sents'):
+        #     for sent in doc.sents:
+        #         tokens = []
+        #         for token in sent:
+        #             tokens.append({
+        #                 "id": str(token.i + 1),
+        #                 "form": token.text,
+        #                 "lemma": token.lemma_,
+        #                 "xpos": "_",
+        #                 "upos": token.pos_,
+        #                 "feats": str(token.morph),
+        #                 "head": str(token.head.i + 1),
+        #                 "deprel": token.dep_,
+        #                 "deps": "_",
+        #                 "misc": "_"
+        #             })
+        #         sentences.append(tokens)
+        # return cast(UnifiedCoNLLUDocument, sentences)
 
 
 class StanzaAnalyzer(LibraryWrapper):
@@ -324,6 +385,7 @@ class StanzaAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the StanzaAnalyzer class.
         """
+        # self._analyzer = analyzer
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -388,6 +450,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus_manager = corpus_manager
+        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -399,11 +463,29 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
+        pos_dict = {}
+        sentences = self._analyzer.from_conllu(article).sents
+        for sentence in sentences:
+            for word in sentence:
+                pos = word.pos_
+                if pos not in pos_dict:
+                    pos_dict[pos] = 1
+                else:
+                    pos_dict[pos] += 1
+        return pos_dict
+
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
+        for article in self._corpus_manager.get_articles().values():
+            article_path = article.get_meta_file_path()
+            from_meta(article_path)
+            article.set_pos_info(self._count_frequencies(article))
+            to_meta(article)
+            visualize(article, ASSETS_PATH / f'{article.article_id}_image.png')
+
 
 
 class PatternSearchPipeline(PipelineProtocol):
@@ -422,6 +504,9 @@ class PatternSearchPipeline(PipelineProtocol):
             analyzer (LibraryWrapper): Analyzer instance
             pos (tuple[str, ...]): Root, Dependency, Child part of speech
         """
+        self._corpus_manager = corpus_manager
+        self._analyzer = analyzer
+        self._node_labels = pos
 
     def _make_graphs(self, doc: CoNLLUDocument) -> list[DiGraph]:
         """
@@ -433,6 +518,21 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             list[DiGraph]: Graphs for the sentences in the document
         """
+        graphs = []
+        for sent in doc.sents:
+            current_graph = DiGraph()
+
+            for token in sent.tokens:
+                current_graph.add_node(token.token_id, label=token.upos)
+
+            for word in sent.tokens:
+                if word.head_id != 0:
+                    current_graph.add_edge(word.head_id, word.token_id, label=word.deprel)
+
+            graphs.append(current_graph)
+
+        return graphs
+
 
     def _add_children(
         self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
@@ -446,6 +546,23 @@ class PatternSearchPipeline(PipelineProtocol):
             node_id (int): ID of root node of the match
             tree_node (TreeNode): Root node of the match
         """
+        cur_node = subgraph_to_graph[node_id]
+
+        for ch_id in graph.successors(cur_node):
+            if ch_id in subgraph_to_graph.values():
+                sub_ch_id = [k for k, v in subgraph_to_graph.items() if v == ch_id][0]
+                ch_attrs = graph.nodes[sub_ch_id]
+
+                child_node = TreeNode(
+                    upos=ch_attrs['label'],
+                    text=graph.nodes[ch_id].get('text', ''),
+                    children=[]
+                )
+
+                tree_node.children.append(child_node)
+
+                self._add_children(graph, subgraph_to_graph, sub_ch_id, child_node)
+
 
     def _find_pattern(self, doc_graphs: list) -> dict[int, list[TreeNode]]:
         """
@@ -457,11 +574,105 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             dict[int, list[TreeNode]]: A dictionary with pattern matches
         """
+        pat_gr = DiGraph()
+
+        pat_gr.add_node(1, label=self._node_labels[0])
+        pat_gr.add_node(2, label=self._node_labels[1])
+        pat_gr.add_node(3, label=self._node_labels[2])
+
+        pat_gr.add_edge(1, 2)
+        pat_gr.add_edge(2, 3)
+
+        res = {}
+
+        for i, v in enumerate(doc_graphs):
+            matches = []
+
+            matcher = DiGraphMatcher(
+                v,
+                pat_gr,
+                node_match=lambda x, y: x["label"] == y["label"]
+            )
+
+            for mapp in matcher.subgraph_isomorphisms_iter():
+                templ_nodes = set(pat_gr.nodes)
+                searched_nodes = mapp.values()
+                templ_roots = templ_nodes - set(searched_nodes.keys())
+
+                if templ_roots:
+                    templ_id = list(templ_roots)[0]
+                    searched_id = mapp[templ_id]
+                else:
+                    templ_id = list(pat_gr.nodes)[0]
+                    searched_id = mapp[templ_id]
+
+                it = []
+                node_attrs = v.nodes[searched_id]
+                tree_node = TreeNode(
+                    upos=node_attrs["label"],
+                    text=node_attrs.get("text", ""),
+                    children=[]
+                )
+                it.append((tree_node, searched_id))
+
+                while it:
+                    parent_node, parent_id = it.pop()
+                    for successor in pat_gr.successors(parent_id):
+                        if successor in mapp.values():
+                            child_id = None
+                            for k, val in mapp.items():
+                                if val == successor:
+                                    child_id = k
+                                    break
+
+                            if child_id is not None:
+                                ch_attrs = pat_gr.nodes[successor]
+                                child_node = TreeNode(
+                                    upos=ch_attrs["label"],
+                                    text=ch_attrs.get("text", ""),
+                                    children=[]
+                                )
+                                parent_node.children.append(child_node)
+                                it.append((child_node, successor))
+                matches.append(tree_node)
+            if matches:
+                res[i] = matches
+        return res
+
+
+
 
     def run(self) -> None:
         """
         Search for a pattern in documents and writes found information to JSON file.
         """
+        for article in self._corpus_manager.get_articles().values():
+            article_path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
+            doc = self._analyzer.from_conllu(cast(Article, article_path))
+            grph = self._make_graphs(doc)
+            matching = self._find_pattern(grph)
+
+            if matching:
+                res = {}
+                for ind, nod in matching.items():
+                    res[ind] = []
+                    for i in nod:
+                        nd = {
+                            "upos": i.upos,
+                            "text": i.text,
+                            "children": [{
+                                "upos": child.upos,
+                                "text": child.text,
+                                "children": [{
+                                    "upos": grandchild.upos,
+                                    "text": grandchild.text
+                                } for grandchild in child.children]
+                            } for child in i.children]
+                        }
+                        res[ind].append(nd)
+                article.set_pos_info(res)
+                to_meta(article)
+
 
 
 def main() -> None:
