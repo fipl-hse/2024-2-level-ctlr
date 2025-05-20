@@ -29,10 +29,10 @@ class InconsistentDatasetError(Exception):
     '''Data in directory is inconsistent'''
 
 class EmptyDirectoryError(Exception):
-    '''Directory is empty'''
+    '''No files found in the directory'''
 
 class EmptyFileError(Exception):
-    ''''''
+    '''The file is empty'''
 
 class CorpusManager:
     """
@@ -88,21 +88,21 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        files_list = list(map(str, self.path_to_raw_txt_data.iterdir()))
+        files_list = list(self.path_to_raw_txt_data.iterdir())
         files_new = []
         for file in files_list:
-            if file.endswith('raw.txt'):
-                files_new.append(file)
+            if str(file).endswith('raw.txt'):
+                files_new.append(str(file))
         files_new = sorted(files_new, key=lambda m: int(m.split("\\")[-1].split('_')[0]))
+        print(files_new)
         iter_count = 0
         for file_id, file in enumerate(files_new):
+            iter_count += 1
             if str(file).endswith('raw.txt'):
-                f = open(file, 'r', encoding="UTF-8")
-                iter_count += 1
-                article = Article(url=None, article_id=iter_count)
-                article.text = f.read()
+                article = from_raw(file)
                 self._storage[iter_count] = article
-                f.close()
+
+
 
     def get_articles(self) -> dict:
         """
@@ -137,7 +137,7 @@ class TextProcessingPipeline(PipelineProtocol):
         articles = self.corpus_manager.get_articles()
         texts_to_conllu = []
         for _, article in articles.items():
-            article.text = article.text.lower()
+            article.text = article.get_cleaned_text()
             article.text = re.sub(r'[^\w\s]', '', article.text)
             article.text = re.sub(r' ', '', article.text)
             to_cleaned(article)
@@ -171,6 +171,8 @@ class UDPipeAnalyzer(LibraryWrapper):
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
         path = PROJECT_ROOT / "lab_6_pipeline" / "assets" / "module" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        if not path.exists():
+            raise FileNotFoundError("Path does not exist")
         nlp = spacy_udpipe.load_from_path(lang='ru', path=str(path))
         nlp.add_pipe(
             "conll_formatter",
@@ -189,12 +191,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
-        result = []
-        nlp = self._analyzer
-        for text in texts:
-            analyzed_text = nlp(text)
-            conllu_annotation = analyzed_text._.conll_str
-            result.append(conllu_annotation)
+        result = [self._analyzer(text)._.conll_str for text in texts]
         return result
 
     def to_conllu(self, article: Article) -> None:
@@ -205,11 +202,10 @@ class UDPipeAnalyzer(LibraryWrapper):
             article (Article): Article containing information to save
         """
         path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
-        info = article.get_conllu_info()
-        f = open(path, 'w', encoding="UTF-8")
-        f.write(info)
-        f.write('\n')
-        f.close()
+        with open(path, 'w', encoding="UTF-8") as f:
+            f.write(article.get_conllu_info())
+            f.write('\n')
+            f.close()
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """

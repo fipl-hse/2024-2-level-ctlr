@@ -227,13 +227,9 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        cards = article_bs.find_all(class_='card-title ms5')
-        for card in cards:
-            url = card.find("a", href=True)["href"]
-            link = f'https://www.riakchr.ru{str(url)}'
-            if link not in self.urls:
-                return link
-        return ''
+        url = article_bs.find("a", href=True)["href"]
+        link = f'https://www.riakchr.ru{str(url)}'
+        return link
 
     def find_articles(self) -> None:
         """
@@ -249,16 +245,14 @@ class Crawler:
                 continue
 
             seed_url_bs = BeautifulSoup(seed_url_request.text, 'html.parser')
-            num_new_urls = len(set(seed_url_bs.find_all(class_='card-title ms5')))
+            found_urls = seed_url_bs.find_all(class_='card-title ms5')
 
-            for _ in range(num_new_urls):
+            for url in found_urls:
                 if len(self.urls) == self.config.get_num_articles():
                     return None
-                found_article_url = self._extract_url(seed_url_bs)
-                if found_article_url:
-                    self.urls.append(found_article_url)
-                else:
-                    return None
+                url_bs = BeautifulSoup(str(url), 'html.parser')
+                found_article_url = self._extract_url(url_bs)
+                self.urls.append(found_article_url)
         return None
 
 
