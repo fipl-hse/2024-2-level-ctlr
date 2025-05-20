@@ -122,11 +122,8 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        punctuation = "!\"#$%&'«»–()*+,-./:;<=>?@[\\]^_`{|}~\xa0"
         for article in self.corpus_manager.get_articles().values():
-            article.text = article.text.lower()
-            for symbol in punctuation:
-                article.text = article.text.replace(symbol, '')
+            article.text = article.text.replace('\xa0', '')
             to_cleaned(article)
 
 
