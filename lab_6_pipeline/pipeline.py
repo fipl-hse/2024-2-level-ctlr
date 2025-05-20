@@ -8,6 +8,7 @@ from pathlib import Path
 from string import punctuation
 from core_utils.constants import ASSETS_PATH
 import spacy_udpipe
+import string
 from networkx import DiGraph
 
 from core_utils.article.article import Article
@@ -155,9 +156,14 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         for article_id, article in self.corpus_manager.get_articles().items():
-            lowered_text = article.text.lower()
-            no_punctuation_text = ''.join(el if el not in punctuation else ' ' for el in lowered_text)
-            article.text = no_punctuation_text.replace('NBSP', '')
+            article.text = article.text.lower()
+            text_with_normal_spaces = article.text.replace('\xa0', ' ')
+            processed_text = ''.join(char if char not in string.punctuation
+                                     else ' ' for char in text_with_normal_spaces)
+            processed_text = ''.join(char if char.isalnum() or char in (' ', '\n')
+                                     else ' ' for char in processed_text)
+            processed_text = ' '.join(processed_text.split())
+            article.text = processed_text
             to_cleaned(article)
 
         if self._analyzer:
@@ -389,12 +395,10 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    repo_root = Path(__file__).parent.parent
-    path = repo_root / "tmp" / "articles"
-    corpus_manager = CorpusManager(path)
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     pipeline = TextProcessingPipeline(corpus_manager)
     pipeline.run()
-    #udpipe_analyzer = UDPipeAnalyzer()
+    udpipe_analyzer = UDPipeAnalyzer()
 
 
 if __name__ == "__main__":
