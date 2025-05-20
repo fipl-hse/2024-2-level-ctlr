@@ -4,6 +4,8 @@ Crawler implementation.
 
 import datetime
 import json
+import random
+import time
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
@@ -191,6 +193,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
+    a = random.randint(1, 3)
+    time.sleep(a)
     if not isinstance(url, str):
         raise ValueError('URL must be a string!')
     site_request = requests.get(url=url,
@@ -227,7 +231,7 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        url = article_bs.find("a", href=True)['href']
+        url = article_bs.find("a").get("href")
         link = f'https://www.riakchr.ru{str(url)}'
         print(link)
         return link
