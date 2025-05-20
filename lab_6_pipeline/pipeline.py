@@ -5,8 +5,10 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 
+from typing import Dict
 from networkx import DiGraph
 
+from core_utils.article.io import from_raw
 from core_utils.article.article import Article
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -18,6 +20,25 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Raised when dataset directory is empty.
+    """
+
+
+class InconsistentDatasetError(Exception):
+    """
+    Raised when the dataset is inconsistent: IDs contain slips,
+    number of meta and raw files is not equal, files are empty.
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    Raised when an article file is empty.
+    """
 
 
 class CorpusManager:
@@ -32,16 +53,67 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage: Dict[int, Article] = {}
+
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError(f"Path {self.path_to_raw_txt_data} does not exist")
+
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError(f"Path {self.path_to_raw_txt_data} is not a directory")
+
+        if not any(self.path_to_raw_txt_data.iterdir()):
+            raise EmptyDirectoryError(f"Directory {self.path_to_raw_txt_data} is empty")
+
+        raw_files = sorted(
+            f for f in self.path_to_raw_txt_data.glob('*_raw.txt')
+            if f.stem.split('_')[0].isdigit()
+        )
+        meta_files = sorted(
+            f for f in self.path_to_raw_txt_data.glob('*_meta.json')
+            if f.stem.split('_')[0].isdigit()
+        )
+
+        if len(raw_files) != len(meta_files):
+            raise InconsistentDatasetError("Number of raw and meta files doesn't match")
+
+        raw_ids = []
+        for file in raw_files:
+            try:
+                file_id = int(file.stem.split('_')[0])
+                raw_ids.append(file_id)
+            except (ValueError, IndexError):
+                continue
+
+        if raw_ids != list(range(1, len(raw_ids) + 1)):
+            raise InconsistentDatasetError("IDs are not sequential or have gaps")
+
+        for file in raw_files + meta_files:
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"File {file.name} is empty")
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        raw_files = sorted(
+            f for f in self.path_to_raw_txt_data.glob('*_raw.txt')
+            if f.stem.split('_')[0].isdigit()
+        )
+
+        for raw_file in raw_files:
+            try:
+                article_id = int(raw_file.stem.split('_')[0])
+                self._storage[article_id] = Article(url=None, article_id=article_id)
+            except (ValueError, IndexError):
+                continue
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +122,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -58,7 +131,7 @@ class TextProcessingPipeline(PipelineProtocol):
     """
 
     def __init__(
-        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
+            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
     ) -> None:
         """
         Initialize an instance of the TextProcessingPipeline class.
@@ -237,7 +310,7 @@ class PatternSearchPipeline(PipelineProtocol):
     """
 
     def __init__(
-        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
+            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
     ) -> None:
         """
         Initialize an instance of the PatternSearchPipeline class.
@@ -260,7 +333,7 @@ class PatternSearchPipeline(PipelineProtocol):
         """
 
     def _add_children(
-        self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
+            self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
     ) -> None:
         """
         Add children to TreeNode.
