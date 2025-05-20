@@ -7,9 +7,10 @@ import pathlib
 
 from typing import Dict
 from networkx import DiGraph
+import string
 
-from core_utils.article.io import from_raw
 from core_utils.article.article import Article
+from core_utils.article.io import to_cleaned
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -111,8 +112,12 @@ class CorpusManager:
         for raw_file in raw_files:
             try:
                 article_id = int(raw_file.stem.split('_')[0])
-                self._storage[article_id] = Article(url=None, article_id=article_id)
-            except (ValueError, IndexError):
+                with open(raw_file, 'r', encoding='utf-8') as file:
+                    text = file.read().strip()
+                article = Article(url=None, article_id=article_id)
+                article.text = text
+                self._storage[article_id] = article
+            except (ValueError, IndexError, IOError):
                 continue
 
     def get_articles(self) -> dict:
@@ -140,11 +145,23 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = self._corpus.get_articles().values()
+        for article in articles:
+            if not article.text:
+                continue
+
+            cleaned_text = article.text.lower().translate(
+                str.maketrans('', '', string.punctuation)
+            )
+            article.set_cleaned_text(cleaned_text)
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
