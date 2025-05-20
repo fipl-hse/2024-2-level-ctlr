@@ -33,7 +33,8 @@ class EmptyDirectoryError(Exception):
 
 class InconsistentDatasetError(Exception):
     """
-    Raised when the dataset is inconsistent: IDs contain slips, number of meta and raw files is not equal, files are empty.
+    Raised when the dataset is inconsistent: IDs contain slips,
+    number of meta and raw files is not equal, files are empty.
     """
 
 
@@ -85,9 +86,10 @@ class CorpusManager:
         raw_template = [f'{count}_raw.txt' for count in range(1, len(raw) + 1)]
         if set(raw) != set(raw_template):
             raise InconsistentDatasetError('IDs of raw files are inconsistent.')
-        for filepath in self.path.iterdir():
-            if filepath.stat().st_size == 0:
-                raise InconsistentDatasetError(f'File {filepath} is empty.')
+        for mask in ['*_raw.txt', '*_meta.json']:
+            for filepath in self.path.glob(mask):
+                if filepath.stat().st_size == 0:
+                    raise InconsistentDatasetError(f'File {filepath} is empty.')
 
     def _scan_dataset(self) -> None:
         """
@@ -208,7 +210,11 @@ class UDPipeAnalyzer(LibraryWrapper):
         conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
         if pathlib.Path(conllu_path).stat().st_size == 0:
             raise EmptyFileError
-        return ConllParser(self._analyzer).parse_file_as_conll(input_file=conllu_path)
+        with open(conllu_path, encoding='utf-8') as file:
+            conllu = file.read()
+        parsed_conllu: UDPipeDocument = ConllParser(
+            self._analyzer).parse_conll_text_as_spacy(conllu.strip('\n'))
+        return parsed_conllu
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -313,9 +319,11 @@ class POSFrequencyPipeline:
         """
         article_conllu = self._analyzer.from_conllu(article)
         pos_frequencies = {}
-        for sentence in article_conllu.sentences:
-            upos = [word.todict().get('upos') for word in sentence.words]
-            pos_frequencies = {pos: upos.count(pos) for pos in upos}
+        for token in article_conllu:
+            if (token_pos := token.pos_) not in pos_frequencies:
+                pos_frequencies[token_pos] = 1
+            else:
+                pos_frequencies[token_pos] += 1
         return pos_frequencies
 
     def run(self) -> None:
