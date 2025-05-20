@@ -4,13 +4,14 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-from string import punctuation
 
 import spacy_udpipe
 from networkx import DiGraph
+from spacy_conll.parser import ConllParser
 
-from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import to_cleaned
+from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
+from core_utils.article.io import to_cleaned, from_meta, from_raw, to_meta
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -21,6 +22,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.visualizer import visualize
 
 
 class EmptyDirectoryError(Exception):
@@ -91,16 +93,8 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        index = 1
-        for filepath in self.path.iterdir():
-            if not filepath.name.endswith('_raw.txt'):
-                continue
-            with open(filepath, encoding='utf-8') as file:
-                raw_text = file.read()
-            article = Article(url=None, article_id=index)
-            article.text = raw_text
-            self._storage[index] = article
-            index += 1
+        self._storage = {get_article_id_from_filepath(filepath): from_raw(filepath)
+                         for filepath in self.path.glob('*_raw.txt')}
 
     def get_articles(self) -> dict:
         """
@@ -118,7 +112,7 @@ class TextProcessingPipeline(PipelineProtocol):
     """
 
     def __init__(
-        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
+            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
     ) -> None:
         """
         Initialize an instance of the TextProcessingPipeline class.
@@ -137,9 +131,6 @@ class TextProcessingPipeline(PipelineProtocol):
         conllu = self._analyzer.analyze([article.text for article
                                          in self.corpus_manager.get_articles().values()])
         for idx, article in enumerate(self.corpus_manager.get_articles().values()):
-            article.text = article.text.lower()
-            for symbol in punctuation:
-                article.text = article.text.replace(symbol, '')
             article.text = article.text.replace('NBSP', '')
             to_cleaned(article)
             article.set_conllu_info(conllu[idx])
@@ -167,9 +158,12 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        if not pathlib.Path(model_path := 'lab_6_pipeline/assets/model/russian-syntagrus-ud-2.0'
+                                          '-170801.udpipe').exists():
+            raise FileNotFoundError("Path to model does not exists or is invalid")
         model = spacy_udpipe.load_from_path(
             lang='ru',
-            path='lab_6_pipeline/assets/model/russian-syntagrus-ud-2.0-170801.udpipe'
+            path=model_path
         )
         model.add_pipe(
             "conll_formatter",
@@ -197,10 +191,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
-        conllu = article.get_conllu_info()
         path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
         with open(path, 'w', encoding='utf-8') as file:
-            file.write(conllu)
+            file.write(article.get_conllu_info())
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -212,6 +205,10 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        if pathlib.Path(conllu_path).stat().st_size == 0:
+            raise EmptyFileError
+        return ConllParser(self._analyzer).parse_file_as_conll(input_file=conllu_path)
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -301,6 +298,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -312,11 +311,22 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
+        article_conllu = self._analyzer.from_conllu(article)
+        pos_frequencies = {}
+        for sentence in article_conllu.sentences:
+            upos = [word.todict().get('upos') for word in sentence.words]
+            pos_frequencies = {pos: upos.count(pos) for pos in upos}
+        return pos_frequencies
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
+        for idx, article in self._corpus.get_articles().items():
+            from_meta(article.get_meta_file_path(), article)
+            article.set_pos_info(self._count_frequencies(article))
+            to_meta(article)
+            visualize(article, pathlib.Path(ASSETS_PATH) / f"{idx}_image.png")
 
 
 class PatternSearchPipeline(PipelineProtocol):
@@ -325,7 +335,7 @@ class PatternSearchPipeline(PipelineProtocol):
     """
 
     def __init__(
-        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
+            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
     ) -> None:
         """
         Initialize an instance of the PatternSearchPipeline class.
@@ -348,7 +358,7 @@ class PatternSearchPipeline(PipelineProtocol):
         """
 
     def _add_children(
-        self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
+            self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
     ) -> None:
         """
         Add children to TreeNode.
