@@ -4,12 +4,12 @@ Crawler implementation.
 
 import datetime
 import json
-import random
-import time
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
+import random
 import shutil
+import time
 from typing import Pattern, Union
 
 import requests
