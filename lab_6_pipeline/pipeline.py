@@ -157,9 +157,16 @@ class TextProcessingPipeline(PipelineProtocol):
         for article_id, article in self.corpus_manager.get_articles().items():
             lowered_text = article.text.lower()
             no_punctuation_text = ''.join(el if el not in punctuation else ' ' for el in lowered_text)
-            cleaned_text = ' '.join(no_punctuation_text.split())
-            article.text = cleaned_text.replace('NBSP', '')
+            article.text = no_punctuation_text.replace('NBSP', '')
             to_cleaned(article)
+
+        if self._analyzer:
+            articles = list(self.corpus_manager.get_articles().values())
+            analyzed_texts = self._analyzer.analyze([article.text for article in articles])
+            if isinstance(analyzed_texts, (list, tuple)) and len(analyzed_texts) != len(articles):
+                for article, analyzed in zip(articles, analyzed_texts):
+                    article.set_conllu_info(analyzed)
+                    self._analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -382,7 +389,8 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    path = Path("tmp/articles").absolute()
+    project_dir = Path(__file__).parent.parent
+    path = (project_dir / "tmp" / "articles").absolute()
     corpus_manager = CorpusManager(path)
     pipeline = TextProcessingPipeline(corpus_manager)
     udpipe_analyzer = UDPipeAnalyzer()
