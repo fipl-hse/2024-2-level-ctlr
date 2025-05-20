@@ -8,7 +8,7 @@ import spacy_udpipe
 
 from networkx import DiGraph
 
-from core_utils.article.article import Article, get_article_id_from_filepath
+from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
 from core_utils.article.io import from_raw, to_cleaned
 from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
@@ -74,7 +74,7 @@ class CorpusManager:
         for file in self.path_to_raw_txt_data.iterdir():
             if file.name.endswith('_raw.txt'):
                 raw_actual.append(file.name)
-            elif file.name.endswith('_meta.json'):
+            if file.name.endswith('_meta.json'):
                 meta_actual.append(file.name)
             if not file.stat().st_size:
                 raise InconsistentDatasetError('Empty file(s) in the directory.')
@@ -154,7 +154,6 @@ class UDPipeAnalyzer(LibraryWrapper):
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
 
-
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
         Process texts into CoNLL-U formatted markup.
@@ -173,6 +172,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), 'w', encoding='utf-8') as file:
+            file.writelines([article.get_conllu_info(), '\n'])
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
