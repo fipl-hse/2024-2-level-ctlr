@@ -4,10 +4,12 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+import re
 
 from networkx import DiGraph
 
 from core_utils.article.article import Article
+from core_utils.article.io import from_raw, to_cleaned
 from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -22,11 +24,15 @@ from core_utils.pipeline import (
 
 
 class EmptyDirectoryError(Exception):
-    pass
+    """
+    Raises when directory is empty.
+    """
 
 
 class InconsistentDatasetError(Exception):
-    pass
+    """
+    Raises when IDs contain slips, number of meta and raw files is not equal, files are empty.
+    """
 
 
 class CorpusManager:
@@ -41,42 +47,41 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
-        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self.path = path_to_raw_txt_data
         self._storage = {}
         self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
-        if not self._storage:
+        if not self.path.exists():
             raise FileNotFoundError('File does not exist.')
 
-        if not self.path_to_raw_txt_data.is_dir():
+        if not self.path.is_dir():
             raise NotADirectoryError('Path does not lead to directory.')
 
-        files = {f.stem.split('_')[0]: [] for f in self.path_to_raw_txt_data.iterdir()
+        if not any(self.path.iterdir()):
+            raise EmptyDirectoryError('Directory is empty.')
+
+        files = {f.stem.split('_')[0]: [] for f in self.path.iterdir()
                  if f.is_file() and len(f.stem.split('_')) == 2}
 
         if not files:
             raise EmptyDirectoryError('Directory is empty.')
 
-        for file in self.path_to_raw_txt_data.iterdir():
-            if file.is_file() and file.stat().st_size == 0:
-                raise InconsistentDatasetError('There is an empty file.')
-
+        for file in self.path.iterdir():
+            if not file.stat().st_size:
+                raise InconsistentDatasetError(f'File {file} is empty.')
             parts = file.stem.split('_')
-            if len(parts) == 2 and parts[0].isdigit():
-                files.setdefault(parts[0], []).append(parts[1])
+            files.setdefault(parts[0], []).append(parts[1])
 
-        for file_id, types in files.items():
-            if not file_id.isdigit():
-                continue
-
-            if len(types) != 2 or sorted(types) != ['meta', 'raw']:
+        for value in files.values():
+            if len(value) != 2 or sorted(value) != ['meta', 'raw']:
                 raise InconsistentDatasetError('Number of meta and raw files is not equal.')
 
-        ids = sorted(int(k) for k in files.keys() if k.isdigit())
+        ids = sorted(int(k) for k in files.keys())
         if ids and any(b - a != 1 for a, b in zip(ids, ids[1:])):
             raise InconsistentDatasetError('There is an ID which contains slips.')
 
@@ -84,6 +89,11 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
+        for file in self.path.iterdir():
+            if file.is_file():
+                parts = file.stem.split('_')
+                article_id = int(parts[0])
+                self._storage[article_id] = from_raw(file, Article(None, article_id=article_id))
 
     def get_articles(self) -> dict:
         """
@@ -92,6 +102,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -109,11 +120,17 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self._corpus = corpus_manager
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        for article in self._corpus.get_articles().values():
+            article.text = article.text.replace('NBSP', '')
+            article.text = article.text.lower()
+            article.text = re.sub(r'[^\w\s]', '', article.text)
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -335,7 +352,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    corpus_manager = CorpusManager(ASSETS_PATH)
+    pipeline = TextProcessingPipeline(corpus_manager)
+    pipeline.run()
 
 
 if __name__ == "__main__":
