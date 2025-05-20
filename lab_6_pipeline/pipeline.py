@@ -37,7 +37,6 @@ class EmptyFileError(Exception):
     """
     Raised when file is empty.
     """
-
 class CorpusManager:
     """
     Work with articles and store them.
