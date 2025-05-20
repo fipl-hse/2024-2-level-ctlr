@@ -19,6 +19,7 @@ from core_utils.pipeline import (
     UnifiedCoNLLUDocument,
 )
 from core_utils.article.io import to_cleaned, from_raw
+from core_utils.constants import ASSETS_PATH
 
 class EmptyDirectoryError(Exception):
     """
@@ -70,9 +71,9 @@ class CorpusManager:
         for file in self.path.iterdir():
             if not file.stat().st_size:
                 raise InconsistentDatasetError('Something is empty')
-            if file.name.endswith('raw.txt'):
+            if file.name.endswith('_raw.txt'):
                 raw_list.append(file.name)
-            elif file.name.endswith('meta.json'):
+            elif file.name.endswith('_meta.json'):
                 meta_list.append(file.name)
         if len(raw_list) != len(meta_list):
             raise InconsistentDatasetError(f'Meta and text amounts are different,'
@@ -351,6 +352,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    processing = TextProcessingPipeline(manager)
+    processing.run()
 
 
 if __name__ == "__main__":
