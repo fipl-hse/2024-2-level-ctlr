@@ -7,7 +7,6 @@ import pathlib
 import os
 import re
 import spacy_udpipe
-import spacy
 
 from networkx import DiGraph
 
