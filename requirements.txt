@@ -1,5 +1,5 @@
 beautifulsoup4==4.13.4
-networkx==3.4.2
 lxml==5.3.2
+networkx==3.4.2
 requests==2.32.3
 stanza==1.10.1

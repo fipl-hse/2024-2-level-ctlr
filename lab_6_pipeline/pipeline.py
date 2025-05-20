@@ -93,8 +93,8 @@ class CorpusManager:
             except (ValueError, IndexError):
                 continue
 
-        if raw_ids != list(range(1, len(raw_ids) + 1)):
-            raise InconsistentDatasetError("IDs are not sequential or have gaps")
+        if sorted(raw_ids) != raw_ids or len(raw_ids) != len(set(raw_ids)):
+            raise InconsistentDatasetError("IDs are not unique or not in order")
 
         for file in raw_files + meta_files:
             if file.stat().st_size == 0:
@@ -153,14 +153,18 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         articles = self._corpus.get_articles().values()
+
         for article in articles:
             if not article.text:
                 continue
 
-            cleaned_text = article.text.lower().translate(
+            cleaned_text = article.text.lower()
+
+            cleaned_text = cleaned_text.translate(
                 str.maketrans('', '', string.punctuation)
             )
-            article.set_cleaned_text(cleaned_text)
+
+            article.cleaned_text = cleaned_text
             to_cleaned(article)
 
 
