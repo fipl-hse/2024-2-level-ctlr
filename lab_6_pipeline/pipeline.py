@@ -18,7 +18,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
-from core_utils.article.io import to_cleaned
+from core_utils.article.io import to_cleaned, from_raw
 
 class EmptyDirectoryError(Exception):
     """
@@ -28,7 +28,7 @@ class EmptyDirectoryError(Exception):
 
 class InconsistentDatasetError(Exception):
     """
-    Ids are inconsisten
+    Ids are inconsistent
     """
 
 
@@ -76,10 +76,10 @@ class CorpusManager:
                 meta_list.append(file.name)
         if len(raw_list) != len(meta_list):
             raise InconsistentDatasetError('Meta and text amounts are different')
-        raw_ids_list = [raw.split('_')[0] for raw in raw_list]
-        meta_ids_list = [meta.split('_')[0] for meta in meta_list]
-        if raw_ids_list != meta_ids_list:
-            raise InconsistentDatasetError('Numering of files is inconsistent')
+        raw_perfect = sorted([f'{i}_raw.txt' for i in range(1, len(raw_list) + 1)])
+        meta_perfect = sorted([f'{i}_meta.json' for i in range(1, len(meta_list) + 1)])
+        if raw_perfect != raw_list or meta_perfect != meta_list:
+            raise InconsistentDatasetError('Numbering of files is inconsistent')
         return None
 
     def _scan_dataset(self) -> None:
@@ -87,12 +87,10 @@ class CorpusManager:
         Register each dataset entry.
         """
         for file in self.path.iterdir():
-            if file.name.endswith('raw.txt'):
-                article = Article(url=None, article_id=int(file.name.split('_')[0]))
-                with open(file, 'r', encoding="UTF-8") as read_file:
-                    raw = read_file.read()
-                article.text = raw
-                self._storage[int(file.name.split('_')[0])] = article
+            if not file.name.endswith('raw.txt'):
+                continue
+            article = from_raw(file)
+            self._storage[int(file.name.split('_')[0])] = article
 
 
     def get_articles(self) -> dict:
