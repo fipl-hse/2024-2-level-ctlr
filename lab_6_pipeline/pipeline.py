@@ -393,7 +393,8 @@ def main() -> None:
     path = repo_root / "tmp" / "articles"
     corpus_manager = CorpusManager(path)
     pipeline = TextProcessingPipeline(corpus_manager)
-    udpipe_analyzer = UDPipeAnalyzer()
+    pipeline.run()
+    #udpipe_analyzer = UDPipeAnalyzer()
 
 
 if __name__ == "__main__":
