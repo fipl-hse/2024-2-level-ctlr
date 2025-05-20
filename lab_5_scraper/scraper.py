@@ -9,6 +9,7 @@ import pathlib
 import shutil
 from time import sleep
 from typing import Pattern, Union
+import random
 
 import requests
 from bs4 import BeautifulSoup
@@ -200,7 +201,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    sleep(15)
+    sleep(random.randint(1, 5))
     response = requests.get(
         url,
         headers=config.get_headers(),
