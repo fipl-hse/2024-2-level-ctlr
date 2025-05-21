@@ -2,16 +2,18 @@
 Pipeline for CONLL-U formatting.
 """
 
+import os
+
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-import os
 import re
-import spacy_udpipe
 
+import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import to_cleaned, from_raw
+from core_utils.article.io import from_raw, to_cleaned
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -22,16 +24,22 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
-from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
+
 
 class InconsistentDatasetError(Exception):
-    '''Data in directory is inconsistent'''
+    '''
+    Data in directory is inconsistent
+    '''
 
 class EmptyDirectoryError(Exception):
-    '''No files found in the directory'''
+    '''
+    No files found in the directory
+    '''
 
 class EmptyFileError(Exception):
-    '''The file is empty'''
+    '''
+    The file is empty
+    '''
 
 class CorpusManager:
     """
@@ -135,18 +143,12 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         articles = self.corpus_manager.get_articles()
-        texts_to_conllu = []
-        for _, article in articles.items():
-            article.text = article.get_cleaned_text()
-            article.text = re.sub(r'[^\w\s]', '', article.text)
+        texts_to_conllu = [from_raw(article.get_raw_text_path()).get_raw_text() for article in articles.values()]
+        conllu_docs = self._analyzer.analyze(texts_to_conllu)
+        for article_id, article in enumerate(articles.values()):
             article.text = re.sub(r' ', '', article.text)
             to_cleaned(article)
-            path = article.get_raw_text_path()
-            article_to_conllu = from_raw(path)
-            texts_to_conllu.append(article_to_conllu.get_raw_text())
-        conllu_docs = self._analyzer.analyze(texts_to_conllu)
-        for article_id, article in articles.items():
-            article.set_conllu_info(conllu_docs[article_id - 1])
+            article.set_conllu_info(conllu_docs[article_id])
             self._analyzer.to_conllu(article)
 
 
@@ -163,6 +165,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Initialize an instance of the UDPipeAnalyzer class.
         """
         self._analyzer = self._bootstrap()
+
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
         Load and set up the UDPipe model.
