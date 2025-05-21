@@ -8,8 +8,7 @@ from collections import defaultdict
 
 import spacy_udpipe
 import stanza
-from networkx import descendants, DiGraph
-from networkx.algorithms.isomorphism import GraphMatcher
+from networkx import DiGraph
 from spacy_conll.parser import ConllParser
 from stanza.models.common.doc import Document
 from stanza.utils.conll import CoNLL
@@ -161,8 +160,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model_path = pathlib.Path(PROJECT_ROOT) /\
-                     "lab_6_pipeline" / "assets" / "model" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        model_path = pathlib.Path(PROJECT_ROOT) /"lab_6_pipeline" /\
+                     "assets" / "model" / "russian-syntagrus-ud-2.0-170801.udpipe"
         if not model_path.exists():
             raise FileNotFoundError("Path to model does not exists or is invalid")
         model = spacy_udpipe.load_from_path(
@@ -253,9 +252,10 @@ class StanzaAnalyzer(LibraryWrapper):
         language = "ru"
         processors = "tokenize,pos,lemma,depparse"
         stanza.download(lang=language, processors=processors, logging_level="INFO")
-        return stanza.Pipeline(
+        stanza_analyzer: AbstractCoNLLUAnalyzer = stanza.Pipeline(
             lang=language, processors=processors, logging_level="INFO", download_method=None
         )
+        return stanza_analyzer
 
     def analyze(self, texts: list[str]) -> list[StanzaDocument]:
         """
@@ -267,7 +267,7 @@ class StanzaAnalyzer(LibraryWrapper):
         Returns:
             list[StanzaDocument]: List of documents
         """
-        return [self._analyzer.process(Document([], text=text)) for text in texts]
+        return self._analyzer.process([Document([], text=text) for text in texts])
 
     def to_conllu(self, article: Article) -> None:
         """
