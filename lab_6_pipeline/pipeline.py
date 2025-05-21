@@ -4,6 +4,7 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from collections import defaultdict
 
 import spacy_udpipe
 from networkx import DiGraph
@@ -71,12 +72,8 @@ class CorpusManager:
             raise NotADirectoryError
         if not any(self.path.iterdir()):
             raise EmptyDirectoryError
-        meta, raw = [], []
-        for filepath in self.path.iterdir():
-            if filepath.name.endswith('_meta.json'):
-                meta.append(filepath.name)
-            elif filepath.name.endswith('_raw.txt'):
-                raw.append(filepath.name)
+        meta = [filepath.name for filepath in self.path.glob('*_meta.json')]
+        raw = [filepath.name for filepath in self.path.glob('*_raw.txt')]
         if len(meta) != len(raw):
             raise InconsistentDatasetError(
                 f'The amounts of meta and raw files are not equal: {len(meta)} != {len(raw)}.')
@@ -133,7 +130,7 @@ class TextProcessingPipeline(PipelineProtocol):
         conllu = self._analyzer.analyze([article.text for article
                                          in self.corpus_manager.get_articles().values()])
         for idx, article in enumerate(self.corpus_manager.get_articles().values()):
-            article.text = article.text.replace('NBSP', '')
+            article.text = article.text.replace('\u00A0', '')
             to_cleaned(article)
             article.set_conllu_info(conllu[idx])
             self._analyzer.to_conllu(article)
@@ -318,12 +315,9 @@ class POSFrequencyPipeline:
             dict[str, int]: POS frequencies
         """
         article_conllu = self._analyzer.from_conllu(article)
-        pos_frequencies = {}
+        pos_frequencies = defaultdict(int)
         for token in article_conllu:
-            if (token_pos := token.pos_) not in pos_frequencies:
-                pos_frequencies[token_pos] = 1
-            else:
-                pos_frequencies[token_pos] += 1
+            pos_frequencies[token.pos_] += 1
         return pos_frequencies
 
     def run(self) -> None:
@@ -353,6 +347,9 @@ class PatternSearchPipeline(PipelineProtocol):
             analyzer (LibraryWrapper): Analyzer instance
             pos (tuple[str, ...]): Root, Dependency, Child part of speech
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
+        self._node_labels = pos
 
     def _make_graphs(self, doc: CoNLLUDocument) -> list[DiGraph]:
         """
@@ -364,6 +361,10 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             list[DiGraph]: Graphs for the sentences in the document
         """
+        graphs = []
+        for sentence in doc.sents:
+            graph = DiGraph()
+
 
     def _add_children(
             self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
