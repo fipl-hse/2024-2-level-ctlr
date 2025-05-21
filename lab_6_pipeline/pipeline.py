@@ -10,9 +10,10 @@ from builtins import FileNotFoundError, NotADirectoryError
 import spacy
 import spacy_udpipe
 from networkx import DiGraph
+from spacy_conll.parser import ConllParser
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import from_raw, to_cleaned
+from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -24,6 +25,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.visualizer import visualize
 
 
 class InconsistentDatasetError(Exception):
@@ -222,17 +224,26 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        file_path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
+        if file_path.stat().st_size == 0:
+            raise EmptyFileError
 
-    def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
-        """
-        Present ConLLU document's sentence tokens as a unified structure.
+        with open(file_path, "r", encoding="utf-8") as conllu_file:
+            conllu_info = conllu_file.read().strip('\n')
+        parsed: UDPipeDocument = ConllParser(self._analyzer).parse_conll_text_as_spacy(conllu_info)
+        return parsed
 
-        Args:
-            doc (UDPipeDocument): ConLLU document
 
-        Returns:
-            UnifiedCoNLLUDocument: Dictionary of token features within document sentences
-        """
+def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
+    """
+    Present ConLLU document's sentence tokens as a unified structure.
+
+    Args:
+        doc (UDPipeDocument): ConLLU document
+
+    Returns:
+        UnifiedCoNLLUDocument: Dictionary of token features within document sentences
+    """
 
 
 class StanzaAnalyzer(LibraryWrapper):
@@ -311,6 +322,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -322,11 +335,22 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
+        сonllu = self._analyzer.from_conllu(article)
+        freq = {}
+        for token in сonllu:
+            freq[token.pos_] = freq.get(token.pos_, 0) + 1
+        return freq
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
+        articles = self._corpus.get_articles()
+        for idx, article in articles.items():
+            from_meta(article.get_meta_file_path(), article)
+            article.set_pos_info(self._count_frequencies(article))
+            to_meta(article)
+            visualize(article, ASSETS_PATH / f"{idx}_image.png")
 
 
 class PatternSearchPipeline(PipelineProtocol):
@@ -395,6 +419,9 @@ def main() -> None:
     udpipe_analyzer = UDPipeAnalyzer()
     pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
     pipeline.run()
+
+    visualizer = POSFrequencyPipeline(corpus_manager, udpipe_analyzer)
+    visualizer.run()
 
 
 if __name__ == "__main__":
