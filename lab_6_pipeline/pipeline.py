@@ -262,7 +262,6 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
 
 
-
 class StanzaAnalyzer(LibraryWrapper):
     """
     Wrapper for stanza library.
