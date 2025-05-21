@@ -4,10 +4,12 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from core_utils.constants import ASSETS_PATH
 
 from networkx import DiGraph
 
 from core_utils.article.article import Article
+from core_utils.article.io import from_raw, to_cleaned
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +20,24 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Dataset directory is empty
+    """
+
+
+class InconsistentDatasetError(Exception):
+    """
+    IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    An article file is empty
+    """
 
 
 class CorpusManager:
@@ -32,16 +52,62 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path.exists():
+            raise FileNotFoundError(f'Directory {self.path} does not exist')
+        if not self.path.is_dir():
+            raise NotADirectoryError(f'{self.path} is not a directory')
+        if not any(self.path.iterdir()):
+            raise EmptyDirectoryError
+
+        raw = [f.name for f in self.path.iterdir() if f.is_file() and f.name.endswith('_raw.txt')]
+        meta = [f.name for f in self.path.iterdir() if f.is_file() and f.name.endswith('_meta.json')]
+
+        if len(raw) != len(meta):
+            raise InconsistentDatasetError(f'Number of meta and raw files is not equal: {len(raw)} != {len(meta)}')
+
+        raw_ids = [int(name.split('_')[0]) for name in raw]
+        expected_raw_ids = list(range(1, len(raw) + 1))
+        if sorted(raw_ids) != expected_raw_ids:
+            missing_raw = set(expected_raw_ids) - set(raw_ids)
+            raise InconsistentDatasetError(f'raw IDs in dataset are not found: {missing_raw}')
+
+        meta_ids = [int(name.split('_')[0]) for name in meta]
+        expected_meta_ids = list(range(1, len(meta) + 1))
+        if sorted(meta_ids) != expected_meta_ids:
+            missing_meta = set(expected_meta_ids) - set(meta_ids)
+            raise InconsistentDatasetError(f'meta IDs in dataset are not found: {missing_meta}')
+
+        for file_raw in self.path.glob('*_raw.txt'):
+            if file_raw.stat().st_size == 0:
+                raise InconsistentDatasetError(f'raw file {file_raw.name} is empty')
+
+        for file_meta in self.path.glob('*_meta.json'):
+            if file_meta.stat().st_size == 0:
+                raise InconsistentDatasetError(f'meta file {file_meta.name} is empty')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for filepath in self.path.glob('*_raw.txt'):
+            filename = filepath.name
+
+            if filename.endswith('_raw.txt'):
+                prefix = filename[:-8]
+
+                if prefix.isdigit():
+                    article_id = int(prefix)
+                    article = from_raw(filepath)
+                    self._storage[article_id] = article
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +116,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,11 +134,23 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus_manager = corpus_manager
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = self.corpus_manager.get_articles()
+        for article_id, article in articles.items():
+            raw_text_path = self.corpus_manager.path / f"{article_id}_raw.txt"
+            with open(raw_text_path, 'r', encoding='utf-8') as file:
+                raw_text = file.read()
+
+            cleaned_text = ''.join(elem if elem.isalnum() or elem.isspace() else ' ' for elem in raw_text.lower())
+            cleaned_text = ' '.join(cleaned_text.split())
+            article.text = cleaned_text
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -293,6 +372,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    pipeline = TextProcessingPipeline(corpus_manager)
+    pipeline.run()
 
 
 if __name__ == "__main__":
