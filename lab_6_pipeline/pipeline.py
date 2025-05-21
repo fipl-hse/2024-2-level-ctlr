@@ -4,8 +4,6 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-from pathlib import Path
-from string import punctuation
 from core_utils.constants import ASSETS_PATH
 import spacy_udpipe
 import string
@@ -68,45 +66,41 @@ class CorpusManager:
             raise FileNotFoundError(f" Directory {self.path} does not exist")
         if not self.path.is_dir():
             raise NotADirectoryError(f" {self.path} is not a directory")
+        all_files = list(self.path.iterdir())
+
+        if not all_files:
+            raise EmptyDirectoryError(...)
+        has_valid_files = False
+        for filepath in all_files:
+            if filepath.name.endswith(('_meta.json', '_raw.txt')):
+                if filepath.stat().st_size == 0:
+                    raise InconsistentDatasetError(...)
+                has_valid_files = True
+        if not has_valid_files:
+            raise EmptyDirectoryError("No valid files found")
+
         meta_files = []
         raw_files = []
-        for filepath in sorted(self.path.iterdir()):
-            filename = filepath.name
-            if filename.endswith('_meta.json'):
+        for filepath in self.path.iterdir():
+            if filepath.name.endswith('_meta.json'):
                 if filepath.stat().st_size == 0:
-                    raise InconsistentDatasetError(f"Empty metainfo file: {filename}")
+                    raise InconsistentDatasetError(f"Empty metainfo file: {filepath.name}")
                 meta_files.append(filepath)
-            elif filename.endswith('_raw.txt'):
+            elif filepath.name.endswith('_raw.txt'):
                 if filepath.stat().st_size == 0:
-                    raise InconsistentDatasetError(f"Empty text file: {filename}")
+                    raise InconsistentDatasetError(f"Empty text file: {filepath.name}")
                 raw_files.append(filepath)
-
-        if not meta_files and not raw_files:
-            raise EmptyDirectoryError(f"No valid files found in {self.path}")
-
         if len(meta_files) != len(raw_files):
-            raise InconsistentDatasetError(
-                f"Number of meta and raw files is not equal: "
-                f"{len(raw_files)} texts != {len(meta_files)} jsons")
-
-        meta_ids = set()
-        raw_ids = set()
-
-        for m in meta_files:
-            parts = m.stem.split('_')
-            if len(parts) > 0 and parts[0].isdigit():
-                meta_ids.add(int(parts[0]))
-
-        for r in raw_files:
-            parts = r.stem.split('_')
-            if len(parts) > 0 and parts[0].isdigit():
-                raw_ids.add(int(parts[0]))
+            raise InconsistentDatasetError(f"Number of meta and raw files is not equal:"
+                                           f"{len(raw_files)} texts != {len(meta_files)} jsons")
+        meta_ids = {int(m.stem.split('_')[0]) for m in meta_files if '_' in m.stem and m.stem.split('_')[0].isdigit()}
+        raw_ids = {int(r.stem.split('_')[0]) for r in raw_files if '_' in r.stem and r.stem.split('_')[0].isdigit()}
 
         if meta_ids != raw_ids:
             missing_meta = raw_ids - meta_ids
             missing_raw = meta_ids - raw_ids
-            raise InconsistentDatasetError(
-                f"Inconsistent IDs. Missing meta: {missing_meta}, missing raw: {missing_raw}")
+            raise InconsistentDatasetError(f"Inconsistent IDs."
+                                           f"Missing meta: {missing_meta}, missing raw: {missing_raw}")
 
     def _scan_dataset(self) -> None:
         """
@@ -198,8 +192,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        if not pathlib.Path(model_path := 'C:\\Users\\222\\Desktop\\HSE_2023-2027\\'
-                                          '2_course\\CTLR\\2024-2-level-ctlr\lab_6_pipeline\\'
+        if not pathlib.Path(model_path := 'lab_6_pipeline\\'
                                           'assets\\russian-syntagrus-ud-2.0-170801.udpipe').exists():
             raise FileNotFoundError("Path to model does not exists or is invalid")
         model = spacy_udpipe.load_from_path(lang='ru', path=model_path)
