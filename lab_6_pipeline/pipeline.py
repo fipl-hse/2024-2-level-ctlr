@@ -71,31 +71,36 @@ class CorpusManager:
         if not any(self.path.iterdir()):
             raise EmptyDirectoryError('Directory is empty.')
 
-        files = {f.stem.split('_')[0]: [] for f in self.path.iterdir()
-                 if f.is_file() and len(f.stem.split('_')) == 2}
+        meta, raw = [], []
+        for filepath in self.path.iterdir():
+            if filepath.name.endswith('_meta.json'):
+                meta.append(filepath.name)
+            elif filepath.name.endswith('_raw.txt'):
+                raw.append(filepath.name)
 
-        if not files:
-            raise EmptyDirectoryError('Directory is empty.')
+        if len(meta) != len(raw):
+            raise InconsistentDatasetError(
+                f'Number of meta and raw files is not equal: {len(meta)} != {len(raw)}.')
+
+        meta_ideal = [f'{count}_meta.json' for count in range(1, len(meta) + 1)]
+        raw_ideal = [f'{count}_raw.txt' for count in range(1, len(raw) + 1)]
+
+        if set(meta) != set(meta_ideal):
+            raise InconsistentDatasetError('There are slips in IDs of meta files.')
+        if set(raw) != set(raw_ideal):
+            raise InconsistentDatasetError('There are slips in IDs of raw files.')
 
         for file in self.path.iterdir():
             if not file.stat().st_size:
                 raise InconsistentDatasetError(f'File {file} is empty.')
-            parts = file.stem.split('_')
-            files.setdefault(parts[0], []).append(parts[1])
-
-        for value in files.values():
-            if len(value) != 2 or sorted(value) != ['meta', 'raw']:
-                raise InconsistentDatasetError('Number of meta and raw files is not equal.')
-
-        ids = sorted(int(k) for k in files.keys())
-        if ids and any(b - a != 1 for a, b in zip(ids, ids[1:])):
-            raise InconsistentDatasetError('There is an ID which contains slips.')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
         for file in self.path.iterdir():
+            if not file.name.endswith('_raw.txt'):
+                continue
             if file.is_file():
                 parts = file.stem.split('_')
                 article_id = int(parts[0])
