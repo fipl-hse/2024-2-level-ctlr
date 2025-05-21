@@ -138,7 +138,7 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         for article in self._corpus.get_articles().values():
-            article.text = article.text.replace('NBSP', '')
+            article.text = article.text.replace('\u00A0', '')
             article.text = article.text.lower()
             article.text = re.sub(r'[^\w\s]', '', article.text)
             to_cleaned(article)
