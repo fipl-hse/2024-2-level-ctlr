@@ -61,7 +61,7 @@ class CorpusManager:
         if not self.path_to_raw_txt_data.is_dir():
             raise NotADirectoryError("Path leads to something other than Directory")
 
-        files_list = list(map(str, self.path_to_raw_txt_data.iterdir()))
+        files_list = list(self.path_to_raw_txt_data.iterdir())
         if len(files_list) == 0:
             raise EmptyDirectoryError("Directory is empty")
 
@@ -69,16 +69,17 @@ class CorpusManager:
             if os.stat(file).st_size == 0:
                 raise InconsistentDatasetError("One of the files is empty")
 
-        json_count = [file for file in files_list if '.json' in file]
-        json_count = sorted(json_count, key=lambda m: int(m.split("\\")[-1].split('_')[0]))
-        article_count = [file for file in files_list if 'raw.txt' in file]
-        article_count = sorted(article_count, key=lambda m: int(m.split("\\")[-1].split('_')[0]))
+        json_count = [file for file in files_list if '.json' in str(file)]
+        json_count = sorted(json_count, key=lambda m: int(str(m.stem).split('_')[0]))
+        article_count = [file for file in files_list if 'raw.txt' in str(file)]
+        article_count = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
+        print(article_count)
 
         if len(json_count) != len(article_count):
             raise InconsistentDatasetError("Number of meta files doesn't match the number of articles")
 
         for file_id, file_name in enumerate(article_count):
-            if file_name.startswith(str(file_id)) and json_count[file_id].startswith(str(file_id)):
+            if str(file_name.stem).startswith(str(file_id)) and str(json_count[file_id].stem).startswith(str(file_id)):
                 raise InconsistentDatasetError('Slip ups in ID detected')
 
         return None
