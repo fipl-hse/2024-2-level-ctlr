@@ -207,6 +207,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         return [f'{self._analyzer(text)._.conll_str}\n' for text in texts]
 
+
     def to_conllu(self, article: Article) -> None:
         """
         Save content to ConLLU format.
