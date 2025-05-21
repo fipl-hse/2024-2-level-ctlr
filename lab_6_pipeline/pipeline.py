@@ -99,16 +99,14 @@ class CorpusManager:
         files_list = list(self.path_to_raw_txt_data.iterdir())
         files_new = []
         for file in files_list:
-            if str(file).endswith('raw.txt'):
-                files_new.append(str(file))
+            if re.match('[0-9]+_raw', str(file.stem)):
+                files_new.append(file)
         files_new = sorted(files_new, key=lambda m: int(str(m.stem).split('_')[0]))
-        print(files_new)
-        iter_count = 0
         for file_id, file in enumerate(files_new):
-            iter_count += 1
             if str(file).endswith('raw.txt'):
                 article = from_raw(file)
-                self._storage[iter_count] = article
+                self._storage[file_id + 1] = article
+
 
 
 
