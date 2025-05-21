@@ -8,8 +8,6 @@ import json
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import pathlib
 import shutil
-from random import randint
-from time import sleep
 from typing import Pattern, Union
 
 import requests
