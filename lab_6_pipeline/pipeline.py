@@ -4,6 +4,7 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+import spacy_udpipe
 
 from networkx import DiGraph
 
@@ -26,6 +27,12 @@ from core_utils.pipeline import (
 class InconsistentDatasetError(Exception):
     """
     IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    Raised when an article file is empty.
     """
 
 
