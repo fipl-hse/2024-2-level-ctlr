@@ -335,9 +335,9 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
-        сonllu = self._analyzer.from_conllu(article)
+        conllu = self._analyzer.from_conllu(article)
         freq = {}
-        for token in сonllu:
+        for token in conllu:
             freq[token.pos_] = freq.get(token.pos_, 0) + 1
         return freq
 
