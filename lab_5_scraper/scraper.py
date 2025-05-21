@@ -246,7 +246,8 @@ class Crawler:
         url_pattern = r'^(https?://(www\.)?zvezdaaltaya\.ru/\d{4}/\d{2}/.*)$'
 
         for url_href in extracted_hrefs:
-            if isinstance(url_href, str) and re.match(url_pattern, url_href) and url_href not in self.urls:
+            if (isinstance(url_href, str) and
+                    re.match(url_pattern, url_href) and url_href not in self.urls):
                 if not url_href.startswith('http'):
                     url_href = f"https://zvezdaaltaya.ru{url_href}"
                 return url_href

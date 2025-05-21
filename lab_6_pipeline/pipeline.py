@@ -10,11 +10,11 @@ from pathlib import Path
 import spacy_udpipe
 from conllu import parse
 from networkx import DiGraph
-from spacy_conll.parser import ConllParser
+from spacy_conll import ConllParser  # type: ignore[import-not-found, import-untyped]
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_cleaned, to_meta
-from core_utils.constants import ASSETS_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -187,8 +187,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model = Path(r"C:\LabGit\2024-2-level-ctlr\core_utils\
-        udpipe\russian-syntagrus-ud-2.0-170801.udpipe")
+        model = PROJECT_ROOT / "core_utils" / "udpipe" / "russian-syntagrus-ud-2.0-170801.udpipe"
         if not model.exists() or not model.is_file():
             raise FileNotFoundError(f"UDPipe model not found or path is empty: {model}")
 
@@ -373,10 +372,7 @@ class POSFrequencyPipeline:
         """
         articles = self._corpus.get_articles().values()
         for article in articles:
-        #    try:
-        #        frequencies = self._count_frequencies(article)
-        #    except EmptyFileError:
-        #        continue
+
             frequencies = self._count_frequencies(article)
             if not frequencies:
                 raise EmptyFileError(f"Empty POS frequencies "
