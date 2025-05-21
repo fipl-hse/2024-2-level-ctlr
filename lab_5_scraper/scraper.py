@@ -361,6 +361,22 @@ class HTMLParser:
                     topics.append(meta['content'].strip())
         self.article.topics = topics or ['NOT FOUND']
 
+        bc_ol = article_soup.find("ol", class_="breadcrumb")
+        if bc_ol:
+            crumbs: list[str] = []
+            for li in bc_ol.find_all("li", itemprop="itemListElement"):
+                a = li.find("a", itemprop="item")
+                if isinstance(a, Tag):
+                    name = a.find(attrs={"itemprop": "name"})
+                    crumbs.append(name.get_text(strip=True) if name else a.get_text(strip=True))
+                else:
+                    name = li.find(attrs={"itemprop": "name"})
+                    crumbs.append(name.get_text(strip=True) if name else '')
+            self.article.map = crumbs
+        else:
+            self.article.map = []
+
+
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unify date format.

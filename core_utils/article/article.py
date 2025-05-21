@@ -97,6 +97,7 @@ class Article:
         self.date = None
         self.author = []
         self.topics = []
+        self.map = []
         self.text = ""
         self.pos_frequencies = {}
         self._conllu_sentences = []
@@ -135,6 +136,7 @@ class Article:
             "date": self._date_to_text() or None,
             "author": self.author,
             "topics": self.topics,
+            "map": self.map,
             "pos_frequencies": self.pos_frequencies,
             "pattern_matches": self.pattern_matches,
         }
