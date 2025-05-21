@@ -79,20 +79,14 @@ class CorpusManager:
         raw, meta = [], []
 
         for f in raws:
-            try:
-                n_id = int(f.name.split("_")[0])
-                raw.append(n_id)
-            except (ValueError, IndexError):
-                continue
+            n_id = int(f.name.split("_")[0])
+            raw.append(n_id)
             if f.stat().st_size == 0:
                 raise InconsistentDatasetError("File is empty")
 
         for f in metas:
-            try:
-                n_id = int(f.name.split("_")[0])
-                meta.append(n_id)
-            except (ValueError, IndexError):
-                continue
+            n_id = int(f.name.split("_")[0])
+            meta.append(n_id)
             if f.stat().st_size == 0:
                 raise InconsistentDatasetError("Meta file is empty")
 
@@ -117,39 +111,30 @@ class CorpusManager:
         if gaps:
             raise InconsistentDatasetError("Dataset has slips")
 
-        if sorted(raw) != list(range(1, len(raw) + 1)):
-            raise InconsistentDatasetError("Number of raw files is not equal")
-
-        if sorted(meta) != list(range(1, len(meta) + 1)):
-            raise InconsistentDatasetError("Number of meta files is not equal")
-
-        if raw != meta:
-            raise InconsistentDatasetError("IDs of raw and meta files do not match")
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
         for file in self.path_to_raw_txt_data.glob("*_raw.txt"):
-            n_id = int(file.name.split("_")[0])
-
             if not file.name.endswith("_raw.txt"):
                 continue
 
-            with open(file, encoding="utf-8") as f:
-                raw_txt = f.read()
+            n_id = int(file.name.split("_")[0])
 
-            article = Article(url=None, article_id=n_id)
+            # with open(file, encoding="utf-8") as f:
+            #     raw_txt = f.read()
+            #
+            # article = Article(url=None, article_id=n_id)
+            #
+            # article.text = raw_txt
 
-            article.text = raw_txt
+            art = from_raw(file, Article(url=None, article_id=n_id))
 
-            self._storage[n_id] = article
+            self._storage[n_id] = art
 
-        # for file in self.path_to_raw_txt_data.iterdir():
-        #     if not file.name.endswith('_raw.txt'):
-        #         continue
-        #     article = from_raw(file, Article(url=None, article_id=int(file.name[:-8])))
-        #     self._storage[int(file.name[:-8])] = article
+
+
 
     def get_articles(self) -> dict:
         """
@@ -183,12 +168,12 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        # for i, val in self._corpus.get_articles().items():
-        #     val.text = val.text.lower()
-        #     for char in punctuation:
-        #         val.text = val.text.replace(char, "")
-        #     val.text = val.text.replace("NBSP", "")
-        #     to_cleaned(val)
+        articles = self._corpus.get_articles().values()
+        analyzed = self._analyzer.analyze([article.text for article in articles])
+        for ind, article in enumerate(articles):
+            to_cleaned(article)
+            article.set_conllu_info(analyzed[ind])
+            self._analyzer.to_conllu(article)
 
         # articles = self._corpus.get_articles().values()
         # analyzed = self._analyzer.analyze([article.text for article in articles])
@@ -197,12 +182,27 @@ class TextProcessingPipeline(PipelineProtocol):
         #     article.set_conllu_info(analyzed[ind])
         #     self._analyzer.to_conllu(article)
 
-        articles = self._corpus.get_articles().values()
-        analyzed = self._analyzer.analyze([article.text for article in articles])
-        for ind, article in enumerate(articles):
-            to_cleaned(article)
-            article.set_conllu_info(analyzed[ind])
-            self._analyzer.to_conllu(article)
+        # articles = self._corpus.get_articles().values()
+        # analyzed = self._analyzer.analyze([article.text for article in articles])
+        # for ind, article in enumerate(articles):
+        #     to_cleaned(article)
+        #     article.set_conllu_info(analyzed[ind])
+        #     self._analyzer.to_conllu(article)
+
+
+
+        # articles = list(self._corpus.get_articles().values())
+        # texts = [article.text for article in articles]
+        #
+        # analyzed = self._analyzer.analyze(texts)
+        # if analyzed is None:
+        #     raise ValueError("Analyzer returned None")
+        #
+        # for article, analysis in zip(articles, analyzed):
+        #     to_cleaned(article)
+        #     article.set_conllu_info(analysis)
+        #     self._analyzer.to_conllu(article)
+
 
 
 
