@@ -4,10 +4,12 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from pathlib import Path
+import spacy_udpipe
 
 from networkx import DiGraph
 
-from core_utils.article.article import Article
+from core_utils.article.article import Article, ArtifactType
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -19,7 +21,7 @@ from core_utils.pipeline import (
     UnifiedCoNLLUDocument,
 )
 from core_utils.article.io import to_cleaned, from_raw
-from core_utils.constants import ASSETS_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 
 class EmptyDirectoryError(Exception):
     """
@@ -122,14 +124,19 @@ class TextProcessingPipeline(PipelineProtocol):
             analyzer (LibraryWrapper | None): Analyzer instance
         """
         self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
-        got_articles = self._corpus.get_articles()
-        for article_id in got_articles:
-            to_cleaned(got_articles[article_id])
+        got_articles = self._corpus.get_articles().values()
+        analyzed_texts = self._analyzer.analyze([article.text for article in got_articles])
+        for article_id, article in enumerate(got_articles):
+            to_cleaned(article)
+            article.set_conllu_info(analyzed_texts[article_id])
+            self._analyzer.to_conllu(article)
+
 
 
 
@@ -145,6 +152,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -153,6 +161,16 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        model_path = PROJECT_ROOT/'lab_6_pipeline'/'assets'/'model'/'russian-syntagrus-ud-2.0-170801.udpipe'
+        if not model_path.exists() or not model_path.is_file():
+            raise FileNotFoundError('UDPipe does not exist')
+        model = spacy_udpipe.load_from_path(lang="ru", path=str(model_path))
+        model.add_pipe(
+            "conll_formatter",
+            last=True,
+            config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+        )
+        return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -164,6 +182,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        return [f'{self._analyzer(text)._.conll_str}\n' for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -172,6 +191,10 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        conllu_info = article.get_conllu_info()
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        with open(path, 'w', encoding='utf-8') as file:
+            file.write(conllu_info)
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -352,9 +375,10 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    # manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
-    # processing = TextProcessingPipeline(manager)
-    # processing.run()
+    manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    udpipe_analyzer = UDPipeAnalyzer()
+    processing = TextProcessingPipeline(manager, udpipe_analyzer)
+    processing.run()
 
 
 if __name__ == "__main__":
