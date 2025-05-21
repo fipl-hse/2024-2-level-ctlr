@@ -147,10 +147,7 @@ class TextProcessingPipeline(PipelineProtocol):
             raw_text_path = self.corpus_manager.path / f"{article_id}_raw.txt"
             with open(raw_text_path, 'r', encoding='utf-8') as file:
                 raw_text = file.read()
-
-            cleaned_text = ''.join(elem if elem.isalnum() or elem.isspace() else ' ' for elem in raw_text.lower())
-            cleaned_text = ' '.join(cleaned_text.split())
-            article.text = cleaned_text
+            article.text = raw_text
             to_cleaned(article)
 
             if self._analyzer:
