@@ -5,8 +5,8 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 from pathlib import Path
-import spacy_udpipe
 
+import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
@@ -22,6 +22,7 @@ from core_utils.pipeline import (
 )
 from core_utils.article.io import to_cleaned, from_raw
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
+
 
 class EmptyDirectoryError(Exception):
     """
