@@ -157,6 +157,8 @@ class UDPipeAnalyzer(LibraryWrapper):
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
         model_path = PROJECT_ROOT / "lab_6_pipeline" / "assets" / "model" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        if not pathlib.Path(model_path).exists():
+            raise FileNotFoundError("Path to model does not exists or is invalid")
         model = spacy_udpipe.load_from_path(
             lang="ru",
             path=str(model_path)
