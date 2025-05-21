@@ -1,23 +1,7 @@
 {
     "seed_urls": [
         "https://astralist.info/archives/68040",
-        "https://astralist.info/archives/44871",
-        "https://astralist.info/archives/69110",
-        "https://astralist.info/archives/69040",
-        "https://astralist.info/archives/69116",
-        "https://astralist.info/archives/69124",
-        "https://astralist.info/archives/69120",
-        "https://astralist.info/archives/69116",
-        "https://astralist.info/archives/69114",
-        "https://astralist.info/archives/68689",
-        "https://astralist.info/archives/69128",
-        "https://astralist.info/archives/69108",
-        "https://astralist.info/archives/69106",
-        "https://astralist.info/archives/62811",
-        "https://astralist.info/archives/69124",
-        "https://astralist.info/archives/62811",
-        "https://astralist.info/archives/68747",
-        "https://astralist.info/archives/68620"
+        "https://astralist.info/archives/44871"
     ],
     "headers": {
         "User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36",
