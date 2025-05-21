@@ -341,6 +341,7 @@ class POSFrequencyPipeline:
         self._corpus = corpus_manager
         self._analyzer = analyzer
 
+
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
         Count POS frequency in Article.
