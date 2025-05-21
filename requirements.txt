@@ -6,4 +6,5 @@ numpy==1.26.4
 requests==2.32.3
 spacy-udpipe==1.0.0
 spacy==3.8.6
+spacy-conll=4.0.1
 stanza==1.10.1
