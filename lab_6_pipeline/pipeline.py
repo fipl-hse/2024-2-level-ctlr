@@ -379,7 +379,8 @@ class POSFrequencyPipeline:
         #        continue
             frequencies = self._count_frequencies(article)
             if not frequencies:
-                raise EmptyFileError(f"Empty POS frequencies for article {article.article_id}")
+                raise EmptyFileError(f"Empty POS frequencies "
+                                     f"for article {article.article_id}")
 
             article.set_pos_info(frequencies)
             to_meta(article)
