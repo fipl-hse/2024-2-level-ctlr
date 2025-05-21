@@ -4,10 +4,14 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+import re
 
+import spacy_udpipe
 from networkx import DiGraph
 
-from core_utils.article.article import Article
+from core_utils.article.article import Article, ArtifactType
+from core_utils.article.io import from_raw, to_cleaned
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +22,24 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+
+class InconsistentDatasetError(Exception):
+    """
+    IDs contain slips, number of meta and raw files is not equal, files are empty.
+    """
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Directory is empty.
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    The file is empty.
+    """
 
 
 class CorpusManager:
@@ -32,16 +54,52 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError(f'This path doesnt exist: {self.path_to_raw_txt_data} :(')
+
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError(f'This isnt a directory: {self.path_to_raw_txt_data} :(')
+
+        raw_files = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
+        meta_files = list(self.path_to_raw_txt_data.glob('*_meta.json'))
+
+        if not raw_files and not meta_files:
+            raise EmptyDirectoryError(f'Directory is empty: {self.path_to_raw_txt_data} :(')
+
+        for file in raw_files + meta_files:
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f'Empty file: {file} :(')
+
+        raw_ids = {int(re.match(r'(\d+)_raw\.txt', f.name).group(1)) for f in
+                   raw_files if re.match(r'(\d+)_raw\.txt', f.name)}
+        meta_ids = {int(re.match(r'(\d+)_meta\.json', f.name).group(1)) for f in
+                    meta_files if re.match(r'(\d+)_meta\.json', f.name)}
+
+        if not raw_ids or not meta_ids:
+            raise InconsistentDatasetError('Empty or missing files :(')
+
+        if raw_ids != meta_ids:
+            raise InconsistentDatasetError('Mismatch between raw and meta file IDs :(')
+
+        if sorted(raw_ids) != list(range(1, len(raw_ids) + 1)):
+            raise InconsistentDatasetError('IDs are inconsistent :(')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for file in list(self.path_to_raw_txt_data.glob("*_raw.txt")):
+            article = from_raw(file)
+            self._storage[article.article_id] = article
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +108,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,11 +126,24 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = list(self._corpus.get_articles().values())
+
+        for article in articles:
+
+            to_cleaned(article)
+
+        if self._analyzer:
+            conllu_output = self._analyzer.analyze([article.text for article in articles])
+            for article, conllu in zip(articles, conllu_output):
+                article.set_conllu_info(conllu)
+                self._analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -86,6 +158,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        super().__init__()
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -94,6 +168,16 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        model_path = (PROJECT_ROOT / 'lab_6_pipeline' / 'assets' / 'model'
+                      / 'russian-syntagrus-ud-2.0-170801.udpipe')
+
+        model = spacy_udpipe.load_from_path(
+            lang="ru",
+            path=str(model_path))
+
+        model.add_pipe("conll_formatter", last=True,
+                       config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True})
+        return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -105,6 +189,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        return [self._analyzer(text)._.conll_str for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -113,6 +198,10 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        conllu_path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
+        with open(conllu_path, 'w', encoding='utf-8') as conllu_file:
+            conllu_file.write(article.get_conllu_info())
+            conllu_file.write("\n")
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -293,6 +382,10 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    udpipe_analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
+    pipeline.run()
 
 
 if __name__ == "__main__":
