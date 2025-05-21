@@ -8,7 +8,7 @@ import pathlib
 from networkx import DiGraph
 
 from core_utils.article.article import Article
-from core_utils.article.io import to_cleaned
+from core_utils.article.io import from_raw, to_cleaned
 from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -86,10 +86,7 @@ class CorpusManager:
         for file in self.path.iterdir():
             if not file.name.endswith('_raw.txt'):
                 continue
-            with open(file, encoding='utf-8') as f:
-                raw_text = f.read()
-            article = Article(url=None, article_id=int(file.name[:-8]))
-            article.text = raw_text
+            article = from_raw(file, article=None)
             self._storage[int(file.name[:-8])] = article
 
     def get_articles(self) -> dict:
