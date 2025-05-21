@@ -3,4 +3,5 @@ lxml==5.4.0
 networkx==3.4.2
 requests==2.32.3
 spacy-conll==4.0.1
+spacy-udpipe==1.0.0
 stanza==1.10.1
