@@ -10,7 +10,7 @@ from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_cleaned
-from core_utils.constants import ASSETS_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -181,12 +181,14 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        if not pathlib.Path(model_path := 'C:\\Users\\User\\KILI_labs\\2024-2-level-ctlr\\lab_6_pipeline\\assets\\model\\russian-syntagrus-ud-2.0-170801.udpipe').exists():
-            raise FileNotFoundError('Path to the model does not exists or is invalid')
-        model = spacy_udpipe.load_from_path(lang='ru', path=model_path)
-        model.add_pipe("conll_formatter", last=True,
-                       config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
-                       )
+        model_path = (PROJECT_ROOT / "lab_6_pipeline" / "assets" / "model" /
+                      "russian-syntagrus-ud-2.0-170801.udpipe")
+        model = spacy_udpipe.load_from_path(lang="ru", path=str(model_path))
+        model.add_pipe(
+            "conll_formatter",
+            last=True,
+            config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+        )
         return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
