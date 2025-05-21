@@ -9,7 +9,7 @@ import re
 import spacy_udpipe
 from networkx import DiGraph
 
-from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
+from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_cleaned
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
@@ -98,8 +98,8 @@ class CorpusManager:
         Register each dataset entry.
         """
         for file in list(self.path_to_raw_txt_data.glob("*_raw.txt")):
-            index = get_article_id_from_filepath(file)
-            self._storage[index] = from_raw(file, Article(None, index))
+            article = from_raw(file)
+            self._storage[article.article_id] = article
 
     def get_articles(self) -> dict:
         """
@@ -133,19 +133,16 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        for article in self._corpus.get_articles().values():
+        articles = list(self._corpus.get_articles().values())
 
-            cleaned_text = re.sub(r'[^\w\s\-,\'".!?]', '', article.text)
+        for article in articles:
 
-            if len(cleaned_text.strip()) < 50:
-                continue
-
-            article._cleaned_text = cleaned_text
             to_cleaned(article)
 
-            if self._analyzer:
-                conllu_output = self._analyzer.analyze([cleaned_text])[0]
-                article.set_conllu_info(conllu_output)
+        if self._analyzer:
+            conllu_output = self._analyzer.analyze([article.text for article in articles])
+            for article, conllu in zip(articles, conllu_output):
+                article.set_conllu_info(conllu)
                 self._analyzer.to_conllu(article)
 
 
