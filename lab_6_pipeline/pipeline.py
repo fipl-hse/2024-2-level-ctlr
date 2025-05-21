@@ -63,28 +63,37 @@ class CorpusManager:
         Validate folder with assets.
         """
         if not self.path.exists():
-            raise FileNotFoundError('File cannot be found')
+            raise FileNotFoundError(f'Directory {self.path} does not exist')
         if not self.path.is_dir():
-            raise NotADirectoryError('Given path does not lead to a directory')
+            raise NotADirectoryError(f'{self.path} is not a directory')
         if not any(self.path.iterdir()):
             raise EmptyDirectoryError
-        meta = set()
-        raw = set()
-        for file in self.path.iterdir():
-            if file.name.endswith('_meta.json'):
-                if not file.stat().st_size:
-                    raise InconsistentDatasetError
-                meta.add(file.name)
-            elif file.name.endswith('_raw.txt'):
-                if not file.stat().st_size:
-                    raise InconsistentDatasetError
-                raw.add(file.name)
-        if len(meta) != len(raw):
-            raise InconsistentDatasetError
-        true_meta = {f'{n}_meta.json' for n in range(1, len(meta) + 1)}
-        true_raw = {f'{n}_raw.txt' for n in range(1, len(raw) + 1)}
-        if meta != true_meta or raw != true_raw:
-            raise InconsistentDatasetError
+
+        raw = [f.name for f in self.path.iterdir() if f.is_file() and f.name.endswith('_raw.txt')]
+        meta = [f.name for f in self.path.iterdir() if f.is_file() and f.name.endswith('_meta.json')]
+
+        if len(raw) != len(meta):
+            raise InconsistentDatasetError(f'Number of meta and raw files is not equal: {len(raw)} != {len(meta)}')
+
+        raw_ids = [int(name.split('_')[0]) for name in raw]
+        expected_raw_ids = list(range(1, len(raw) + 1))
+        if sorted(raw_ids) != expected_raw_ids:
+            missing_raw = set(expected_raw_ids) - set(raw_ids)
+            raise InconsistentDatasetError(f'raw IDs in dataset are not found: {missing_raw}')
+
+        meta_ids = [int(name.split('_')[0]) for name in meta]
+        expected_meta_ids = list(range(1, len(meta) + 1))
+        if sorted(meta_ids) != expected_meta_ids:
+            missing_meta = set(expected_meta_ids) - set(meta_ids)
+            raise InconsistentDatasetError(f'meta IDs in dataset are not found: {missing_meta}')
+
+        for file_raw in self.path.glob('*_raw.txt'):
+            if file_raw.stat().st_size == 0:
+                raise InconsistentDatasetError(f'raw file {file_raw.name} is empty')
+
+        for file_meta in self.path.glob('*_meta.json'):
+            if file_meta.stat().st_size == 0:
+                raise InconsistentDatasetError(f'meta file {file_meta.name} is empty')
 
     def _scan_dataset(self) -> None:
         """
@@ -135,23 +144,25 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        for article_id, article in self.corpus_manager.get_articles().items():
-            article.text = article.text.lower()
-            text_with_normal_spaces = article.text.replace('\xa0', ' ')
-            processed_text = ''.join(char if char not in string.punctuation
-                                     else ' ' for char in text_with_normal_spaces)
-            processed_text = ''.join(char if char.isalnum() or char in (' ', '\n')
-                                     else ' ' for char in processed_text)
-            processed_text = ' '.join(processed_text.split())
-            article.text = processed_text
+        articles = self.corpus_manager.get_articles()
+        for article_id, article in articles.items():
+            raw_text_path = self.corpus_manager.path / f"{article_id}_raw.txt"
+            with open(raw_text_path, 'r', encoding='utf-8') as file:
+                raw_text = file.read()
+
+            text = raw_text.lower()
+            text = text.replace('\xa0', ' ')
+            text = ''.join(char if char not in string.punctuation else ' ' for char in text)
+            text = ''.join(char if char.isalnum() or char in (' ', '\n') else ' ' for char in text)
+            cleaned_text = ' '.join(text.split())
+
+            article.text = cleaned_text
             to_cleaned(article)
 
-        if self._analyzer:
-            articles = list(self.corpus_manager.get_articles().values())
-            analyzed_texts = self._analyzer.analyze([article.text for article in articles])
-            if isinstance(analyzed_texts, (list, tuple)) and len(analyzed_texts) != len(articles):
-                for article, analyzed in zip(articles, analyzed_texts):
-                    article.set_conllu_info(analyzed)
+            if self._analyzer:
+                analyzed_texts = self._analyzer.analyze([raw_text])
+                if analyzed_texts:
+                    article.set_conllu_info(analyzed_texts[0])
                     self._analyzer.to_conllu(article)
 
 
@@ -176,8 +187,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        if not pathlib.Path(model_path := 'lab_6_pipeline\\'
-                                          'assets\\russian-syntagrus-ud-2.0-170801.udpipe').exists():
+        if not pathlib.Path(model_path := 'C:\\Users\\222\\Desktop\\HSE_2023-2027\\2_course\\'
+                                          'CTLR\\2024-2-level-ctlr\\lab_6_pipeline\\assets\\russian-syntagrus-ud-2.0-170801.udpipe').exists():
             raise FileNotFoundError("Path to model does not exists or is invalid")
         model = spacy_udpipe.load_from_path(lang='ru', path=model_path)
         model.add_pipe("conll_formatter", last=True,
@@ -194,15 +205,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
-        results = []
-        for text in texts:
-            if not self._analyzer:
-                return []
-            doc = self._analyzer(text)
-            if not hasattr(doc._, 'conll_str'):
-                return []
-            results.append(doc._.conll_str)
-        return results
+        return [f'{self._analyzer(text)._.conll_str}\n' for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -394,8 +397,7 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    path = pathlib.Path(__file__).parent.parent / "tmp" / "articles"
-    corpus_manager = CorpusManager(path)
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
     pipeline = TextProcessingPipeline(corpus_manager, analyzer=udpipe_analyzer)
     pipeline.run()
