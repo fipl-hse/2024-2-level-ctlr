@@ -1,6 +1,7 @@
 beautifulsoup4==4.13.3
 conllu==6.0.0
 lxml==5.3.1
+matplotlib==3.10.3
 networkx==3.4.2
 requests==2.32.3
 spacy-udpipe==1.0.0
