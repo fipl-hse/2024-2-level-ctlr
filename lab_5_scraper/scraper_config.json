@@ -19,7 +19,7 @@
         "Cookie": "tmr_lvid=748e4813242e36653623c04923ff6b0e; tmr_lvidTS=1744362710690; _ym_uid=1744362711838728617; _ym_d=1744362711; __utmz=263909904.1744362711.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); adtech_uid=ca1e8fc7-f0da-4d6f-b2d3-87bc19abf377%3Amordovia-news.ru; top100_id=t1.2367414.1683558137.1744362711053; PHPSESSID=o60q9009qbkhdaojcuppf6cg41; __utmc=263909904; _ym_isad=2; domain_sid=HIHbq3BkXHPfx2yvl0zEL%3A1745831131193; __utma=263909904.24401468.1744362711.1745831130.1745844493.3; __utmt=1; t3_sid_2367414=s1.967071828.1745844493177.1745845029517.3.18.16.1; __utmb=263909904.16.10.1745844493; tmr_detect=0%7C1745845031832"
     },
     "total_articles_to_find_and_parse": 100,
-    "encoding": "utf-8",
+    "encoding": "windows-1251",
     "timeout": 50,
     "should_verify_certificate": true,
     "headless_mode": true

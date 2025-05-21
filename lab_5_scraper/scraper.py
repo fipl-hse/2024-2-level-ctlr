@@ -299,7 +299,7 @@ def main() -> None:
     crawler.find_articles()
 
     for idx, url in enumerate(crawler.urls[:config.get_num_articles()], 1):
-        sleep(randint(1, 3))  # Be polite with delays between requests
+        sleep(randint(1, 3))
         parser = HTMLParser(url, idx, config)
         article = parser.parse()
 
