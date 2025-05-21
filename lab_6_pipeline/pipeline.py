@@ -7,8 +7,12 @@ import pathlib
 from collections import defaultdict
 
 import spacy_udpipe
-from networkx import DiGraph
+import stanza
+from networkx import descendants, DiGraph
+from networkx.algorithms.isomorphism import GraphMatcher
 from spacy_conll.parser import ConllParser
+from stanza.models.common.doc import Document
+from stanza.utils.conll import CoNLL
 
 from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
 from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
@@ -245,6 +249,12 @@ class StanzaAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        language = "ru"
+        processors = "tokenize,pos,lemma,depparse"
+        stanza.download(lang=language, processors=processors, logging_level="INFO")
+        return stanza.Pipeline(
+            lang=language, processors=processors, logging_level="INFO", download_method=None
+        )
 
     def analyze(self, texts: list[str]) -> list[StanzaDocument]:
         """
@@ -256,6 +266,7 @@ class StanzaAnalyzer(LibraryWrapper):
         Returns:
             list[StanzaDocument]: List of documents
         """
+        return [self._analyzer.process(Document([], text=text)) for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -264,6 +275,8 @@ class StanzaAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        CoNLL.write_doc2conll(article.get_conllu_info(),
+                              article.get_file_path(ArtifactType.STANZA_CONLLU))
 
     def from_conllu(self, article: Article) -> StanzaDocument:
         """
@@ -275,6 +288,11 @@ class StanzaAnalyzer(LibraryWrapper):
         Returns:
             StanzaDocument: Document ready for parsing
         """
+        conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        if pathlib.Path(conllu_path).stat().st_size == 0:
+            raise EmptyFileError
+        parsed_conllu: StanzaDocument = CoNLL.conll2doc(conllu_path)
+        return parsed_conllu
 
     def get_document(self, doc: StanzaDocument) -> UnifiedCoNLLUDocument:
         """
@@ -364,7 +382,12 @@ class PatternSearchPipeline(PipelineProtocol):
         graphs = []
         for sentence in doc.sents:
             graph = DiGraph()
-
+            for word in sentence.words:
+                word = word.to_dict()
+                graph.add_node(word['id'], label=word['upos'])
+                graph.add_edge(word['head'], word['id'], label=word['deprel'])
+            graphs.append(graph)
+        return graphs
 
     def _add_children(
             self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
@@ -378,6 +401,14 @@ class PatternSearchPipeline(PipelineProtocol):
             node_id (int): ID of root node of the match
             tree_node (TreeNode): Root node of the match
         """
+        children = graph.successors(node_id)
+        if not children:
+            return
+        for child in children:
+            child_info = graph.nodes()[child]
+            child_tree_node = TreeNode(child_info['upos'], child_info['text'], [])
+            tree_node.children.append(child_tree_node)
+            self._add_children(graph, subgraph_to_graph, child, child_tree_node)
 
     def _find_pattern(self, doc_graphs: list) -> dict[int, list[TreeNode]]:
         """
