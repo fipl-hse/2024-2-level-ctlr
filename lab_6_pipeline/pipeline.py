@@ -198,12 +198,14 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        if not Path('lab_6_pipeline/assets').exists():
-            spacy_udpipe.download("ru")
-            model = spacy_udpipe.load_from_path(lang="ru", path='lab_6_pipeline/assets')
-            model.add_pipe("conllu_formatter",
-                           config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True})
-            return model
+        if not pathlib.Path(model_path := 'C:\\Users\\222\\Desktop\\HSE_2023-2027\\'
+                                          '2_course\\CTLR\\2024-2-level-ctlr\lab_6_pipeline\\'
+                                          'assets\\russian-syntagrus-ud-2.0-170801.udpipe').exists():
+            raise FileNotFoundError("Path to model does not exists or is invalid")
+        model = spacy_udpipe.load_from_path(lang='ru', path=model_path)
+        model.add_pipe("conll_formatter", last=True,
+                       config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True})
+        return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -215,7 +217,15 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
-        return [self._analyzer(text)._.conll_str for text in texts]
+        results = []
+        for text in texts:
+            if not self._analyzer:
+                return []
+            doc = self._analyzer(text)
+            if not hasattr(doc._, 'conll_str'):
+                return []
+            results.append(doc._.conll_str)
+        return results
 
     def to_conllu(self, article: Article) -> None:
         """
