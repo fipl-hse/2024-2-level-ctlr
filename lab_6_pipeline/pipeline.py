@@ -183,7 +183,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model_path = PROJECT_ROOT / "core_utils" / "udpipe" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        model_path = PROJECT_ROOT / 'lab_6_pipeline' / 'assets' / 'model' / 'russian-syntagrus-ud-2.0-170801.udpipe'
         nlp = spacy_udpipe.load_from_path("ru", str(model_path))
         nlp.add_pipe("conll_formatter", last=True, config={"include_headers": True}, )
         return nlp
