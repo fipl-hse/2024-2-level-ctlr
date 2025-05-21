@@ -349,6 +349,13 @@ class HTMLParser:
         if left_author:
             authors.append(left_author[0].get_text(strip=True))
 
+        if not authors:
+            for p in article_soup.find_all(['p', 'div']):
+                text = p.get_text(strip=True)
+                if text.startswith("Фото:") or text.startswith("Информация/фото:"):
+                    authors.append(text)
+                    break
+
         self.article.author = authors if authors else ["NOT FOUND"]
 
         try:
