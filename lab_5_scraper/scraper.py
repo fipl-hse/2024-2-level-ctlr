@@ -354,7 +354,7 @@ class HTMLParser:
                 text = p.get_text(strip=True)
                 if text.startswith("Фото:") or text.startswith("Информация/фото:"):
                     authors.append(text)
-                    break
+                    #break
 
         self.article.author = authors if authors else ["NOT FOUND"]
 

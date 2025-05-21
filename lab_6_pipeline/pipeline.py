@@ -6,16 +6,15 @@ Pipeline for CONLL-U formatting.
 import pathlib
 import re
 from pathlib import Path
-import spacy_udpipe
-from spacy_conll.parser import ConllParser
-from conllu import parse
 
+import spacy_udpipe
+from conllu import parse
 from networkx import DiGraph
+from spacy_conll.parser import ConllParser
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
-from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
-from core_utils.visualizer import visualize
+from core_utils.article.io import from_raw, to_cleaned, to_meta
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -26,6 +25,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.visualizer import visualize
 
 
 class EmptyDirectoryError(Exception):
@@ -187,8 +187,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model = Path(UDPIPE_MODEL_PATH)
-        if not model.exists() or not any(model.iterdir()):
+        model = Path(r"C:\LabGit\2024-2-level-ctlr\core_utils\
+        udpipe\russian-syntagrus-ud-2.0-170801.udpipe")
+        if not model.exists() or not model.is_file():
             raise FileNotFoundError(f"UDPipe model not found or path is empty: {model}")
 
         nlp = spacy_udpipe.load_from_path(
@@ -247,7 +248,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         with open(path, 'r', encoding='utf-8') as file:
             conllu_str = file.read()
         parser = ConllParser(self._analyzer)
-        result = parser.parse_conll_text_as_spacy(conllu_str.rstrip('\n'))
+        result: UDPipeDocument = parser.parse_conll_text_as_spacy(conllu_str.rstrip('\n'))
         return result
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
@@ -260,6 +261,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UnifiedCoNLLUDocument: Dictionary of token features within document sentences
         """
+
 
 
 class StanzaAnalyzer(LibraryWrapper):
@@ -371,10 +373,13 @@ class POSFrequencyPipeline:
         """
         articles = self._corpus.get_articles().values()
         for article in articles:
-            try:
-                frequencies = self._count_frequencies(article)
-            except EmptyFileError:
-                continue
+        #    try:
+        #        frequencies = self._count_frequencies(article)
+        #    except EmptyFileError:
+        #        continue
+            frequencies = self._count_frequencies(article)
+            if not frequencies:
+                raise EmptyFileError(f"Empty POS frequencies for article {article.article_id}")
 
             article.set_pos_info(frequencies)
             to_meta(article)
