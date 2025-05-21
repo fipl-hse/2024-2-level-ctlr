@@ -101,7 +101,7 @@ class CorpusManager:
         for file in files_list:
             if str(file).endswith('raw.txt'):
                 files_new.append(str(file))
-        files_new = sorted(files_new, key=lambda m: int(m.split("\\")[-1].split('_')[0]))
+        files_new = sorted(files_new, key=lambda m: int(str(m.stem).split('_')[0]))
         print(files_new)
         iter_count = 0
         for file_id, file in enumerate(files_new):
