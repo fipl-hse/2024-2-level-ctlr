@@ -151,13 +151,8 @@ class TextProcessingPipeline(PipelineProtocol):
             with open(raw_text_path, 'r', encoding='utf-8') as file:
                 raw_text = file.read()
 
-            text = raw_text.lower()
-            text = text.replace('\xa0', ' ')
-            text = ''.join(char if char not in string.punctuation else ' ' for char in text)
-            text = ''.join(char if char.isalnum() or char in (' ', '\n') else ' ' for char in text)
-            cleaned_text = ' '.join(text.split())
-
-            article.text = cleaned_text
+            text = raw_text.replace('\xa0', ' ')
+            article.text = text
             to_cleaned(article)
 
             if self._analyzer:
@@ -188,7 +183,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model_path = (PROJECT_ROOT / "lab_6_pipeline" / "assets" /
+        model_path = (PROJECT_ROOT / "lab_6_pipeline" / "assets" / "model" /
                       "russian-syntagrus-ud-2.0-170801.udpipe")
         model = spacy_udpipe.load_from_path(lang="ru", path=str(model_path))
         model.add_pipe(
