@@ -68,45 +68,45 @@ class CorpusManager:
             raise FileNotFoundError(f" Directory {self.path} does not exist")
         if not self.path.is_dir():
             raise NotADirectoryError(f" {self.path} is not a directory")
-        if not any(self.path.iterdir()):
-            raise EmptyDirectoryError
-
         meta_files = []
         raw_files = []
-        for filepath in self.path.iterdir():
-            if filepath.name.endswith('_meta.json'):
+        for filepath in sorted(self.path.iterdir()):
+            filename = filepath.name
+            if filename.endswith('_meta.json'):
                 if filepath.stat().st_size == 0:
-                    raise InconsistentDatasetError(f"Empty metainfo file: {filepath.name}")
+                    raise InconsistentDatasetError(f"Empty metainfo file: {filename}")
                 meta_files.append(filepath)
-            elif filepath.name.endswith('_raw.txt'):
+            elif filename.endswith('_raw.txt'):
                 if filepath.stat().st_size == 0:
-                    raise InconsistentDatasetError(f"Empty text file: {filepath.name}")
+                    raise InconsistentDatasetError(f"Empty text file: {filename}")
                 raw_files.append(filepath)
+
+        if not meta_files and not raw_files:
+            raise EmptyDirectoryError(f"No valid files found in {self.path}")
+
         if len(meta_files) != len(raw_files):
-            raise InconsistentDatasetError(f"Number of meta and raw files is not equal:"
-                                           f"{len(raw_files)} texts != {len(meta_files)} jsons")
+            raise InconsistentDatasetError(
+                f"Number of meta and raw files is not equal: "
+                f"{len(raw_files)} texts != {len(meta_files)} jsons")
+
         meta_ids = set()
-        for m in meta_files:
-            if '_' not in m.stem:
-                continue
-            file_id = m.stem.split('_')[0]
-            if not file_id.isdigit():
-                continue
-            meta_ids.add(int(file_id))
         raw_ids = set()
+
+        for m in meta_files:
+            parts = m.stem.split('_')
+            if len(parts) > 0 and parts[0].isdigit():
+                meta_ids.add(int(parts[0]))
+
         for r in raw_files:
-            if '_' not in r.stem:
-                continue
-            file_id = r.stem.split('_')[0]
-            if not file_id.isdigit():
-                continue
-            raw_ids.add(int(file_id))
-        expected_ids = set(range(1, len(meta_files) + 1))
-        if meta_ids != expected_ids or raw_ids != expected_ids:
-            missing_meta = expected_ids - meta_ids
-            missing_raw = expected_ids - raw_ids
-            raise InconsistentDatasetError(f"Inconsistent IDs."
-                                           f"Missing meta: {missing_meta}, missing raw: {missing_raw}")
+            parts = r.stem.split('_')
+            if len(parts) > 0 and parts[0].isdigit():
+                raw_ids.add(int(parts[0]))
+
+        if meta_ids != raw_ids:
+            missing_meta = raw_ids - meta_ids
+            missing_raw = meta_ids - raw_ids
+            raise InconsistentDatasetError(
+                f"Inconsistent IDs. Missing meta: {missing_meta}, missing raw: {missing_raw}")
 
     def _scan_dataset(self) -> None:
         """
