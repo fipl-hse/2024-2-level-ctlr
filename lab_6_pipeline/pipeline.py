@@ -5,15 +5,12 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 
-import networkx
 import spacy_udpipe
 from networkx import DiGraph
 from networkx.algorithms.isomorphism import DiGraphMatcher
 from typing import cast
 from spacy_conll import ConllParser
-from string import  punctuation
 
-from torch.utils.benchmark import Language
 import matplotlib.pyplot as plt
 
 from core_utils.article.article import Article, ArtifactType
