@@ -17,7 +17,7 @@
         "Accept-Language": "ru,en;q=0.9",
         "Cookie": "_ym_uid=1744355789860353532; _ym_d=1744355789; tmr_lvid=1c81557ea2b899c16b89b85f603e4e71; tmr_lvidTS=1744355788988; _ym_visorc=w; adtech_uid=5996360a-31da-476a-a5ba-88354040b48d%3Apravda-nn.ru; top100_id=t1.4519654.1676636151.1744355789599; adLenth=0; adBlockSize=0; adBlockSizeName=0%20%D0%BF%D0%BE%D0%BB%D0%BE%D1%81%D1%8B; editionColor=bw; adType=personal; editionType=pravdaNN; selectedModuleSize=120; selectedModule=pravdaNN; selectedArticleSize=120; selectedArticle=pravdaNN; _ym_isad=2; domain_sid=ylpfW0UYv8HvPd1kzU8NA%3A1744355791478; tmr_detect=0%7C1744355793782; t3_sid_4519654=s1.501577454.1744355789603.1744356532742.1.11.1.1"
     },
-    "total_articles_to_find_and_parse": 5,
+    "total_articles_to_find_and_parse": 10,
     "encoding": "UTF-8",
     "timeout": 5,
     "should_verify_certificate": true,
