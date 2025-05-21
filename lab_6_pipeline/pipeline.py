@@ -64,20 +64,16 @@ class CorpusManager:
         Validate folder with assets.
         """
         if not self.path.exists():
-            raise FileNotFoundError
+            raise FileNotFoundError('Cannot find the file')
         if not self.path.is_dir():
-            raise NotADirectoryError
+            raise NotADirectoryError('The file is not a directory')
         if not any(self.path.iterdir()):
             raise EmptyDirectoryError
-        meta_list = []
-        raw_list = []
         for file in self.path.iterdir():
             if not file.stat().st_size:
                 raise InconsistentDatasetError('Something is empty')
-            if file.name.endswith('_raw.txt'):
-                raw_list.append(file.name)
-            if file.name.endswith('_meta.json'):
-                meta_list.append(file.name)
+        meta_list = [file.name for file in self.path.iterdir() if file.name.endswith('_meta.json')]
+        raw_list = [file.name for file in self.path.iterdir() if file.name.endswith('_raw.txt')]
         if len(raw_list) != len(meta_list):
             raise InconsistentDatasetError(f'Meta and text amounts are different,'
                                            f' {len(raw_list)}, {len(meta_list)}')
@@ -95,8 +91,7 @@ class CorpusManager:
         for file in self.path.iterdir():
             if not file.name.endswith('raw.txt'):
                 continue
-            article = from_raw(file)
-            self._storage[int(file.name.split('_')[0])] = article
+            self._storage[int(file.name.split('_')[0])] = from_raw(file)
 
 
     def get_articles(self) -> dict:
@@ -131,9 +126,9 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        got_articles = self._corpus.get_articles().values()
-        analyzed_texts = self._analyzer.analyze([article.text for article in got_articles])
-        for article_id, article in enumerate(got_articles):
+        analyzed_texts = self._analyzer.analyze([article.text for article
+                                                 in self._corpus.get_articles().values()])
+        for article_id, article in enumerate(self._corpus.get_articles().values()):
             to_cleaned(article)
             article.set_conllu_info(analyzed_texts[article_id])
             self._analyzer.to_conllu(article)
