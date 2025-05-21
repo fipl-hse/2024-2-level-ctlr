@@ -384,6 +384,11 @@ class PatternSearchPipeline(PipelineProtocol):
             node_id (int): ID of root node of the match
             tree_node (TreeNode): Root node of the match
         """
+        for child in graph.neighbors(node_id):
+            if child in subgraph_to_graph:
+                child_node = TreeNode(child['label'], child['word'], [])
+                tree_node.children.append(child_node)
+                self._add_children(graph, subgraph_to_graph, child, child_node)
 
     def _find_pattern(self, doc_graphs: list) -> dict[int, list[TreeNode]]:
         """
