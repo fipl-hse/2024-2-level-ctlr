@@ -5,7 +5,9 @@
         "https://ria.ru/society/",
         "https://ria.ru/economy/",
         "https://ria.ru/politics/",
-        "https://ria.ru/world/"
+        "https://ria.ru/world/",
+        "https://ria.ru/religion/",
+        "https://ria.ru/tourism/"
     ],
     "headers": {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
