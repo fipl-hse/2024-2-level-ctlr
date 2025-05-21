@@ -130,13 +130,13 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        symbols_to_remove = set("!\"#$%&'()*+,-./:;<=>?@[\\]^_{|}~")
-
-        for article in self._corpus.get_articles().values():
-            normalized_text = article.text.lower()
-            cleaned_text = ''.join(char for char in normalized_text
-                                   if char not in symbols_to_remove)
-            article._cleaned_text = cleaned_text
+        articles = self._corpus.get_articles()
+        for article_id in articles:
+            article = articles[article_id]
+            # this extra block was added to remove punctuation which is not
+            # included in string punctuation (comment just for clarifying, I will delete it)
+            for char in ['–', '—', '−', '…']:
+                article.text = article.text.replace(char, '')
             to_cleaned(article)
 
 
