@@ -8,6 +8,7 @@ import pathlib
 from networkx import DiGraph
 
 from core_utils.article.article import Article
+from core_utils.article.io import to_cleaned, from_raw
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +19,25 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
+
+
+class InconsistentDatasetError(Exception):
+    """
+    IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Directory is empty
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    The file is empty
+    """
 
 
 class CorpusManager:
@@ -32,16 +52,43 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError('not existent path')
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError('path does not lead to directory')
+        ids = [int(file_path.name.split('_')[0])
+               for file_path in self.path_to_raw_txt_data.glob('*_raw.txt')]
+        if not ids:
+            raise EmptyDirectoryError('directory is empty')
+        ids.sort()
+        expected_ids = list(range(1, len(ids) + 1))
+        if ids != expected_ids:
+            raise InconsistentDatasetError('ids contain slips')
+        for i, file in enumerate(self.path_to_raw_txt_data.iterdir(),
+                                 start=1):
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError('file is empty')
+        if (len(list(self.path_to_raw_txt_data.glob('*_meta.json'))) !=
+                len(list(self.path_to_raw_txt_data.glob('*_raw.txt')))):
+            raise InconsistentDatasetError('numbers of meta and txt are not equal')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for i, file_path in enumerate(self.path_to_raw_txt_data.glob('*_raw.txt')):
+            self._storage[i + 1] = from_raw(file_path,
+                                            Article(url=None,
+                                            article_id=i + 1))
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +97,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,11 +115,16 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus_manager = corpus_manager
+        self.analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = self.corpus_manager.get_articles()
+        for i, article in articles.items():
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
