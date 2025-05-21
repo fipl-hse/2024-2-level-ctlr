@@ -7,8 +7,6 @@ import pathlib
 import re
 
 import spacy_udpipe
-import spacy_udpipe
-from spacy_conll import ConllParser
 from networkx import DiGraph
 
 from core_utils.article.article import Article
@@ -74,6 +72,10 @@ class CorpusManager:
         if not any(self.path.iterdir()):
             raise EmptyDirectoryError('Directory is empty.')
 
+        for file in self.path.iterdir():
+            if not file.stat().st_size:
+                raise InconsistentDatasetError(f'File {file} is empty.')
+
         meta, raw = [], []
         for filepath in self.path.iterdir():
             if filepath.name.endswith('_meta.json'):
@@ -92,10 +94,6 @@ class CorpusManager:
             raise InconsistentDatasetError('There are slips in IDs of meta files.')
         if set(raw) != set(raw_ideal):
             raise InconsistentDatasetError('There are slips in IDs of raw files.')
-
-        for file in self.path.iterdir():
-            if not file.stat().st_size:
-                raise InconsistentDatasetError(f'File {file} is empty.')
 
     def _scan_dataset(self) -> None:
         """
