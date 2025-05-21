@@ -66,25 +66,13 @@ class CorpusManager:
             raise FileNotFoundError(f" Directory {self.path} does not exist")
         if not self.path.is_dir():
             raise NotADirectoryError(f" {self.path} is not a directory")
-        all_files = list(self.path.iterdir())
-
-        if not all_files:
-            raise EmptyDirectoryError(...)
-        has_valid_files = False
-        for filepath in all_files:
-            if filepath.name.endswith(('_meta.json', '_raw.txt')):
-                if filepath.stat().st_size == 0:
-                    raise InconsistentDatasetError(...)
-                has_valid_files = True
-        if not has_valid_files:
-            raise EmptyDirectoryError("No valid files found")
+        if not any(self.path.iterdir()):
+            raise EmptyDirectoryError
 
         meta_files = []
         raw_files = []
         for filepath in self.path.iterdir():
             if filepath.name.endswith('_meta.json'):
-                if filepath.stat().st_size == 0:
-                    raise InconsistentDatasetError(f"Empty metainfo file: {filepath.name}")
                 meta_files.append(filepath)
             elif filepath.name.endswith('_raw.txt'):
                 if filepath.stat().st_size == 0:
