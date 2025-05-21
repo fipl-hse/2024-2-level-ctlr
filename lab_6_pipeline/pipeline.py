@@ -443,7 +443,6 @@ class PatternSearchPipeline(PipelineProtocol):
         """
 
 
-
 def main() -> None:
     """
     Entrypoint for pipeline module.
