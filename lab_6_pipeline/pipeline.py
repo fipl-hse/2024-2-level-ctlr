@@ -9,6 +9,7 @@ from networkx import DiGraph
 
 from core_utils.article.article import Article
 from core_utils.article.io import from_raw, to_cleaned
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -346,6 +347,7 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
 
 
 if __name__ == "__main__":
