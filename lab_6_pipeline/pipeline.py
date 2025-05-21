@@ -10,7 +10,7 @@ from pathlib import Path
 import spacy_udpipe
 from conllu import parse
 from networkx import DiGraph
-from spacy_conll import ConllParser  # type: ignore[import-not-found, import-untyped]
+from spacy_conll.parser import ConllParser
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_cleaned, to_meta
