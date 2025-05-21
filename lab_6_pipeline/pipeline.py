@@ -5,6 +5,7 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 import re
+#import spacy-udpipe
 
 from networkx import DiGraph
 from core_utils.constants import (
@@ -39,8 +40,8 @@ class EmptyDirectoryError(Exception):
 
 class EmptyFileError(Exception):
     """
-        Raised when the file is empty.
-        """
+    Raised when the file is empty.
+    """
 
 class CorpusManager:
     """
@@ -64,30 +65,34 @@ class CorpusManager:
         Validate folder with assets.
         """
         if not self.path_to_raw.exists():
-            raise FileNotFoundError
+            raise FileNotFoundError("The path to articles doesn't lead to an existing directory")
         if not self.path_to_raw.is_dir():
-            raise NotADirectoryError
+            raise NotADirectoryError("The path to articles leads to a file, not a directory")
         if not any(self.path_to_raw.iterdir()):
-            raise EmptyDirectoryError
-        raw_index = 1
-        meta_index = 1
-        files_to_check = [file.stem + file.suffix for file in self.path_to_raw.iterdir()
+            raise EmptyDirectoryError("The path to articles leads to an empty directory")
+        raw_ind = 1
+        meta_ind = 1
+        files_to_check = [file.name for file in self.path_to_raw.iterdir()
                           if re.match("[0-9]+_raw", file.stem) or
                           re.match("[0-9]+_meta", file.stem)]
         for file_name in sorted(files_to_check,
                                 key=lambda name: int(name[:name.index("_")])):
             if re.match("[0-9]+_raw.txt", file_name):
-                if str(raw_index) in file_name and raw_index == meta_index-1:
-                    raw_index += 1
+                if file_name[:file_name.index("_")] == str(raw_ind) and raw_ind == meta_ind-1:
+                    raw_ind += 1
                 else:
-                    raise InconsistentDatasetError
+                    raise InconsistentDatasetError(
+                        "There are slips in file IDs or the number of raw and meta files is not equal"
+                    )
             elif re.match("[0-9]+_meta.json", file_name):
-                if str(meta_index) in file_name and raw_index == meta_index:
-                    meta_index += 1
+                if file_name[:file_name.index("_")] == str(meta_ind) and raw_ind == meta_ind:
+                    meta_ind += 1
                 else:
-                    raise InconsistentDatasetError
+                    raise InconsistentDatasetError(
+                        "There are slips in file IDs or the number of raw and meta files is not equal"
+                    )
             if not (self.path_to_raw / file_name).stat().st_size:
-                raise InconsistentDatasetError
+                raise InconsistentDatasetError("At least one file is empty")
 
     def _scan_dataset(self) -> None:
         """
