@@ -162,9 +162,9 @@ class TextProcessingPipeline(PipelineProtocol):
 
             if self._analyzer:
                 analyzed_texts = self._analyzer.analyze([raw_text])
-                if analyzed_texts:
-                    article.set_conllu_info(analyzed_texts[0])
-                    self._analyzer.to_conllu(article)
+                conllu_markup = analyzed_texts[0]
+                article.set_conllu_info(conllu_markup)
+                self._analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
