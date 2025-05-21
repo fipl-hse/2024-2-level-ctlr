@@ -16,7 +16,7 @@ from stanza.utils.conll import CoNLL
 
 from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
 from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
-from core_utils.constants import ASSETS_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -161,12 +161,13 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        if not pathlib.Path(model_path := 'lab_6_pipeline/assets/model/russian-syntagrus-ud-2.0'
-                                          '-170801.udpipe').exists():
+        model_path = pathlib.Path(PROJECT_ROOT) /\
+                     "lab_6_pipeline" / "assets" / "model" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        if not model_path.exists():
             raise FileNotFoundError("Path to model does not exists or is invalid")
         model = spacy_udpipe.load_from_path(
             lang='ru',
-            path=model_path
+            path=str(model_path)
         )
         model.add_pipe(
             "conll_formatter",
@@ -434,6 +435,12 @@ def main() -> None:
     path = pathlib.Path(__file__).parent.parent / "tmp" / "articles"
     corpus_manager = CorpusManager(path)
     udpipe_analyzer = UDPipeAnalyzer()
+
+    text_pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
+    pos_pipeline = POSFrequencyPipeline(corpus_manager, udpipe_analyzer)
+
+    text_pipeline.run()
+    pos_pipeline.run()
 
 
 if __name__ == "__main__":
