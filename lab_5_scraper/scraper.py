@@ -428,7 +428,7 @@ class CrawlerRecursive(Crawler):
 
                 if len(self.urls) - 1 >= self.config.get_num_articles():
                     self.urls.remove(self.start_url)
-                    self.urls = self.urls[:self.config.get_num_articles() + 1]
+                    self.urls = self.urls[:self.config.get_num_articles()]
                     return
 
             self.visited_urls.add(base_url)
@@ -496,6 +496,7 @@ def main2() -> None:
         if isinstance(article, Article):
             to_raw(article)
             to_meta(article)
+    print('finished')
 
 
 if __name__ == "__main__":
