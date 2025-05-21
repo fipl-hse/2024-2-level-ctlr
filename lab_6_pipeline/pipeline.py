@@ -133,8 +133,6 @@ class TextProcessingPipeline(PipelineProtocol):
         articles = self._corpus.get_articles()
         for article_id in articles:
             article = articles[article_id]
-            # this extra block was added to remove punctuation which is not
-            # included in string punctuation (comment just for clarifying, I will delete it)
             for char in ['–', '—', '−', '…']:
                 article.text = article.text.replace(char, '')
             to_cleaned(article)
