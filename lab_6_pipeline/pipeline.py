@@ -13,7 +13,7 @@ from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_cleaned
-from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -183,7 +183,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        nlp = spacy_udpipe.load_from_path("ru", str(UDPIPE_MODEL_PATH))
+        model_path = PROJECT_ROOT / "core_utils" / "udpipe" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        nlp = spacy_udpipe.load_from_path("ru", str(model_path))
         nlp.add_pipe("conll_formatter", last=True, config={"include_headers": True}, )
         return nlp
 
