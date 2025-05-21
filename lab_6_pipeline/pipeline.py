@@ -135,7 +135,7 @@ class TextProcessingPipeline(PipelineProtocol):
     """
 
     def __init__(
-            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
+        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper | None = None
     ) -> None:
         """
         Initialize an instance of the TextProcessingPipeline class.
@@ -359,7 +359,7 @@ class PatternSearchPipeline(PipelineProtocol):
     """
 
     def __init__(
-            self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
+        self, corpus_manager: CorpusManager, analyzer: LibraryWrapper, pos: tuple[str, ...]
     ) -> None:
         """
         Initialize an instance of the PatternSearchPipeline class.
@@ -382,7 +382,7 @@ class PatternSearchPipeline(PipelineProtocol):
         """
 
     def _add_children(
-            self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
+        self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
     ) -> None:
         """
         Add children to TreeNode.
