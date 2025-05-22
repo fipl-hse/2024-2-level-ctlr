@@ -5,13 +5,13 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 from typing import cast
-from torch.utils.benchmark import Language
 
 import matplotlib.pyplot as plt
 import spacy_udpipe
 from networkx import DiGraph
 from networkx.algorithms.isomorphism import DiGraphMatcher
-from spacy_conll import ConllParser
+from spacy_conll import ConllParser  # type: ignore[import-not-found, import-untyped]
+from torch.utils.benchmark import Language
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
@@ -28,7 +28,10 @@ from core_utils.pipeline import (
 )
 from core_utils.visualizer import visualize
 
-UDPIPE_MODEL_PATH = PROJECT_ROOT / "lab_6_pipeline" / "assets" / "model" / "russian-syntagrus-ud-2.0-170801.udpipe"
+UDPIPE_MODEL_PATH = (PROJECT_ROOT /
+                     "lab_6_pipeline" /
+                     "assets" / "model" /
+                     "russian-syntagrus-ud-2.0-170801.udpipe")
 
 
 class InconsistentDatasetError(Exception):
@@ -76,8 +79,8 @@ class CorpusManager:
         if not any(self.path_to_raw_txt_data.iterdir()):
             raise EmptyDirectoryError("Directory is empty")
 
-        raws = [doc for doc in self.path_to_raw_txt_data.glob("*_raw.txt")]
-        metas = [doc for doc in self.path_to_raw_txt_data.glob("*_meta.json")]
+        raws = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
+        metas = list(self.path_to_raw_txt_data.glob('*_meta.json'))
 
         raw, meta = [], []
 
