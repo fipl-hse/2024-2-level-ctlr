@@ -62,32 +62,41 @@ class CorpusManager:
         Validate folder with assets.
         """
         if not self.path_to_raw_txt_data.exists():
-            raise FileNotFoundError("Path does not exist")
+            raise FileNotFoundError("Directory does not exist")
         if not self.path_to_raw_txt_data.is_dir():
-            raise NotADirectoryError("Not a directory")
+            raise NotADirectoryError("Path is not a directory")
 
-        raw_files = list(self.path_to_raw_txt_data.glob("*_raw.txt"))
-        if not raw_files:
-            raise EmptyDirectoryError("No raw files fоund")
-
+            # Собираем ID только из корректных имен файлов
         raw_ids = set()
-        for file in raw_files:
+        for file in self.path_to_raw_txt_data.glob("*_raw.txt"):
             try:
-                file_id = int(file.stem.split("_")[0])
-                raw_ids.add(file_id)
+                # Извлекаем числовой ID из имени файла
+                article_id = int(file.stem.split("_")[0])
+                raw_ids.add(article_id)
+            except (ValueError, IndexError):
+                continue  # Игнорируем файлы с некорректными именами
+
+        meta_ids = set()
+        for file in self.path_to_raw_txt_data.glob("*_meta.json"):
+            try:
+                # Извлекаем числовой ID из имени файла
+                article_id = int(file.stem.split("_")[0])
+                meta_ids.add(article_id)
             except (ValueError, IndexError):
                 continue
 
-        meta_files = {
-            int(file.stem.split("_")[0])
-            for file in self.path_to_raw_txt_data.glob("*_meta.json")
-            if file.name.endswith("_meta.json")
-        }
+        # Проверяем соответствие ID (допускаем "дырки" в нумерации)
+        if raw_ids != meta_ids:
+            missing_meta = raw_ids - meta_ids
+            missing_raw = meta_ids - raw_ids
+            error_msg = (
+                f"Mismatch: Missing meta for IDs {missing_meta}, "
+                f"Missing raw for IDs {missing_raw}"
+            )
+            raise InconsistentDatasetError(error_msg)
 
-        if raw_ids != meta_files:
-            raise InconsistentDatasetError("Mismatch between meta and raw files")
-
-        for file in raw_files:
+        # Проверка на пустые файлы
+        for file in self.path_to_raw_txt_data.glob("*"):
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f"Empty file: {file.name}")
 
