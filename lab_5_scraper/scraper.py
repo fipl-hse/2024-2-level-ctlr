@@ -13,6 +13,8 @@ from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
 import shutil
 import requests
 from bs4 import BeautifulSoup
+import time
+import random
 
 
 class IncorrectSeedURLError(Exception):
@@ -72,13 +74,14 @@ class Config:
         self.path_to_config = path_to_config
         self._validate_config_content()
         self._extr_config = self._extract_config_content()
-        self.seed_urls = self._extr_config.seed_urls
+        self._seed_urls = self._extr_config.seed_urls
         self.total_articles = self._extr_config.total_articles
         self.headers = self._extr_config.headers
         self.encoding = self._extr_config.encoding
         self.timeout = self._extr_config.timeout
         self.should_verify_certificate = self._extr_config.should_verify_certificate
         self.headless_mode = self._extr_config.headless_mode
+
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -89,7 +92,7 @@ class Config:
         """
         with self.path_to_config.open("r", encoding="utf-8") as config_file:
             config = json.load(config_file)
-            return ConfigDTO(**config)
+        return ConfigDTO(**config)
 
     def _validate_config_content(self) -> None:
         """
@@ -97,7 +100,7 @@ class Config:
         """
         config = self._extract_config_content()
 
-        if not ('https://vestiprim.ru/' in url for url in config.seed_urls):
+        if not ('https://www.ks87.ru/' in url for url in config.seed_urls):
             raise IncorrectSeedURLError
         if config.total_articles < 1 or config.total_articles > 150:
             raise NumberOfArticlesOutOfRangeError
@@ -121,7 +124,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
-        return self.seed_urls
+        return self._seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -189,7 +192,8 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     Returns:
         requests.models.Response: A response from a request
     """
-    response = requests.get(url=url,
+    time.sleep(random.randint(1,5))
+    response = requests.get(url,
                             headers=config.get_headers(),
                             timeout=config.get_timeout(),
                             verify=config.get_verify_certificate())
@@ -225,26 +229,38 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        all_links = article_bs.find_all('a', class_='img_box')
-        for link in all_links:
-            href_link = link.get('href')
-            if isinstance(href_link, str) and href_link not in self.urls:
-                return href_link
-            return ''
+        link = article_bs.a["href"]
+        print(link)
+        return link
 
     def find_articles(self) -> None:
         """
         Find articles.
         """
-        for seed in self.get_search_urls():
-            response = make_request(seed, self.config)
-            if not response.ok:
+        seed_urls = self.config.get_seed_urls()
+        print(seed_urls)
+        for seed_url in seed_urls:
+            if len(self.urls) >= self.config.get_num_articles():
+                break
+
+            seed_url_request = make_request(seed_url, self.config)
+            if not seed_url_request.ok:
                 continue
-            soup = BeautifulSoup(response.text, 'lxml')
-            url = self._extract_url(soup)
-            while url and len(self.urls) != self.config.get_num_articles():
-                self.urls.append(url)
-                url = self._extract_url(soup)
+
+            seed_url_bs = BeautifulSoup(seed_url_request.text, 'html.parser')
+            num_new_urls = len(set(seed_url_bs.find_all(class_="description")))
+            links = seed_url_bs.find_all("a", href=True)
+            #print(seed_url_bs)
+
+
+            for link in links:
+                link_soup = BeautifulSoup(str(link), "html.parser")
+                found_article_url = self._extract_url(link_soup)
+                if found_article_url:
+                    self.urls.append(found_article_url)
+                else:
+                    return None
+        return None
 
     def get_search_urls(self) -> list:
         """
@@ -285,7 +301,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        div = article_soup.find('div', class_='article_text')
+        div = article_soup.find('div', class_="description")
         text = []
         if div is not None:
             for block in div:
@@ -309,9 +325,10 @@ class HTMLParser:
             Union[Article, bool, list]: Article instance
         """
         response = make_request(self.full_url, self.config)
-        if response.ok:
-            soup = BeautifulSoup(response.text, 'lxml')
-            self._fill_article_with_text(soup)
+        if not response.ok:
+            return self.article
+        soup = BeautifulSoup(response.text, 'lxml')
+        self._fill_article_with_text(soup)
         return self.article
 
 
@@ -324,7 +341,7 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
     if base_path.exists():
         shutil.rmtree(base_path)
-        base_path.mkdir(parents=True)
+    base_path.mkdir(parents=True)
 
 
 def main() -> None:
@@ -335,11 +352,12 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    parser = HTMLParser(full_url="https://vestiprim.ru/news/ptrnews/163045-generalnoe-konsulstvo-respubliki-belarus-otkrylos-v-primore.html", article_id=1, config=configuration)
-    parsed_article = parser.parse()
-    if isinstance(parsed_article, Article):
-        to_raw(parsed_article)
-
+    print(crawler.urls)
+    for article_id, article_url in enumerate(crawler.urls):
+        parser = HTMLParser(article_url, article_id+1, configuration)
+        parsed_article = parser.parse()
+        if isinstance(parsed_article, Article):
+            to_raw(parsed_article)
 
 
 if __name__ == "__main__":
