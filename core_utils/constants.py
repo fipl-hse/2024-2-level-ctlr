@@ -14,5 +14,3 @@ CONFIG_DIR = PROJECT_ROOT / "config"
 NUM_ARTICLES_UPPER_LIMIT = 150
 TIMEOUT_LOWER_LIMIT = 0
 TIMEOUT_UPPER_LIMIT = 60
-
-UDPIPE_MODEL_PATH = PROJECT_ROOT / "lab_6_pipeline" / "assets" / "model" / "russian-syntagrus-ud-2.0-170801.udpipe"
