@@ -8,9 +8,10 @@ import pathlib
 import spacy_udpipe
 from networkx import DiGraph
 from stanza.utils.conll import CoNLL
+import matplotlib.pyplot as plt
 
 from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
-from core_utils.article.io import from_raw, to_cleaned, to_meta
+from core_utils.article.io import from_raw, to_cleaned, to_meta, from_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -133,6 +134,8 @@ class TextProcessingPipeline(PipelineProtocol):
         analyzed_texts = self._analyzer.analyze([article.text for article
                                                  in self._corpus.get_articles().values()])
         for article_id, article in enumerate(self._corpus.get_articles().values()):
+            for char in ['–', '—', '−', '…']:
+                article.text = article.text.replace(char, '')
             to_cleaned(article)
             article.set_conllu_info(analyzed_texts[article_id])
             self._analyzer.to_conllu(article)
@@ -328,12 +331,22 @@ class POSFrequencyPipeline:
         """
         articles = self._corpus.get_articles()
         for article in articles.values():
+            meta_path = ASSETS_PATH / f"{article.article_id}_meta.json"
+            meta_article = from_meta(meta_path)
+
+            article.title = meta_article.title
+            article.author = meta_article.author
+            article.date = meta_article.date
+            article.topics = meta_article.topics
+            article.url = meta_article.url
+
             pos_freq = self._count_frequencies(article)
             article.set_pos_info(pos_freq)
             to_meta(article)
 
             output_path = ASSETS_PATH / f'{article.article_id}_image.png'
             visualize(article=article, path_to_save=output_path)
+            plt.close()
 
 
 
@@ -404,6 +417,8 @@ def main() -> None:
     udpipe_analyzer = UDPipeAnalyzer()
     pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
     pipeline.run()
+    pos_pipeline = POSFrequencyPipeline(corpus_manager, udpipe_analyzer)
+    pos_pipeline.run()
 
 
 if __name__ == "__main__":
