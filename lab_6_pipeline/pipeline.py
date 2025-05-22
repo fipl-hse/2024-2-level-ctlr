@@ -322,8 +322,6 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
-        self._corpus = corpus_manager
-        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -335,22 +333,11 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
-        conllu = self._analyzer.from_conllu(article)
-        freq = {}
-        for token in conllu:
-            freq[token.pos_] = freq.get(token.pos_, 0) + 1
-        return freq
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
-        articles = self._corpus.get_articles()
-        for idx, article in articles.items():
-            from_meta(article.get_meta_file_path(), article)
-            article.set_pos_info(self._count_frequencies(article))
-            to_meta(article)
-            visualize(article, ASSETS_PATH / f"{idx}_image.png")
 
 
 class PatternSearchPipeline(PipelineProtocol):
