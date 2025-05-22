@@ -6,7 +6,6 @@ Pipeline for CONLL-U formatting.
 import pathlib
 from typing import cast
 
-import matplotlib.pyplot as plt
 import spacy_udpipe
 from networkx import DiGraph
 from networkx.algorithms.isomorphism import DiGraphMatcher
