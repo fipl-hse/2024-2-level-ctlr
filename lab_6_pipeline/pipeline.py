@@ -100,22 +100,24 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        for file_path in self.path_to_raw_txt_data.glob("*_raw.txt"):
+        valid_pairs = []
+
+        # Обрабатываем raw-файлы
+        for raw_file in self.path_to_raw_txt_data.glob("*_raw.txt"):
             try:
-                # Извлекаем ID из имени файла
-                article_id = int(file_path.stem.split("_")[0])
-
-                # Проверяем существование meta
+                article_id = int(raw_file.stem.split("_")[0])
                 meta_file = self.path_to_raw_txt_data / f"{article_id}_meta.json"
-                if not meta_file.exists():
-                    continue  # Пропускаем файлы без meta
 
-                # Создаем статью
-                article = from_raw(file_path)
-                self._storage[article_id] = article
+                if meta_file.exists():
+                    valid_pairs.append((article_id, raw_file))
 
             except (ValueError, IndexError):
                 continue
+
+        # Сортируем по ID и добавляем в хранилище
+        for article_id, raw_file in sorted(valid_pairs, key=lambda x: x[0]):
+            article = from_raw(raw_file)
+            self._storage[article_id] = article
 
     def get_articles(self) -> dict:
         """
