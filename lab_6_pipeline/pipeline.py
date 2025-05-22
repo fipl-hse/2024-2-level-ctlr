@@ -4,6 +4,7 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from typing import cast
 
 import spacy_udpipe
 from networkx import DiGraph
@@ -221,7 +222,8 @@ class UDPipeAnalyzer(LibraryWrapper):
                   encoding="utf-8") as f:
             conllu_text = f.read()
             parser = ConllParser(self._analyzer)
-            doc = parser.parse_conll_text_as_spacy(conllu_text.strip())
+            doc = cast(UDPipeDocument,
+                       parser.parse_conll_text_as_spacy(conllu_text.strip()))
             return doc
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
