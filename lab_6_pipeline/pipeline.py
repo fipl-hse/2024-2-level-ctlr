@@ -173,6 +173,7 @@ class UDPipeAnalyzer(LibraryWrapper):
 
         model.add_pipe("conll_formatter", last=True,
                        config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True})
+
         return model
 
 
