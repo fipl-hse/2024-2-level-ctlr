@@ -7,6 +7,7 @@ import pathlib
 
 import spacy_udpipe
 from networkx import DiGraph
+from spacy_conll import ConllParser
 
 from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
 from core_utils.article.io import from_raw, to_cleaned
@@ -369,6 +370,8 @@ def main() -> None:
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
+    pipeline.run()
 
 
 if __name__ == "__main__":
