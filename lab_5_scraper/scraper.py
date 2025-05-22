@@ -105,7 +105,7 @@ class Config:
             raise IncorrectHeadersError('incorrect type of headers')
         if not isinstance(self._encoding, str):
             raise IncorrectEncodingError('incorrect type of encoding')
-        if not isinstance(self._timeout, int) or self._timeout <= 0 or self._timeout >= 60:
+        if not isinstance(self._timeout, int) or self._timeout <= 0 or self._timeout > 60:
             raise IncorrectTimeoutError('incorrect timeouts')
         if not isinstance(self._should_verify_certificate, bool) or not \
                 isinstance(self._headless_mode, bool):
