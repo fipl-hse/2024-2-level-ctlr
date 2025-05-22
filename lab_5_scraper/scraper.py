@@ -19,31 +19,31 @@ from core_utils.config_dto import ConfigDTO
 
 
 class IncorrectEncodingError(Exception):
-    print("Incorrect Encoding Error")
+    """Incorrect Encoding Error"""
 
 
 class IncorrectHeadersError(Exception):
-    print("Incorrect Headers Error")
+    """Incorrect Headers Error"""
 
 
 class IncorrectNumberOfArticlesError(Exception):
-    print("Incorrect Number Of Articles Error")
+    """Incorrect Number Of Articles Error"""
 
 
 class IncorrectSeedURLError(Exception):
-    print("Incorrect Seed URL Error")
+    """Incorrect Seed URL Error"""
 
 
 class IncorrectTimeoutError(Exception):
-    print("Incorrect Timeout Error")
+    """Incorrect Timeout Error"""
 
 
 class IncorrectVerifyError(Exception):
-    print("Incorrect Verify Error")
+    """Incorrect Verify Error"""
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
-    print("Number Of Articles Out Of Range Error")
+    """Number Of Articles Out Of Range Error"""
 
 
 class Config:
