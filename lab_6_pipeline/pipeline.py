@@ -171,8 +171,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model = (PROJECT_ROOT / "lab_6_pipeline" / "assets"
-                 / "russian-syntagrus-ud-2.0-170801.udpipe")
+        model = pathlib.Path(PROJECT_ROOT) / "lab_6_pipeline" / \
+                     "assets" / "model" / "russian-syntagrus-ud-2.0-170801.udpipe"
         if not model.exists() or not model.is_file():
             raise FileNotFoundError(f"UDPipe model not found or path is empty: {model}")
 
