@@ -137,6 +137,7 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         self.corpus_manager = corpus_manager
         self._analyzer = analyzer
+
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
