@@ -368,10 +368,6 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    for file in ASSETS_PATH.glob("*"):
-        if file.is_file():
-            file.unlink()
-
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
     pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
