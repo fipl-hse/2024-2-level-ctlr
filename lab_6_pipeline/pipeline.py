@@ -470,70 +470,70 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             dict[int, list[TreeNode]]: A dictionary with pattern matches
         """
-        pat_gr = DiGraph()
-
-        pat_gr.add_node(1, label=self._node_labels[0])
-        pat_gr.add_node(2, label=self._node_labels[1])
-        pat_gr.add_node(3, label=self._node_labels[2])
-
-        pat_gr.add_edge(1, 2)
-        pat_gr.add_edge(2, 3)
-
-        res = {}
-
-        for i, v in enumerate(doc_graphs):
-            matches = []
-
-            matcher = DiGraphMatcher(
-                v,
-                pat_gr,
-                node_match=lambda x, y: x["label"] == y["label"]
-            )
-
-            for mapp in matcher.subgraph_isomorphisms_iter():
-                templ_nodes = set(pat_gr.nodes)
-                searched_nodes = mapp.values()
-                templ_roots = templ_nodes - set(searched_nodes.keys())
-
-                if templ_roots:
-                    templ_id = list(templ_roots)[0]
-                    searched_id = mapp[templ_id]
-                else:
-                    templ_id = list(pat_gr.nodes)[0]
-                    searched_id = mapp[templ_id]
-
-                it = []
-                node_attrs = v.nodes[searched_id]
-                tree_node = TreeNode(
-                    upos=node_attrs["label"],
-                    text=node_attrs.get("text", ""),
-                    children=[]
-                )
-                it.append((tree_node, searched_id))
-
-                while it:
-                    parent_node, parent_id = it.pop()
-                    for successor in pat_gr.successors(parent_id):
-                        if successor in mapp.values():
-                            child_id = None
-                            for k, val in mapp.items():
-                                if val == successor:
-                                    child_id = k
-                                    break
-
-                            if child_id is not None:
-                                ch_attrs = pat_gr.nodes[successor]
-                                child_node = TreeNode(
-                                    upos=ch_attrs["label"],
-                                    text=ch_attrs.get("text", ""),
-                                    children=[]
-                                )
-                                parent_node.children.append(child_node)
-                                it.append((child_node, successor))
-                matches.append(tree_node)
-            if matches:
-                res[i] = matches
-        return res
+        # pat_gr = DiGraph()
+        #
+        # pat_gr.add_node(1, label=self._node_labels[0])
+        # pat_gr.add_node(2, label=self._node_labels[1])
+        # pat_gr.add_node(3, label=self._node_labels[2])
+        #
+        # pat_gr.add_edge(1, 2)
+        # pat_gr.add_edge(2, 3)
+        #
+        # res = {}
+        #
+        # for i, v in enumerate(doc_graphs):
+        #     matches = []
+        #
+        #     matcher = DiGraphMatcher(
+        #         v,
+        #         pat_gr,
+        #         node_match=lambda x, y: x["label"] == y["label"]
+        #     )
+        #
+        #     for mapp in matcher.subgraph_isomorphisms_iter():
+        #         templ_nodes = set(pat_gr.nodes)
+        #         searched_nodes = mapp.values()
+        #         templ_roots = templ_nodes - set(searched_nodes.keys())
+        #
+        #         if templ_roots:
+        #             templ_id = list(templ_roots)[0]
+        #             searched_id = mapp[templ_id]
+        #         else:
+        #             templ_id = list(pat_gr.nodes)[0]
+        #             searched_id = mapp[templ_id]
+        #
+        #         it = []
+        #         node_attrs = v.nodes[searched_id]
+        #         tree_node = TreeNode(
+        #             upos=node_attrs["label"],
+        #             text=node_attrs.get("text", ""),
+        #             children=[]
+        #         )
+        #         it.append((tree_node, searched_id))
+        #
+        #         while it:
+        #             parent_node, parent_id = it.pop()
+        #             for successor in pat_gr.successors(parent_id):
+        #                 if successor in mapp.values():
+        #                     child_id = None
+        #                     for k, val in mapp.items():
+        #                         if val == successor:
+        #                             child_id = k
+        #                             break
+        #
+        #                     if child_id is not None:
+        #                         ch_attrs = pat_gr.nodes[successor]
+        #                         child_node = TreeNode(
+        #                             upos=ch_attrs["label"],
+        #                             text=ch_attrs.get("text", ""),
+        #                             children=[]
+        #                         )
+        #                         parent_node.children.append(child_node)
+        #                         it.append((child_node, successor))
+        #         matches.append(tree_node)
+        #     if matches:
+        #         res[i] = matches
+        # return res
 
     def run(self) -> None:
         """
