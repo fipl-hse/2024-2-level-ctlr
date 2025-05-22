@@ -256,6 +256,12 @@ class Crawler:
             continue
 
     def get_search_urls(self) -> list:
+        """
+        Create a list of search URLs.
+
+        Returns:
+            list: List of URLs.
+        """
         return self.config.get_seed_urls()
 
 
