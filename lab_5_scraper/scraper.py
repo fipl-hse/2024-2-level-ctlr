@@ -271,7 +271,7 @@ class Crawler:
                 if extracted_url == '':
                     continue
                 self.urls.append(extracted_url)
-                if len(self.urls) - 1 >= self.config.get_num_articles():
+                if len(self.urls) >= self.config.get_num_articles():
                     return
 
     def get_search_urls(self) -> list:

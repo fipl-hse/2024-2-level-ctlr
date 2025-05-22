@@ -4,12 +4,13 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+import spacy_udpipe
 
 from networkx import DiGraph
 
-from core_utils.article.article import Article
+from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_cleaned
-from core_utils.constants import ASSETS_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -127,22 +128,20 @@ class TextProcessingPipeline(PipelineProtocol):
             analyzer (LibraryWrapper | None): Analyzer instance
         """
         self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
-        available_articles = self._corpus.get_articles()
+        available_articles = dict(sorted(self._corpus.get_articles().items()))
         for article in available_articles.values():
-            text = article.text.lower()
-            cleaned_text = ''
-            for symbol in text:
-                if symbol.isalnum():
-                    cleaned_text += symbol
-                if symbol == ' ' or symbol == '\n':
-                    cleaned_text += ' '
-            article.text = ' '.join(cleaned_text.split())
             to_cleaned(article)
+        analyzed_texts = self._analyzer.analyze([text.text for text
+                                                 in list(available_articles.values())])
+        for article_id, conllu_article in available_articles.items():
+            conllu_article.set_conllu_info(analyzed_texts[article_id - 1])
+            self._analyzer.to_conllu(conllu_article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -157,6 +156,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -165,6 +165,16 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        model = spacy_udpipe.load_from_path(lang="ru",
+                                            path=str(PROJECT_ROOT / "lab_6_pipeline" / "assets" /
+                                                     "model" /
+                                                     "russian-syntagrus-ud-2.0-170801.udpipe"))
+        model.add_pipe(
+            "conll_formatter",
+            last=True,
+            config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+        )
+        return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -176,6 +186,11 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        conllu_annotation = []
+        for text in texts:
+            analyzed_text = self._analyzer(text)
+            conllu_annotation.append(analyzed_text._.conll_str)
+        return conllu_annotation
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -184,6 +199,10 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        with (open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), "w", encoding="utf-8")
+              as annotation_file):
+            annotation_file.write(article.get_conllu_info())
+            annotation_file.write("\n")
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -365,7 +384,8 @@ def main() -> None:
     Entrypoint for pipeline module.
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
-    pipeline = TextProcessingPipeline(corpus_manager)
+    udpipe_analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
     pipeline.run()
 
 
