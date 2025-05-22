@@ -17,7 +17,7 @@ from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-
+import html
 
 class IncorrectSeedURLError(Exception):
     """
@@ -333,37 +333,44 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        article_top = article_soup.find('div', class_='block--article_top')
-        if article_top:
-            title_tag = article_top.find('h1')
-            self.article.title = title_tag.text.strip() if title_tag else "NOT FOUND"
+
+        title_selectors = [
+            {'type': 'css', 'selector': 'div.block--article_top h1'},
+            {'type': 'css', 'selector': 'h1.article-title'},
+            {'type': 'meta', 'property': 'og:title'},
+            {'type': 'tag', 'name': 'h1'}
+        ]
+
+        for selector in title_selectors:
+            try:
+                if selector['type'] == 'css':
+                    title_tag = article_soup.select_one(selector['selector'])
+                elif selector['type'] == 'meta':
+                    title_tag = article_soup.find('meta', property=selector['property'])
+                else:
+                    title_tag = article_soup.find(selector['name'])
+
+                if title_tag:
+                    title_text = title_tag.get('content', '') if selector['type'] == 'meta' else title_tag.get_text()
+                    clean_title = title_text.strip()
+                    if clean_title:
+                        self.article.title = clean_title
+                        break
+            except Exception as e:
+                print(f"[DEBUG] Ошибка при поиске заголовка: {str(e)[:50]}")
         else:
             self.article.title = "NOT FOUND"
 
-        author_tag = article_soup.find('span', class_='author')
-        if author_tag:
-            self.article.author = [author_tag.text.strip()]
-        else:
-            self.article.author = ["NOT FOUND"]
+        self.article.author = ["NOT FOUND"]
+
+        try:
+            parts = self.full_url.split('/')
+            year, month, day = parts[4], parts[5], parts[6]
+            self.article.date = datetime.datetime(int(year), int(month), int(day))
+        except:
+            self.article.date = datetime.datetime.now()
 
         self.article.topics = []
-        parts = self.full_url.split('/')
-        date_parts = []
-
-        for part in parts:
-            if part.isdigit() and (len(part) == 4 or len(part) == 2):
-                date_parts.append(part)
-                if len(date_parts) == 3:
-                    break
-
-        if len(date_parts) == 3:
-            year, month, day = date_parts[0], date_parts[1], date_parts[2]
-            try:
-                self.article.date = datetime.datetime(int(year), int(month), int(day))
-            except ValueError:
-                self.article.date = datetime.datetime.now()
-        else:
-            self.article.date = datetime.datetime.now()
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -409,6 +416,8 @@ class HTMLParser:
                 timeout=self.config.get_timeout(),
                 verify=self.config.get_verify_certificate()
             )
+            if response.encoding.lower() not in ('utf-8', 'utf8'):
+                response.encoding = 'windows-1251'
             response.raise_for_status()
             response.encoding = self.config.get_encoding()
 
