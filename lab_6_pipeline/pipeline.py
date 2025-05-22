@@ -346,6 +346,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corman = CorpusManager(ASSETS_PATH)
+    pipeline = TextProcessingPipeline(corman)
+    pipeline.run()
 
 
 if __name__ == "__main__":
