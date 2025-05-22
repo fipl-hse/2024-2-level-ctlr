@@ -69,16 +69,13 @@ class CorpusManager:
             if not self.path_to_raw_txt_data.exists():
                 raise FileNotFoundError('not existent path')
 
-                # 2. Проверка что это директория
             if not self.path_to_raw_txt_data.is_dir():
                 raise NotADirectoryError('path does not lead to directory')
 
-                # 3. Получаем только raw файлы
             raw_files = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
             if not raw_files:
                 raise EmptyDirectoryError('directory is empty')
 
-            # 4. Извлекаем ID и проверяем нумерацию
             raw_ids = []
             for file in raw_files:
                 try:
