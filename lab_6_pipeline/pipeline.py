@@ -121,7 +121,7 @@ class TextProcessingPipeline(PipelineProtocol):
             analyzer (LibraryWrapper | None): Analyzer instance
         """
         self._corpus = corpus_manager
-        self._analyzer = analyzer
+        self._analyzer = analyzer or UDPipeAnalyzer()
 
     def run(self) -> None:
         """
@@ -134,8 +134,10 @@ class TextProcessingPipeline(PipelineProtocol):
                 article.text = article.text.replace(char, '')
             to_cleaned(article)
 
-        texts = [article.text for article in articles.values()]
+        if not self._analyzer:
+            return
 
+        texts = [article.text for article in articles.values()]
         conllu_results = self._analyzer.analyze(texts)
 
         for article, conllu in zip(articles.values(), conllu_results):
