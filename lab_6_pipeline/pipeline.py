@@ -85,10 +85,19 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        for file_path in self.path_to_raw_txt_data.glob('*_raw.txt'):
-            article_id = int(file_path.stem.split('_')[0])
-            article = from_raw(file_path)
-            self._storage[article_id] = article
+        files_list = list(self.path_to_raw_txt_data.iterdir())
+        files_new = []
+        for file in files_list:
+            if str(file).endswith('raw.txt'):
+                files_new.append(str(file))
+        files_new = sorted(files_new, key=lambda m: int(m.split("\\")[-1].split('_')[0]))
+        print(files_new)
+        iter_count = 0
+        for file_id, file in enumerate(files_new):
+            iter_count += 1
+            if str(file).endswith('raw.txt'):
+                article = from_raw(file)
+                self._storage[iter_count] = article
 
     def get_articles(self) -> dict:
         """
