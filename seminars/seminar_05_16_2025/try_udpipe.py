@@ -17,7 +17,6 @@ from pathlib import Path
 try:
     import spacy
     from spacy_conll import ConllParser  # type: ignore[import-not-found, import-untyped]
-    from spacy_conll import ConllParser  # type: ignore[import-not-found]
 
 except ImportError:
     print("No libraries installed. Failed to import.")

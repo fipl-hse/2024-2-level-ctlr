@@ -23,6 +23,7 @@ from core_utils.pipeline import (
     UnifiedCoNLLUDocument,
 )
 
+
 class EmptyDirectoryError(Exception):
     """
     Exception for empty directory.
@@ -66,7 +67,6 @@ class CorpusManager:
             raise NotADirectoryError(f"{path} is not a directory")
         if not any(self.path_to_raw_txt_data.iterdir()):
             raise EmptyDirectoryError
-        
         raw_files = list(path.glob('**/*_raw.txt'))
         meta_files = list(path.glob('**/*_meta.json'))
         raw_ids = set()
@@ -91,7 +91,6 @@ class CorpusManager:
                 if file.stat().st_size == 0:
                     raise InconsistentDatasetError(f"File {file} is empty")
                 meta_ids.add(file_id)
-        
         if raw_ids != meta_ids or not raw_ids or not meta_ids:
             raise InconsistentDatasetError("Number of meta files and raw files are not consistent")
         if sorted(raw_ids) != list(range(min(sorted(raw_ids)), max(sorted(raw_ids)) + 1)):
@@ -141,6 +140,7 @@ class TextProcessingPipeline(PipelineProtocol):
             analyzer (LibraryWrapper | None): Analyzer instance
         """
         self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
