@@ -33,6 +33,11 @@ class InconsistentDatasetError(Exception):
     Exception for inconsistent dataset.
     """
 
+class EmptyFileError(Exception):
+    """
+    Exception for empty file.
+    """
+
 class CorpusManager:
     """
     Work with articles and store them.
@@ -64,7 +69,7 @@ class CorpusManager:
         
         raw_files = list(path.glob('**/*_raw.txt'))
         meta_files = list(path.glob('**/*_meta.json'))
-        raw_ids = set
+        raw_ids = set()
         meta_ids = set()
 
         for file in raw_files:
@@ -75,7 +80,17 @@ class CorpusManager:
             file_id = int(parts[0])
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f"File {file} is empty")
-            meta_ids.add(file_id)
+            raw_ids.add(file_id)
+
+            for meta_file in meta_files:
+                filename = meta_file.name
+                parts = filename.split("_")
+                if len(parts) < 2 or not parts[0].isdigit():
+                    continue
+                file_id = int(parts[0])
+                if file.stat().st_size == 0:
+                    raise InconsistentDatasetError(f"File {file} is empty")
+                meta_ids.add(file_id)
         
         if raw_ids != meta_ids or not raw_ids or not meta_ids:
             raise InconsistentDatasetError("Number of meta files and raw files are not consistent")
@@ -125,19 +140,15 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
-        self._corpus_manager = corpus_manager
-        self._analyzer = analyzer
+        self._corpus = corpus_manager
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = self._corpus_manager.get_articles().values()
-        analyzed_articles = self._analyzer.analyze([article.text for article in articles])
-        for i, art in enumerate(articles):
-            to_cleaned(art)
-            art.set_conllu_info(analyzed_articles[i])
-            self._analyzer.to_conllu(art)
+        available_articles = self._corpus.get_articles()
+        for article in available_articles.values():
+            to_cleaned(article)
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
