@@ -5,14 +5,18 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 import re
-#import spacy-udpipe
+import spacy_udpipe
+from spacy_conll import ConllParser
 
 from networkx import DiGraph
 from core_utils.constants import (
-    ASSETS_PATH
+    ASSETS_PATH, PROJECT_ROOT
 )
 
-from core_utils.article.article import Article
+from core_utils.article.article import (
+    Article,
+    ArtifactType
+)
 from core_utils.article import io
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -137,8 +141,12 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         articles = self._corpus.get_articles()
-        for article in articles.values():
+        listed_articles = list(articles.values())
+        analyzed_articles = self.analyzer.analyze([art.text for art in listed_articles])
+        for art_id, article in enumerate(listed_articles):
             io.to_cleaned(article)
+            article.set_conllu_info(analyzed_articles[art_id])
+            self.analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -153,6 +161,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -161,6 +170,16 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        ru = spacy_udpipe.load_from_path(
+            "ru",
+            str(PROJECT_ROOT)+"\\lab_6_pipeline\\assets\\model\\russian-syntagrus-ud-2.0-170801.udpipe"
+        )
+        ru.add_pipe(
+            "conll_formatter",
+            last=True,
+            config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+        )
+        return ru
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -172,6 +191,12 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        analyzed_texts = []
+        for text in texts:
+            analyzed_text = self._analyzer(text)
+            annotation = analyzed_text._.conll_str
+            analyzed_texts.append(annotation)
+        return analyzed_texts
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -180,6 +205,10 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        conllu_info = article.get_conllu_info()
+        conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        with open(conllu_path, "w", encoding="utf-8") as conllu_f:
+            conllu_f.write(conllu_info)
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -361,7 +390,8 @@ def main() -> None:
     Entrypoint for pipeline module.
     """
     manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
-    pipeline = TextProcessingPipeline(manager)
+    udpipe_analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(manager, udpipe_analyzer)
     pipeline.run()
 
 
