@@ -62,42 +62,60 @@ class CorpusManager:
         Validate folder with assets.
         """
         if not self.path_to_raw_txt_data.exists():
-            raise FileNotFoundError('not existent path')
+            raise FileNotFoundError("Path does not exist")
         if not self.path_to_raw_txt_data.is_dir():
-            raise NotADirectoryError('path does not lead to directory')
-        ids = [int(file_path.name.split('_')[0])
-               for file_path in self.path_to_raw_txt_data.glob('*_raw.txt')]
-        if not ids:
-            raise EmptyDirectoryError('directory is empty')
-        ids.sort()
-        expected_ids = list(range(1, len(ids) + 1))
-        if ids != expected_ids:
-            raise InconsistentDatasetError('ids contain slips')
-        for i, file in enumerate(self.path_to_raw_txt_data.iterdir(),
-                                 start=1):
+            raise NotADirectoryError("Not a directory")
+
+            # Получаем только корректные raw-файлы
+        raw_files = list(self.path_to_raw_txt_data.glob("*_raw.txt"))
+        if not raw_files:
+            raise EmptyDirectoryError("No raw files found")
+
+        # Извлекаем ID из имен файлов
+        raw_ids = set()
+        for file in raw_files:
+            try:
+                file_id = int(file.stem.split("_")[0])
+                raw_ids.add(file_id)
+            except (ValueError, IndexError):
+                continue  # Игнорируем файлы с некорректными именами
+
+        # Проверяем соответствие meta-файлов
+        meta_files = {
+            int(file.stem.split("_")[0])
+            for file in self.path_to_raw_txt_data.glob("*_meta.json")
+            if "_meta.json" in file.name
+        }
+
+        # Сравниваем наборы ID
+        if raw_ids != meta_files:
+            raise InconsistentDatasetError("Mismatch between meta and raw files")
+
+        # Проверка на пустые файлы
+        for file in raw_files:
             if file.stat().st_size == 0:
-                raise InconsistentDatasetError('file is empty')
-        if (len(list(self.path_to_raw_txt_data.glob('*_meta.json'))) !=
-                len(list(self.path_to_raw_txt_data.glob('*_raw.txt')))):
-            raise InconsistentDatasetError('numbers of meta and txt are not equal')
+                raise InconsistentDatasetError(f"Empty file: {file.name}")
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
-        raw_files = []
-        for file_path in self.path_to_raw_txt_data.glob('*_raw.txt'):
+        for file_path in self.path_to_raw_txt_data.glob("*_raw.txt"):
             try:
-                article_id = int(file_path.stem.split('_')[0])
-                raw_files.append((article_id, file_path))
+                # Извлекаем ID из имени файла
+                article_id = int(file_path.stem.split("_")[0])
+
+                # Проверяем существование meta-файла
+                meta_file = self.path_to_raw_txt_data / f"{article_id}_meta.json"
+                if not meta_file.exists():
+                    continue  # Пропускаем файлы без meta
+
+                # Создаем статью
+                article = from_raw(file_path)
+                self._storage[article_id] = article
+
             except (ValueError, IndexError):
                 continue
-
-        raw_files.sort(key=lambda x: x[0])
-
-        for article_id, file_path in raw_files:
-            article = from_raw(file_path)
-            self._storage[article_id] = article
 
     def get_articles(self) -> dict:
         """
