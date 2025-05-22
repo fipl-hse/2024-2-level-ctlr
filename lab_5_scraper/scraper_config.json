@@ -1,6 +1,7 @@
 {
     "seed_urls": [
         "https://aif.ru/culture",
+        "https://aif.ru/incidents",
         "https://aif.ru/money",
         "https://aif.ru/politics",
         "https://aif.ru/sport",
