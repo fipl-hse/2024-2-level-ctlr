@@ -121,7 +121,7 @@ class TextProcessingPipeline(PipelineProtocol):
             analyzer (LibraryWrapper | None): Analyzer instance
         """
         self._corpus = corpus_manager
-        self._analyzer = analyzer or UDPipeAnalyzer()
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
