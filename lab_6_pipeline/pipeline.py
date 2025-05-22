@@ -7,9 +7,7 @@ import pathlib
 from typing import cast
 
 import spacy_udpipe
-import stanza
 from networkx import DiGraph
-from networkx.algorithms.isomorphism import DiGraphMatcher
 from spacy_conll import ConllParser
 from torch.utils.benchmark import Language
 
@@ -314,7 +312,8 @@ class StanzaAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
-        # with open(article.get_file_path(ArtifactType.STANZA_CONLLU), 'w', encoding='UTF-8') as file:
+        # with open(article.get_file_path(ArtifactType.STANZA_CONLLU)
+        # , 'w', encoding='UTF-8') as file:
         #     file.write(article.get_conllu_info())
         #     file.write("\n")
 
@@ -534,14 +533,14 @@ class PatternSearchPipeline(PipelineProtocol):
         """
         Search for a pattern in documents and writes found information to JSON file.
         """
-        for article in self._corpus_manager.get_articles().values():
-            conllu = self._analyzer.from_conllu(article=article)
-            doc_graph = self._make_graphs(doc=conllu)
-            patterns = self._find_pattern(doc_graphs=doc_graph)
-            if patterns:
-                if isinstance(patterns, dict):
-                    article.set_patterns_info(pattern_matches=patterns)
-                    to_meta(article=article)
+        # for article in self._corpus_manager.get_articles().values():
+        #     conllu = self._analyzer.from_conllu(article=article)
+        #     doc_graph = self._make_graphs(doc=conllu)
+        #     patterns = self._find_pattern(doc_graphs=doc_graph)
+        #     if patterns:
+        #         if isinstance(patterns, dict):
+        #             article.set_patterns_info(pattern_matches=patterns)
+        #             to_meta(article=article)
 
 
 def main() -> None:
