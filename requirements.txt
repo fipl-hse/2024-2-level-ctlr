@@ -3,7 +3,7 @@ lxml==5.4.0
 networkx==3.4.2
 numpy==1.26.4
 requests==2.32.3
-smart-open>=5.2.1,<7.0.0
+smart-open==6.4.0
 spacy-conll==3.0.0
 spacy-udpipe==1.0.0
 spacy==3.5.0
