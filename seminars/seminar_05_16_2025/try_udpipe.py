@@ -16,7 +16,7 @@ from pathlib import Path
 
 try:
     import spacy
-    import spacy_udpipe
+    from spacy_conll import ConllParser  # type: ignore[import-not-found, import-untyped]
     from spacy_conll import ConllParser  # type: ignore[import-not-found]
 
 except ImportError:
