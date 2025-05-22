@@ -277,9 +277,6 @@ class Crawler:
                         self.urls.append(url)
                         articles_collected += 1
 
-                        to_raw(article)
-                        to_meta(article)
-
                 if articles_collected >= required_articles + 1:
                     print(f'Articles number achieved: {articles_collected - 1}')
                     return
@@ -399,6 +396,15 @@ def main() -> None:
 
     crawler = Crawler(config)
     crawler.find_articles()
+
+    for article_id, url in enumerate(crawler.urls, start=1):
+        parser = HTMLParser(url, article_id, config)
+        article = parser.parse()
+        if not article:
+            continue
+        if isinstance(article, Article):
+            to_raw(article)
+            to_meta(article)
 
 
 if __name__ == "__main__":
