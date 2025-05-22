@@ -5,12 +5,12 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 
-import spacy_conll
 import spacy_udpipe
 from networkx import DiGraph
+from stanza.utils.conll import CoNLL
 
 from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
-from core_utils.article.io import from_raw, to_cleaned
+from core_utils.article.io import from_raw, to_cleaned, to_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -22,6 +22,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.visualizer import visualize
 
 
 class InconsistentDatasetError(Exception):
@@ -207,6 +208,13 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+
+        if not path.exists() or path.stat().st_size == 0:
+            raise EmptyFileError
+
+        return CoNLL.conll2doc(input_file=str(path))
+
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -296,6 +304,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -307,11 +317,24 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
+        pos_dict = {}
+        for pos_tag in self._analyzer.from_conllu(article).get('upos'):
+            pos_dict[pos_tag] = pos_dict.get(pos_tag, 0) + 1
+        return pos_dict
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
+        articles = self._corpus.get_articles()
+        for article in articles.values():
+            pos_freq = self._count_frequencies(article)
+            article.set_pos_info(pos_freq)
+            to_meta(article)
+
+            output_path = ASSETS_PATH / f'{article.article_id}_image.png'
+            visualize(article=article, path_to_save=output_path)
+
 
 
 class PatternSearchPipeline(PipelineProtocol):
