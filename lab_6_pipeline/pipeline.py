@@ -7,6 +7,7 @@ import pathlib
 
 import spacy_udpipe
 from networkx import DiGraph
+from spacy_conll import ConllParser
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_cleaned
@@ -85,9 +86,9 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        path = sorted(self.path_to_raw_txt_data.glob('*_raw.txt'),
+        path_list = sorted(self.path_to_raw_txt_data.glob('*_raw.txt'),
                       key=lambda x: int(x.stem.split('_')[0]))
-        for i, path in enumerate(path, start=1):
+        for i, path in enumerate(path_list, start=1):
             self._storage[i] = from_raw(path,
                                         Article(url=None,
                                                 article_id=i))
@@ -301,6 +302,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus_manager = corpus_manager
+        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
