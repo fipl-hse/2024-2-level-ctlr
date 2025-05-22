@@ -339,6 +339,13 @@ class HTMLParser:
             self.article.title = title_tag.text.strip() if title_tag else "NOT FOUND"
         else:
             self.article.title = "NOT FOUND"
+
+        author_tag = article_soup.find('span', class_='author')
+        if author_tag:
+            self.article.author = [author_tag.text.strip()]
+        else:
+            self.article.author = ["NOT FOUND"]
+
         self.article.topics = []
         parts = self.full_url.split('/')
         date_parts = []
