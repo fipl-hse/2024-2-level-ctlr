@@ -438,12 +438,16 @@ class PatternSearchPipeline(PipelineProtocol):
         for sent in doc.sents:
             current_graph = DiGraph()
 
-            for token in sent.tokens:
-                current_graph.add_node(token.token_id, label=token.upos)
+            for token in sent:
+                current_graph.add_node(token.i + 1, label=token.pos_)
 
-            for word in sent.tokens:
-                if word.head_id != 0:
-                    current_graph.add_edge(word.head_id, word.token_id, label=word.deprel)
+            for token in sent:
+                if token.head.i != token.i:
+                    current_graph.add_edge(
+                        u_of_edge=token.head.i + 1,
+                        v_of_edge=token.i + 1,
+                        label=token.dep_
+                    )
 
             graphs.append(current_graph)
 
@@ -552,8 +556,11 @@ def main() -> None:
 
     pos_pipeline = POSFrequencyPipeline(corpus_manager=corpus, analyzer=basic_analyzer)
 
+    pattern_search = PatternSearchPipeline(corpus_manager=corpus, analyzer=basic_analyzer, pos=("VERB", "NOUN", "ADP"))
+
     basic_txt_pipeline.run()
     pos_pipeline.run()
+    pattern_search.run()
 
 if __name__ == "__main__":
     main()
