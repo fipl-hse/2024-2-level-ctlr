@@ -62,48 +62,23 @@ class CorpusManager:
         Validate folder with assets.
         """
         if not self._path_to_raw_txt_data.exists():
-            raise FileNotFoundError(f"Dataset directory not found: {self._path_to_raw_txt_data}")
+            raise FileNotFoundError(f"File '{self._path_to_raw_txt_data}' does not exist")
         if not self._path_to_raw_txt_data.is_dir():
-            raise NotADirectoryError(f"Path is not a directory: {self._path_to_raw_txt_data}")
+            raise NotADirectoryError(f"Path '{self._path_to_raw_txt_data}' does not lead to directory")
+        dir_of_raw_files = list(self._path_to_raw_txt_data.glob('*_raw.txt'))
+        dir_of_meta_files = list(self._path_to_raw_txt_data.glob('*_meta.json'))
+        if not dir_of_raw_files and not dir_of_meta_files:
+            raise EmptyDirectoryError(f'Directory is empty: {self._path_to_raw_txt_data} :(')
 
-        all_files = list(self._path_to_raw_txt_data.iterdir())
-
-        if not all_files:
-            raise EmptyDirectoryError(f"Directory is empty: {self._path_to_raw_txt_data}")
-        raw_files = [
-            f for f in all_files
-            if f.is_file() and re.match(r"\d+_raw\.txt$", f.name)
-        ]
-
-        if not raw_files:
-            raise InconsistentDatasetError("No valid raw files found in the dataset")
-
-        ids = set()
-        for file in raw_files:
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"File is empty: {file.name}")
-            match = re.match(r"(\d+)_raw\.txt$", file.name)
-            if not match:
-                continue
-
-            file_id = int(match.group(1))
-            ids.add(file_id)
-
-        if ids:
-            min_id = min(ids)
-            max_id = max(ids)
-            expected_ids = set(range(1, max_id + 1))
-
-            if ids != expected_ids:
-                missing_ids = expected_ids - ids
-                raise InconsistentDatasetError(
-                    f"Dataset contains gaps in IDs. Missing IDs: {sorted(missing_ids)}"
-                )
-
-            if min_id != 1:
-                raise InconsistentDatasetError(
-                    f"Dataset IDs don't start from 1. First ID found: {min_id}"
-                )
+        all_raw_ids = set()
+        for raw in dir_of_raw_files:
+            if raw.stat().st_size == 0:
+                raise InconsistentDatasetError(f'The file {raw} is empty')
+            if raw.name.endswith('_raw.txt'):
+                all_raw_ids.add(raw.name)
+        good_raw = {f'{i}_raw.txt' for i in range(1, len(all_raw_ids) + 1)}
+        if all_raw_ids != good_raw:
+            raise InconsistentDatasetError('IDs of raw files have slips')
 
     def _scan_dataset(self) -> None:
         """
@@ -151,18 +126,9 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        for article in self._corpus_manager.get_articles().values():
-            raw_text_path = article.get_raw_text_path()
-            article = from_raw(raw_text_path, article)
-
-            raw_text = article.get_raw_text()
-            if raw_text:
-                text = re.sub(r'[^\w\s]', '', raw_text)
-                text = text.lower()
-                text = ' '.join(text.split())
-
-                article.get_cleaned_text()
-                to_cleaned(article)
+        articles = self._corpus_manager.get_articles().values()
+        for article_id, article in enumerate(articles):
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
