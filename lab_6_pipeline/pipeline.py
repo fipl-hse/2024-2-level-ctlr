@@ -373,8 +373,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    corman = CorpusManager(ASSETS_PATH)
-    pipeline = TextProcessingPipeline(corman)
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    udpipe_analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
     pipeline.run()
 
 
