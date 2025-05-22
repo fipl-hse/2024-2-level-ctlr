@@ -137,22 +137,15 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = self._corpus.get_articles()
-        for article_id, article in articles.items():
-            raw_text_path = self._corpus.path / f"{article_id}_raw.txt"
-            with open(raw_text_path, 'r', encoding='utf-8') as file:
-                raw_text = file.read()
-
-            text = raw_text.replace('\u00A0', ' ')
-            text = re.sub(r'[^\w\s]', '', text)
-            article.text = text
+        for article in self._corpus.get_articles().values():
+            if self._analyzer is not None:
+                conllu_info = self._analyzer.analyze([article.text])
+                if conllu_info is not None:
+                    article.set_conllu_info(conllu_info[0])
+                    self._analyzer.to_conllu(article)
+            article.text = article.text.replace('\u00A0', '')
+            article.text = re.sub(r'[^\w\s]', '', article.text)
             to_cleaned(article)
-
-            if self._analyzer:
-                analyzed_texts = self._analyzer.analyze([raw_text])
-                conllu_markup = analyzed_texts[0]
-                article.set_conllu_info(conllu_markup)
-                self._analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
