@@ -74,6 +74,9 @@ class CorpusManager:
             raise EmptyDirectoryError('Given directory is empty')
         meta = {file.name for file in self.path.iterdir() if file.name.endswith('_meta.json')}
         raw = {file.name for file in self.path.iterdir() if file.name.endswith('_raw.txt')}
+        if not all(file.stat().st_size for file in self.path.iterdir()
+                   if file.name.endswith('_meta.json') or file.name.endswith('_raw.txt')):
+            raise InconsistentDatasetError('Dataset contains empty files')
         if len(meta) != len(raw):
             raise InconsistentDatasetError('Dataset numeration is inconsistent')
         true_meta = {f'{n}_meta.json' for n in range(1, len(meta) + 1)}
