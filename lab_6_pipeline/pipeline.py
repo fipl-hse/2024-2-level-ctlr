@@ -79,43 +79,28 @@ class CorpusManager:
         if not any(self.path_to_raw_txt_data.iterdir()):
             raise EmptyDirectoryError("Directory is empty")
 
-        # raws =
-        # metas =
-
         raw, meta = [], []
 
-        for f in list(self.path_to_raw_txt_data.glob('*_raw.txt')):
-            n_id = int(f.name.split("_")[0])
-            raw.append(n_id)
-            if f.stat().st_size == 0:
-                raise InconsistentDatasetError("File is empty")
-
-        for f in list(self.path_to_raw_txt_data.glob('*_meta.json')):
-            n_id = int(f.name.split("_")[0])
-            meta.append(n_id)
-            if f.stat().st_size == 0:
-                raise InconsistentDatasetError("Meta file is empty")
+        for f in self.path_to_raw_txt_data.glob('*'):
+            if f.name.endswith('_raw.txt'):
+                n_id = int(f.name.split("_")[0])
+                raw.append(n_id)
+                if f.stat().st_size == 0:
+                    raise InconsistentDatasetError("File is empty")
+            elif f.name.endswith('_meta.json'):
+                n_id = int(f.name.split("_")[0])
+                meta.append(n_id)
+                if f.stat().st_size == 0:
+                    raise InconsistentDatasetError("Meta file is empty")
 
         if len(raw) != len(meta):
             raise InconsistentDatasetError(
-                f"The amounts of meta and raw files are not equal: {len(meta)} != {len(raw)}")
+                f"The amounts of meta and raw files are not equal")
 
-        raw.sort()
-        meta.sort()
-
-        gaps = False
-        for elem in range(1, len(raw)):
-            if raw[elem] != raw[elem - 1] + 1:
-                gaps = True
-        if gaps:
-            raise InconsistentDatasetError("Dataset has slips")
-
-        gaps = False
-        for elem in range(1, len(meta)):
-            if meta[elem] != meta[elem - 1] + 1:
-                gaps = True
-        if gaps:
-            raise InconsistentDatasetError("Dataset has slips")
+        for ids in (sorted(raw), sorted(meta)):
+            for i in range(1, len(ids)):
+                if ids[i] != ids[i - 1] + 1:
+                    raise InconsistentDatasetError("Dataset has slips")
 
     def _scan_dataset(self) -> None:
         """
