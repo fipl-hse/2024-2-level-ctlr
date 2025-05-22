@@ -8,8 +8,9 @@ from typing import cast
 
 import spacy_udpipe
 from networkx import DiGraph
-from networkx.algorithms.isomorphism import DiGraphMatcher
-from spacy_conll import ConllParser  # type: ignore[import-not-found, import-untyped]
+
+# from networkx.algorithms.isomorphism import DiGraphMatcher
+from spacy_conll import ConllParser
 from torch.utils.benchmark import Language
 
 from core_utils.article.article import Article, ArtifactType

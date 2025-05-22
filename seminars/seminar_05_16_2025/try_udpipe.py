@@ -15,8 +15,8 @@ Make sure to install the library in your working environment!
 from pathlib import Path
 
 try:
-    import spacy # type: ignore[import-not-found, import-untyped]
-    import spacy_udpipe # type: ignore[import-not-found, import-untyped]
+    import spacy
+    import spacy_udpipe
     from spacy_conll import ConllParser  # type: ignore[import-not-found]
 
 except ImportError:
