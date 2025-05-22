@@ -8,7 +8,6 @@ from typing import cast
 
 import spacy_udpipe
 from networkx import DiGraph
-
 from spacy_conll import ConllParser
 from torch.utils.benchmark import Language
 
