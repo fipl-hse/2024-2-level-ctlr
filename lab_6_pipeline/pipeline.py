@@ -170,7 +170,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         model = spacy_udpipe.load_from_path(lang='ru',
                                             path=str(model_path))
         model.add_pipe(
-            'conll_formatter',
+            factory_name='conll_formatter',
             last=True,
             config={'conversion_maps': {'XPOS': {'': '_'}},
                     'include_headers': True},
