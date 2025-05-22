@@ -7,10 +7,11 @@ import pathlib
 from pathlib import Path
 
 import spacy_udpipe
+import spacy_conll
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import from_raw, to_cleaned
+from core_utils.article.io import from_raw, to_cleaned, to_meta, from_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -22,6 +23,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.visualizer import visualize
 
 
 class EmptyDirectoryError(Exception):
@@ -69,9 +71,9 @@ class CorpusManager:
             raise NotADirectoryError('The file is not a directory')
         if not any(self.path.iterdir()):
             raise EmptyDirectoryError
-        for file in self.path.iterdir():
-            if not file.stat().st_size:
-                raise InconsistentDatasetError('Something is empty')
+        if not all(file.stat().st_size for file in self.path.iterdir()
+                   if file.name.endswith('_meta.json') or file.name.endswith('_raw.txt')):
+            raise InconsistentDatasetError('There are empty meta or raw files')
         meta_list = [file.name for file in self.path.iterdir() if file.name.endswith('_meta.json')]
         raw_list = [file.name for file in self.path.iterdir() if file.name.endswith('_raw.txt')]
         if len(raw_list) != len(meta_list):
@@ -202,6 +204,14 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        if not path.stat().st_size:
+            raise EmptyFileError('Conllu is empty')
+        parser = spacy_conll.parser.ConllParser(self._analyzer)
+        with open(path, 'r', encoding='UTF-8') as file:
+            conllu = file.read()
+        data: UDPipeDocument = parser.parse_conll_text_as_spacy(conllu.rstrip('\n'))
+        return data
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -291,6 +301,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -302,11 +314,30 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
+        pos_dict = {}
+        sentences = self._analyzer.from_conllu(article).sents
+        for sentence in sentences:
+            for word in sentence:
+                if not word.pos_ in pos_dict:
+                    pos_dict[word.pos_] = 1
+                else:
+                    pos_dict[word.pos_] += 1
+        return pos_dict
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
+        for article in self._corpus.get_articles().values():
+            path = article.get_meta_file_path()
+            from_meta(path, article)
+            article.set_pos_info(self._count_frequencies(article))
+            to_meta(article)
+            visualize(article, ASSETS_PATH / f'{article.article_id}_image.png')
+
+
+
+
 
 
 class PatternSearchPipeline(PipelineProtocol):
@@ -372,9 +403,11 @@ def main() -> None:
     Entrypoint for pipeline module.
     """
     manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
-    udpipe_analyzer = UDPipeAnalyzer()
-    processing = TextProcessingPipeline(manager, udpipe_analyzer)
+    analyzer = UDPipeAnalyzer()
+    processing = TextProcessingPipeline(manager, analyzer)
     processing.run()
+    visualizer = POSFrequencyPipeline(manager, analyzer)
+    visualizer.run()
 
 
 if __name__ == "__main__":
