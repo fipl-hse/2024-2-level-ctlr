@@ -72,8 +72,8 @@ class CorpusManager:
             raise NotADirectoryError('Given path does not lead to a directory')
         if not any(self.path.iterdir()):
             raise EmptyDirectoryError('Given directory is empty')
-        meta = set([file.name for file in self.path.iterdir() if file.name.endswith('_meta.json')])
-        raw = set([file.name for file in self.path.iterdir() if file.name.endswith('_raw.txt')])
+        meta = {file.name for file in self.path.iterdir() if file.name.endswith('_meta.json')}
+        raw = {file.name for file in self.path.iterdir() if file.name.endswith('_raw.txt')}
         if len(meta) != len(raw):
             raise InconsistentDatasetError('Dataset numeration is inconsistent')
         true_meta = {f'{n}_meta.json' for n in range(1, len(meta) + 1)}
@@ -152,7 +152,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model_path = PROJECT_ROOT / "core_utils" / "udpipe" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        model_path = PROJECT_ROOT/"core_utils"/"udpipe"/"russian-syntagrus-ud-2.0-170801.udpipe"
         model = spacy_udpipe.load_from_path(lang="ru", path=str(model_path))
         model.add_pipe(
             "conll_formatter",
@@ -413,9 +413,18 @@ class PatternSearchPipeline(PipelineProtocol):
                     tree_nodes = [node for node in matched_subgraph.nodes() if
                                   len(matched_subgraph.in_edges(node)) == 0]
                     for tree_node in tree_nodes:
-                        tree_node_tn = TreeNode(graph.nodes[tree_node]['label'], graph.nodes[tree_node]['word'], [])
-                        graph_dict = {node: list(matched_subgraph.neighbors(node)) for node in matched_subgraph.nodes()}
-                        self._add_children(graph, graph_dict, tree_node, tree_node_tn)
+                        tree_node_tn = TreeNode(
+                            graph.nodes[tree_node]['label'],
+                            graph.nodes[tree_node]['word'],
+                            []
+                        )
+                        self._add_children(
+                            graph,
+                            {node: list(matched_subgraph.neighbors(node))
+                             for node in matched_subgraph.nodes()},
+                            tree_node,
+                            tree_node_tn
+                        )
                         matched_nodes.append(tree_node_tn)
                 if matched_nodes:
                     results[index] = matched_nodes
