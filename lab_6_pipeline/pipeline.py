@@ -2,13 +2,10 @@
 Pipeline for CONLL-U formatting.
 """
 
-# pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 import re
 
 from networkx import DiGraph
-
-
 from core_utils.article.article import Article
 from core_utils.article.io import from_raw, to_cleaned
 from core_utils.constants import ASSETS_PATH
@@ -22,6 +19,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
 
 class InconsistentDatasetError(Exception):
     """
@@ -50,8 +48,8 @@ class CorpusManager:
         """
         self._path_to_raw_txt_data = path_to_raw_txt_data
         self._storage = {}
-        self._scan_dataset()
         self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
@@ -61,30 +59,33 @@ class CorpusManager:
             raise FileNotFoundError(f"File '{self._path_to_raw_txt_data}' does not exist")
         if not self._path_to_raw_txt_data.is_dir():
             raise NotADirectoryError(f"Path '{self._path_to_raw_txt_data}' does not lead to directory")
+
         dir_of_raw_files = list(self._path_to_raw_txt_data.glob('*_raw.txt'))
         dir_of_meta_files = list(self._path_to_raw_txt_data.glob('*_meta.json'))
+
         if not dir_of_raw_files and not dir_of_meta_files:
-            raise EmptyDirectoryError(f'Directory is empty: {self._path_to_raw_txt_data} :(')
+            raise EmptyDirectoryError(f'Directory is empty: {self._path_to_raw_txt_data}')
 
         all_raw_ids = set()
         for raw in dir_of_raw_files:
             if raw.stat().st_size == 0:
-                raise InconsistentDatasetError(f'The file {raw} is empty')
+                raise EmptyFileError(f'The file {raw} is empty')
             if raw.name.endswith('_raw.txt'):
                 all_raw_ids.add(raw.name)
+
         good_raw = {f'{i}_raw.txt' for i in range(1, len(all_raw_ids) + 1)}
         if all_raw_ids != good_raw:
             raise InconsistentDatasetError('IDs of raw files have slips')
+
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
-        for file in self._path_to_raw_txt_data.iterdir():
-            if not file.name.endswith('_raw.txt'):
-                continue
+        for file in self._path_to_raw_txt_data.glob('*_raw.txt'):
             article = from_raw(file, article=None)
             article_id = int(file.name[:-8])
             self._storage[article_id] = article
+
     def get_articles(self) -> dict:
         """
         Get storage params.
@@ -93,6 +94,7 @@ class CorpusManager:
             dict: Storage params
         """
         return self._storage
+
 
 class TextProcessingPipeline(PipelineProtocol):
     """
@@ -111,13 +113,14 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         self._corpus = corpus_manager
         self._analyzer = analyzer
+
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = self._corpus.get_articles().values()
-        for article_id, article in enumerate(articles):
+        for article in self._corpus.get_articles().values():
             to_cleaned(article)
+
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
