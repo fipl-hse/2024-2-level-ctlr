@@ -2,27 +2,31 @@
 Crawler implementation.
 """
 
+import datetime
+
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import json
 import pathlib
-import shutil
-from typing import Union
 import re
-import datetime
+import shutil
 from random import randint
 from time import sleep
+from typing import Union
+
 import requests
 from bs4 import BeautifulSoup
-from core_utils.config_dto import ConfigDTO
-from core_utils.article.io import to_raw
+
 from core_utils.article.article import Article
+from core_utils.article.io import to_raw
+from core_utils.config_dto import ConfigDTO
 from core_utils.constants import (
     ASSETS_PATH,
     CRAWLER_CONFIG_PATH,
     NUM_ARTICLES_UPPER_LIMIT,
     TIMEOUT_LOWER_LIMIT,
-    TIMEOUT_UPPER_LIMIT
+    TIMEOUT_UPPER_LIMIT,
 )
+
 
 class IncorrectSeedURLError(Exception):
     """Seed URLs list cannot be empty"""
