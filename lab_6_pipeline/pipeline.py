@@ -4,14 +4,13 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-from pathlib import Path
 
-import spacy_udpipe
 import spacy_conll
+import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import from_raw, to_cleaned, to_meta, from_meta
+from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -84,7 +83,6 @@ class CorpusManager:
         if set(raw_perfect) != set(raw_list) or set(meta_perfect) != set(meta_list):
             raise InconsistentDatasetError(f'Numbering of files is inconsistent'
                                            f'{len(raw_perfect)}, {len(meta_perfect)}')
-        return None
 
     def _scan_dataset(self) -> None:
         """
@@ -159,7 +157,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model_path = PROJECT_ROOT/'lab_6_pipeline'/'assets'/'model'/'russian-syntagrus-ud-2.0-170801.udpipe'
+        model_path = PROJECT_ROOT/'lab_6_pipeline'/'assets'/'model'/\
+                     'russian-syntagrus-ud-2.0-170801.udpipe'
         if not model_path.exists() or not model_path.is_file():
             raise FileNotFoundError('UDPipe does not exist')
         model = spacy_udpipe.load_from_path(lang="ru", path=str(model_path))
