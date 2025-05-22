@@ -7,7 +7,9 @@ import pathlib
 from typing import cast
 
 import spacy_udpipe
+import stanza
 from networkx import DiGraph
+from networkx.algorithms.isomorphism import DiGraphMatcher
 from spacy_conll import ConllParser
 from torch.utils.benchmark import Language
 
@@ -269,7 +271,7 @@ class StanzaAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the StanzaAnalyzer class.
         """
-        # self._analyzer = analyzer
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -278,6 +280,19 @@ class StanzaAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        lang = "ru"
+        processors = "tokenize,lemma,pos,depparse"
+        stanza.download(lang=lang, processors=processors, logging_level="INFO")
+
+        nlp = stanza.Pipeline(
+            lang=lang,
+            processors=processors,
+            logging_level="INFO",
+            download_method=None
+        )
+
+        return nlp
+
 
     def analyze(self, texts: list[str]) -> list[StanzaDocument]:
         """
@@ -289,6 +304,8 @@ class StanzaAnalyzer(LibraryWrapper):
         Returns:
             list[StanzaDocument]: List of documents
         """
+        return [self._analyzer(text) for text in texts]
+
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -297,6 +314,12 @@ class StanzaAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        with open(article.get_file_path(ArtifactType.STANZA_CONLLU), 'w', encoding='UTF-8') as file:
+            file.write(article.get_conllu_info())
+            file.write("\n")
+
+
+
 
     def from_conllu(self, article: Article) -> StanzaDocument:
         """
@@ -308,6 +331,17 @@ class StanzaAnalyzer(LibraryWrapper):
         Returns:
             StanzaDocument: Document ready for parsing
         """
+        path = article.get_file_path(ArtifactType.STANZA_CONLLU)
+
+        if not path.stat().st_size:
+            raise EmptyFileError
+
+        parser = ConllParser(cast(Language, self._analyzer))
+
+        with open(path, "r", encoding="utf-8") as file:
+            conllu = file.read()
+        data = parser.parse_conll_text_as_spacy(conllu[:-1])
+        return data
 
     def get_document(self, doc: StanzaDocument) -> UnifiedCoNLLUDocument:
         """
@@ -454,101 +488,56 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             dict[int, list[TreeNode]]: A dictionary with pattern matches
         """
-        # pat_gr = DiGraph()
-        #
-        # pat_gr.add_node(1, label=self._node_labels[0])
-        # pat_gr.add_node(2, label=self._node_labels[1])
-        # pat_gr.add_node(3, label=self._node_labels[2])
-        #
-        # pat_gr.add_edge(1, 2)
-        # pat_gr.add_edge(2, 3)
-        #
-        # res = {}
-        #
-        # for i, v in enumerate(doc_graphs):
-        #     matches = []
-        #
-        #     matcher = DiGraphMatcher(
-        #         v,
-        #         pat_gr,
-        #         node_match=lambda x, y: x["label"] == y["label"]
-        #     )
-        #
-        #     for mapp in matcher.subgraph_isomorphisms_iter():
-        #         templ_nodes = set(pat_gr.nodes)
-        #         searched_nodes = mapp.values()
-        #         templ_roots = templ_nodes - set(searched_nodes.keys())
-        #
-        #         if templ_roots:
-        #             templ_id = list(templ_roots)[0]
-        #             searched_id = mapp[templ_id]
-        #         else:
-        #             templ_id = list(pat_gr.nodes)[0]
-        #             searched_id = mapp[templ_id]
-        #
-        #         it = []
-        #         node_attrs = v.nodes[searched_id]
-        #         tree_node = TreeNode(
-        #             upos=node_attrs["label"],
-        #             text=node_attrs.get("text", ""),
-        #             children=[]
-        #         )
-        #         it.append((tree_node, searched_id))
-        #
-        #         while it:
-        #             parent_node, parent_id = it.pop()
-        #             for successor in pat_gr.successors(parent_id):
-        #                 if successor in mapp.values():
-        #                     child_id = None
-        #                     for k, val in mapp.items():
-        #                         if val == successor:
-        #                             child_id = k
-        #                             break
-        #
-        #                     if child_id is not None:
-        #                         ch_attrs = pat_gr.nodes[successor]
-        #                         child_node = TreeNode(
-        #                             upos=ch_attrs["label"],
-        #                             text=ch_attrs.get("text", ""),
-        #                             children=[]
-        #                         )
-        #                         parent_node.children.append(child_node)
-        #                         it.append((child_node, successor))
-        #         matches.append(tree_node)
-        #     if matches:
-        #         res[i] = matches
-        # return res
+        pat_gr = DiGraph()
+
+        pat_gr.add_node(1, label=self._node_labels[0])
+        pat_gr.add_node(2, label=self._node_labels[1])
+        pat_gr.add_node(3, label=self._node_labels[2])
+
+        pat_gr.add_edge(1, 2)
+        pat_gr.add_edge(2, 3)
+
+        res = {}
+
+        for idx, cur_graph in enumerate(doc_graphs):
+            matches = []
+
+            matcher = DiGraphMatcher(
+                cur_graph,
+                pat_gr,
+                node_match=lambda x, y: x["label"] == y["label"]
+            )
+
+            for mapping in matcher.subgraph_isomorphisms_iter():
+                root_node_id = mapping[1]
+
+                root_attrs = cur_graph.nodes[root_node_id]
+                root_tree_node = TreeNode(
+                    upos=root_attrs['label'],
+                    text=root_attrs.get('text', ''),
+                    children=[]
+                )
+
+                self._add_children(cur_graph, mapping, 1, root_tree_node)
+                matches.append(root_tree_node)
+
+            if matches:
+                res[idx] = matches
+
+        return res
 
     def run(self) -> None:
         """
         Search for a pattern in documents and writes found information to JSON file.
         """
-        # for article in self._corpus_manager.get_articles().values():
-        #     article_path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
-        #     doc = self._analyzer.from_conllu(cast(Article, article_path))
-        #     grph = self._make_graphs(doc)
-        #     matching = self._find_pattern(grph)
-        #
-        #     if matching:
-        #         res = {}
-        #         for ind, nod in matching.items():
-        #             res[ind] = []
-        #             for i in nod:
-        #                 nd = {
-        #                     "upos": i.upos,
-        #                     "text": i.text,
-        #                     "children": [{
-        #                         "upos": child.upos,
-        #                         "text": child.text,
-        #                         "children": [{
-        #                             "upos": grandchild.upos,
-        #                             "text": grandchild.text
-        #                         } for grandchild in child.children]
-        #                     } for child in i.children]
-        #                 }
-        #                 res[ind].append(nd)
-        #         article.set_pos_info(res)
-        #         to_meta(article)
+        for article in self._corpus_manager.get_articles().values():
+            conllu = self._analyzer.from_conllu(article=article)
+            doc_graph = self._make_graphs(doc=conllu)
+            patterns = self._find_pattern(doc_graphs=doc_graph)
+            if patterns:
+                if isinstance(patterns, dict):
+                    article.set_patterns_info(pattern_matches=patterns)
+                    to_meta(article=article)
 
 
 def main() -> None:
