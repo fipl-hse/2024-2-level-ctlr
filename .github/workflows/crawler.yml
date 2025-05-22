@@ -19,7 +19,7 @@ jobs:
   install-dependencies:
     name: Installing dependencies
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -167,7 +167,7 @@ jobs:
       PR_NAME: ${{ github.event.pull_request.title }}
       PR_AUTHOR: ${{ github.actor }}
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -509,7 +509,7 @@ jobs:
     env:
       PR_AUTHOR: ${{ github.actor }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
