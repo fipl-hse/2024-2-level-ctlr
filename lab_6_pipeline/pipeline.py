@@ -9,7 +9,6 @@ from typing import cast
 import spacy_udpipe
 from networkx import DiGraph
 
-# from networkx.algorithms.isomorphism import DiGraphMatcher
 from spacy_conll import ConllParser
 from torch.utils.benchmark import Language
 
