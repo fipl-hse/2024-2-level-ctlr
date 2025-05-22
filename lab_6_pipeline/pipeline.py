@@ -73,58 +73,42 @@ class CorpusManager:
         if not path.is_dir():
             raise NotADirectoryError(f"The specified path is not a directory: {path}")
 
-        if not any(self.path_to_raw_txt_data.iterdir()):
+        if not any(path.iterdir()):
             raise EmptyDirectoryError
 
         raw_files = list(path.glob('**/*_raw.txt'))
         meta_files = list(path.glob('**/*_meta.json'))
-        raw_ids = set()
-        meta_ids = set()
 
-        for file in raw_files:
-            filename = file.name
-            parts = filename.split('_')
-            if len(parts) < 2 or not parts[0].isdigit():
-                continue
-            file_id = int(parts[0])
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"File is empty: {filename}")
-            raw_ids.add(file_id)
+        raw_pattern = r"(\d+)_raw\.txt$"
+        meta_pattern = r"(\d+)_meta\.json$"
 
-        for file in meta_files:
-            filename = file.name
-            parts = filename.split('_')
-            if len(parts) < 2 or not parts[0].isdigit():
-                continue
-            file_id = int(parts[0])
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"File is empty: {filename}")
-            meta_ids.add(file_id)
+        raw_ids = {int(m.group(1)) for f in raw_files if (m := re.match(raw_pattern, f.name))}
+        meta_ids = {int(m.group(1)) for f in meta_files if (m := re.match(meta_pattern, f.name))}
+
+        empty_files = [
+            f.name for f in raw_files + meta_files
+            if (re.match(raw_pattern, f.name) or
+                re.match(meta_pattern, f.name)) and f.stat().st_size == 0
+        ]
+        if empty_files:
+            raise InconsistentDatasetError(f"Empty files: {empty_files}")
 
         if raw_ids != meta_ids or not raw_ids or not meta_ids:
             raise InconsistentDatasetError("Number of meta and raw files is not equal")
-        if sorted(raw_ids) != list(range(min(sorted(raw_ids)), max(sorted(raw_ids)) + 1)):
+        sorted_ids = sorted(raw_ids)
+        if sorted_ids != list(range(sorted_ids[0], sorted_ids[-1] + 1)):
             raise InconsistentDatasetError("IDs contain slips or are inconsistent.")
+
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
-        ids = set()
-
-        for file in Path(self.path_to_raw_txt_data).rglob('*.txt'):
-            if not file.name.endswith('_raw.txt'):
-                continue
-            pattern = re.match(r'(\d+)_raw\.txt$', file.name)
-            if not pattern:
-                continue
-            article_id = int(pattern.group(1))
-            if article_id in ids:
-                continue
-
-            article = from_raw(file)
-            self._storage[article_id] = article
-            ids.add(article_id)
+        self._storage = {
+            int(match.group(1)): from_raw(file)
+            for file in Path(self.path_to_raw_txt_data).rglob('*_raw.txt')
+            if (match := re.match(r'(\d+)_raw\.txt$', file.name))
+        }
 
     def get_articles(self) -> dict:
         """
@@ -158,9 +142,9 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = self._corpus_manager.get_articles().values()
-        analyzed = self._analyzer.analyze([article.text for article in articles])
-        for ind, article in enumerate(articles):
+        analyzed = self._analyzer.analyze([article.text for article in
+                                           self._corpus_manager.get_articles().values()])
+        for ind, article in enumerate(self._corpus_manager.get_articles().values()):
             to_cleaned(article)
             article.set_conllu_info(analyzed[ind])
             self._analyzer.to_conllu(article)
@@ -187,7 +171,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model = PROJECT_ROOT / "core_utils" / "udpipe" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        model = (PROJECT_ROOT / "lab_6_pipeline" / "assets"
+                 / "russian-syntagrus-ud-2.0-170801.udpipe")
         if not model.exists() or not model.is_file():
             raise FileNotFoundError(f"UDPipe model not found or path is empty: {model}")
 
@@ -341,7 +326,6 @@ class POSFrequencyPipeline:
         self._corpus = corpus_manager
         self._analyzer = analyzer
 
-
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
         Count POS frequency in Article.
@@ -356,13 +340,13 @@ class POSFrequencyPipeline:
         with open(conllu_path, "r", encoding="utf-8") as f:
             data = f.read()
         sentences = parse(data)
+        pos_tags = [token.get('upostag') for sentence in
+                    sentences for token in sentence
+                    if token.get('upostag')]
 
         pos_counts = {}
-        for sentence in sentences:
-            for token in sentence:
-                pos = token.get('upostag')
-                if pos:
-                    pos_counts[pos] = pos_counts.get(pos, 0) + 1
+        for pos in pos_tags:
+            pos_counts[pos] = pos_counts.get(pos, 0) + 1
 
         return pos_counts
 
@@ -451,7 +435,9 @@ def main() -> None:
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     analyzer = UDPipeAnalyzer()
     pipeline = TextProcessingPipeline(corpus_manager=corpus_manager, analyzer=analyzer)
+    pos = POSFrequencyPipeline(corpus_manager=corpus_manager, analyzer=analyzer)
     pipeline.run()
+    pos.run()
 
 
 if __name__ == "__main__":
