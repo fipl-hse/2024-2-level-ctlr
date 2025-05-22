@@ -4,14 +4,13 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-import spacy_udpipe
-from pathlib import Path
 
+import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
 from core_utils.article.io import from_raw, to_cleaned
-from core_utils.constants import ASSETS_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -70,13 +69,11 @@ class CorpusManager:
             raise NotADirectoryError('Path does not lead to directory.')
         if not next(self.path_to_raw_txt_data.iterdir(), None):
             raise EmptyDirectoryError('Empty directory.')
-        meta_actual = []
-        raw_actual = []
+        raw_actual = [file.name for file in self.path_to_raw_txt_data.iterdir()
+                      if file.name.endswith('_raw.txt')]
+        meta_actual = [file.name for file in self.path_to_raw_txt_data.iterdir()
+                       if file.name.endswith('_meta.json')]
         for file in self.path_to_raw_txt_data.iterdir():
-            if file.name.endswith('_raw.txt'):
-                raw_actual.append(file.name)
-            if file.name.endswith('_meta.json'):
-                meta_actual.append(file.name)
             if not file.stat().st_size:
                 raise InconsistentDatasetError('Empty file(s) in the directory.')
         if len(meta_actual) != len(raw_actual):
@@ -158,12 +155,14 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        core_utils_path = Path(__file__).parent.parent / "core_utils"
-        path = core_utils_path / "russian-syntagrus-ud-2.0-170801.udpipe"
-        nlp = spacy_udpipe.load_from_path(lang='ru', path=str(path))
+        assets_path = PROJECT_ROOT / 'lab_6_pipeline' / 'assets' / 'model'
+        model_path = assets_path / 'russian-syntagrus-ud-2.0-170801.udpipe'
+        if not model_path.exists():
+            raise FileNotFoundError('No such file.')
+        nlp = spacy_udpipe.load_from_path(lang='ru', path=str(model_path))
         nlp.add_pipe('conll-formatter',
                      last=True,
-                     config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True})
+                     config={'conversion_maps': {'XPOS': {'': '_'}}, 'include_headers': True})
         return nlp
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
@@ -185,9 +184,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
-        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), 'w', encoding='UTF-8') as file:
+        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), 'w', encoding='utf-8') as file:
             file.write(article.get_conllu_info())
-            file.write("\n")
+            file.write('\n')
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
