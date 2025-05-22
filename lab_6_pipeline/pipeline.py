@@ -66,32 +66,27 @@ class CorpusManager:
         if not self.path_to_raw_txt_data.is_dir():
             raise NotADirectoryError("Not a directory")
 
-            # Получаем только корректные raw-файлы
         raw_files = list(self.path_to_raw_txt_data.glob("*_raw.txt"))
         if not raw_files:
             raise EmptyDirectoryError("No raw files found")
 
-        # Извлекаем ID из имен файлов
         raw_ids = set()
         for file in raw_files:
             try:
                 file_id = int(file.stem.split("_")[0])
                 raw_ids.add(file_id)
             except (ValueError, IndexError):
-                continue  # Игнорируем файлы с некорректными именами
+                continue
 
-        # Проверяем соответствие meta-файлов
         meta_files = {
             int(file.stem.split("_")[0])
             for file in self.path_to_raw_txt_data.glob("*_meta.json")
-            if "_meta.json" in file.name
+            if file.name.endswith("_meta.json")
         }
 
-        # Сравниваем наборы ID
         if raw_ids != meta_files:
             raise InconsistentDatasetError("Mismatch between meta and raw files")
 
-        # Проверка на пустые файлы
         for file in raw_files:
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f"Empty file: {file.name}")
@@ -102,7 +97,6 @@ class CorpusManager:
         """
         valid_pairs = []
 
-        # Обрабатываем raw-файлы
         for raw_file in self.path_to_raw_txt_data.glob("*_raw.txt"):
             try:
                 article_id = int(raw_file.stem.split("_")[0])
@@ -114,7 +108,6 @@ class CorpusManager:
             except (ValueError, IndexError):
                 continue
 
-        # Сортируем по ID и добавляем в хранилище
         for article_id, raw_file in sorted(valid_pairs, key=lambda x: x[0]):
             article = from_raw(raw_file)
             self._storage[article_id] = article
@@ -375,6 +368,10 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    for file in ASSETS_PATH.glob("*"):
+        if file.is_file():
+            file.unlink()
+
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
     pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
