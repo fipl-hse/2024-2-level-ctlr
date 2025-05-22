@@ -4,14 +4,16 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from collections import defaultdict
 
 import spacy_udpipe
 from networkx import DiGraph
+from networkx.algorithms.isomorphism.vf2userfunc import GraphMatcher
 from spacy_conll import ConllParser
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
-from core_utils.constants import ASSETS_PATH, UDPIPE_MODEL_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -69,24 +71,15 @@ class CorpusManager:
         if not self.path.is_dir():
             raise NotADirectoryError('Given path does not lead to a directory')
         if not any(self.path.iterdir()):
-            raise EmptyDirectoryError
-        meta = set()
-        raw = set()
-        for file in self.path.iterdir():
-            if file.name.endswith('_meta.json'):
-                if not file.stat().st_size:
-                    raise InconsistentDatasetError
-                meta.add(file.name)
-            elif file.name.endswith('_raw.txt'):
-                if not file.stat().st_size:
-                    raise InconsistentDatasetError
-                raw.add(file.name)
+            raise EmptyDirectoryError('Given directory is empty')
+        meta = set([file.name for file in self.path.iterdir() if file.name.endswith('_meta.json')])
+        raw = set([file.name for file in self.path.iterdir() if file.name.endswith('_raw.txt')])
         if len(meta) != len(raw):
-            raise InconsistentDatasetError
+            raise InconsistentDatasetError('Dataset numeration is inconsistent')
         true_meta = {f'{n}_meta.json' for n in range(1, len(meta) + 1)}
         true_raw = {f'{n}_raw.txt' for n in range(1, len(raw) + 1)}
         if meta != true_meta or raw != true_raw:
-            raise InconsistentDatasetError
+            raise InconsistentDatasetError('Dataset numeration is inconsistent')
 
     def _scan_dataset(self) -> None:
         """
@@ -95,8 +88,8 @@ class CorpusManager:
         for file in self.path.iterdir():
             if not file.name.endswith('_raw.txt'):
                 continue
-            article = from_raw(file, Article(url=None, article_id=int(file.name[:-8])))
-            self._storage[int(file.name[:-8])] = article
+            article = from_raw(file)
+            self._storage[article.article_id] = article
 
     def get_articles(self) -> dict:
         """
@@ -159,7 +152,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model = spacy_udpipe.load_from_path(lang="ru", path=str(UDPIPE_MODEL_PATH))
+        model_path = PROJECT_ROOT / "core_utils" / "udpipe" / "russian-syntagrus-ud-2.0-170801.udpipe"
+        model = spacy_udpipe.load_from_path(lang="ru", path=str(model_path))
         model.add_pipe(
             "conll_formatter",
             last=True,
@@ -310,15 +304,11 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
-        pos_dict = {}
+        pos_dict = defaultdict(int)
         sentences = self._analyzer.from_conllu(article).sents
         for sentence in sentences:
             for word in sentence:
-                pos = word.pos_
-                if pos not in pos_dict:
-                    pos_dict[pos] = 1
-                else:
-                    pos_dict[pos] += 1
+                pos_dict[word.pos_] += 1
         return pos_dict
 
     def run(self) -> None:
@@ -327,7 +317,7 @@ class POSFrequencyPipeline:
         """
         for article in self._corpus.get_articles().values():
             article_path = article.get_meta_file_path()
-            from_meta(article_path)
+            from_meta(article_path, article)
             article.set_pos_info(self._count_frequencies(article))
             to_meta(article)
             visualize(article, ASSETS_PATH / f'{article.article_id}_image.png')
@@ -367,8 +357,8 @@ class PatternSearchPipeline(PipelineProtocol):
         for sentence in doc.sents:
             graph = DiGraph()
             for token in sentence.as_doc():
-                graph.add_node(token.i + 1, label=token.pos_, word=token.text)
-                graph.add_edge(token.i + 1, token.head.i + 1, label=token.dep_)
+                graph.add_node(token.i, label=token.pos_, word=token.text)
+                graph.add_edge(token.head.i, token.i, label=token.dep_)
                 graphs.append(graph)
         return graphs
 
@@ -400,18 +390,59 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             dict[int, list[TreeNode]]: A dictionary with pattern matches
         """
+        results = {}
+        for index, graph in enumerate(doc_graphs):
+            target_graph = DiGraph()
+            for node in graph.nodes():
+                if graph.nodes[node]['label'] in self._node_labels:
+                    target_graph.add_node(
+                        node,
+                        label=graph.nodes[node]['label']
+                    )
+            for edge in graph.edges():
+                if edge[0] in target_graph.nodes and edge[1] in target_graph.nodes:
+                    target_graph.add_edge(edge[0], edge[1])
+            matcher = GraphMatcher(
+                graph,
+                target_graph,
+                node_match=lambda node_1, node_2: node_1['label'] == node_2['label'])
+            if matcher.is_isomorphic():
+                matched_nodes = []
+                for isomorph in matcher.subgraph_isomorphisms_iter():
+                    matched_subgraph = graph.subgraph(isomorph)
+                    tree_nodes = [node for node in matched_subgraph.nodes() if
+                                  len(matched_subgraph.in_edges(node)) == 0]
+                    for tree_node in tree_nodes:
+                        tree_node_tn = TreeNode(graph.nodes[tree_node]['label'], graph.nodes[tree_node]['word'], [])
+                        graph_dict = {node: list(matched_subgraph.neighbors(node)) for node in matched_subgraph.nodes()}
+                        self._add_children(graph, graph_dict, tree_node, tree_node_tn)
+                        matched_nodes.append(tree_node_tn)
+                if matched_nodes:
+                    results[index] = matched_nodes
+        return results
 
     def run(self) -> None:
         """
         Search for a pattern in documents and writes found information to JSON file.
         """
+        for article in self._corpus.get_articles():
+            conllu = self._analyzer.from_conllu(article)
+            graphs = self._make_graphs(conllu)
+            patterns = self._find_pattern(graphs)
+            article.set_patterns_info(patterns)
+            to_meta(article)
 
 
 def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(corpus_manager, analyzer)
+    pipeline.run()
+    visualizer = POSFrequencyPipeline(corpus_manager, analyzer)
+    visualizer.run()
 
 if __name__ == "__main__":
     main()
