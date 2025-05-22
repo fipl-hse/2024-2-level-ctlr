@@ -68,7 +68,7 @@ class CorpusManager:
 
         raw_files = list(self.path_to_raw_txt_data.glob("*_raw.txt"))
         if not raw_files:
-            raise EmptyDirectoryError("No raw files found")
+            raise EmptyDirectoryError("No raw files fоund")
 
         raw_ids = set()
         for file in raw_files:
