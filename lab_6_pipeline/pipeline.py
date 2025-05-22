@@ -552,11 +552,15 @@ def main() -> None:
     corpus = CorpusManager(path_to_raw_txt_data=path_to_raw_data)
 
     basic_analyzer = UDPipeAnalyzer()
-    basic_txt_pipeline = TextProcessingPipeline(corpus_manager=corpus, analyzer=basic_analyzer)
+    basic_txt_pipeline = TextProcessingPipeline(corpus_manager=corpus,
+                                                analyzer=basic_analyzer)
 
-    pos_pipeline = POSFrequencyPipeline(corpus_manager=corpus, analyzer=basic_analyzer)
+    pos_pipeline = POSFrequencyPipeline(corpus_manager=corpus,
+                                        analyzer=basic_analyzer)
 
-    pattern_search = PatternSearchPipeline(corpus_manager=corpus, analyzer=basic_analyzer, pos=("VERB", "NOUN", "ADP"))
+    pattern_search = PatternSearchPipeline(corpus_manager=corpus
+                                           , analyzer=basic_analyzer,
+                                           pos=("VERB", "NOUN", "ADP"))
 
     basic_txt_pipeline.run()
     pos_pipeline.run()
