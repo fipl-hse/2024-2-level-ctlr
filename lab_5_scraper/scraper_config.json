@@ -1,9 +1,13 @@
 {
-    "seed_urls": ["https://vestiprim.ru/news/policy/", "https://vestiprim.ru/news/economy/", "https://vestiprim.ru/news/culture/"],
-    "headers": {},
-    "total_articles_to_find_and_parse": 100,
+    "seed_urls": ["https://www.ks87.ru/obrazovanie",
+        "https://www.ks87.ru/zdorove",
+        "https://www.ks87.ru/kultura"],
+    "headers": {"cookie": "csrftoken=JOHWI6RFrlgsSHqnnAtbogxNiJjRrtqI",
+    "USER-AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"},
+    "total_articles_to_find_and_parse": 5,
     "encoding": "UTF-8",
-    "timeout": 30,
+    "timeout": 10,
     "should_verify_certificate": true,
     "headless_mode": true
+
 }
