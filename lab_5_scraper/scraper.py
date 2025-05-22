@@ -60,7 +60,6 @@ class Config:
         """
         self.path_to_config = path_to_config
         config = self._extract_config_content()
-        self._validate_config_content()
         self._seed_urls = config.seed_urls
         self._num_articles = config.total_articles
         self._headers = config.headers
@@ -68,6 +67,7 @@ class Config:
         self._timeout = config.timeout
         self._should_verify_certificate = config.should_verify_certificate
         self._headless_mode = config.headless_mode
+        self._validate_config_content()
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -95,7 +95,7 @@ class Config:
         if not isinstance(self._seed_urls, list):
             raise IncorrectSeedURLError('incorrect url')
         for url in self._seed_urls:
-            if not isinstance(url, str) or not 'https://aif.ru/' in url:
+            if not isinstance(url, str) or not 'http://vzm-vesti.ru/' in url:
                 raise IncorrectSeedURLError('incorrect url')
         if not isinstance(self._num_articles, int) or self._num_articles <= 0:
             raise IncorrectNumberOfArticlesError('number is not int or less that 0')
