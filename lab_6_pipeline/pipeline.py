@@ -10,8 +10,8 @@ from networkx import DiGraph
 
 from core_utils.article.io import to_cleaned
 from core_utils.article.io import from_raw
-from core_utils.article.article import Article
-from core_utils.constants import ASSETS_PATH
+from core_utils.article.article import Article, ArtifactType
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -67,12 +67,11 @@ class CorpusManager:
             raise FileNotFoundError('not existent path')
         if not self.path_to_raw_txt_data.is_dir():
             raise NotADirectoryError('path does not lead to directory')
-        ids = [int(file_path.name.split('_')[0])
-               for file_path in self.path_to_raw_txt_data.glob('*_raw.txt')]
+        ids = {int(file_path.name.split('_')[0])
+               for file_path in self.path_to_raw_txt_data.glob('*_raw.txt')}
         if not ids:
             raise EmptyDirectoryError('directory is empty')
-        ids.sort()
-        expected_ids = list(range(1, len(ids) + 1))
+        expected_ids = set(range(1, len(ids) + 1))
         if ids != expected_ids:
             raise InconsistentDatasetError('ids contain slips')
         for i, file in enumerate(self.path_to_raw_txt_data.iterdir(),
@@ -87,10 +86,12 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        for i, file_path in enumerate(self.path_to_raw_txt_data.glob('*_raw.txt')):
-            self._storage[i + 1] = from_raw(file_path,
-                                            Article(url=None,
-                                                    article_id=i + 1))
+        path = sorted(self.path_to_raw_txt_data.glob('*_raw.txt'),
+                      key=lambda x: int(x.stem.split('_')[0]))
+        for i, path in enumerate(path, start=1):
+            self._storage[i] = from_raw(path,
+                                        Article(url=None,
+                                                article_id=i))
 
 
     def get_articles(self) -> dict:
@@ -119,15 +120,25 @@ class TextProcessingPipeline(PipelineProtocol):
             analyzer (LibraryWrapper | None): Analyzer instance
         """
         self.corpus_manager = corpus_manager
-        self.analyzer = analyzer
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        add_punct = ['—', '«', '»']
         articles = self.corpus_manager.get_articles()
-        for i, article in articles.items():
+        for article in articles.values():
+            article.text = article.text.replace('\u00A0', ' ')
+            for x in add_punct:
+                article.text = article.text.replace(x, '')
             to_cleaned(article)
+        analyzed = self._analyzer.analyze([article.text
+                                           for article
+                                           in articles.values()])
+        for i, article in enumerate(articles.values()):
+            article.set_conllu_info(analyzed[i])
+            self._analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -142,6 +153,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -150,6 +162,21 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        model_path = (PROJECT_ROOT
+                        / 'lab_6_pipeline'
+                        / 'assets'
+                        / 'model'
+                        / 'russian-syntagrus-ud-2.0-170801.udpipe'
+                        )
+        model = spacy_udpipe.load_from_path(lang='ru',
+                                            path=str(model_path))
+        model.add_pipe(
+            'conll_formatter',
+            last=True,
+            config={'conversion_maps': {'XPOS': {'': '_'}},
+                    'include_headers': True},
+        )
+        return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -161,6 +188,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        return [str(self._analyzer(text)._.conll_str) for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -169,6 +197,11 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU),
+                  'w',
+                  encoding='utf-8') as file:
+            file.write(article.get_conllu_info())
+            file.write('\n')
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -350,7 +383,8 @@ def main() -> None:
     Entrypoint for pipeline module.
     """
     corman = CorpusManager(ASSETS_PATH)
-    pipeline = TextProcessingPipeline(corman)
+    udpipe_analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(corman, udpipe_analyzer)
     pipeline.run()
 
 
