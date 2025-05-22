@@ -9,7 +9,7 @@ import re
 import shutil
 from random import randint
 from time import sleep
-from typing import Pattern, Union
+from typing import Union
 
 import requests
 from bs4 import BeautifulSoup
@@ -103,14 +103,15 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        if not isinstance(self._seed_urls, list) or not all(isinstance(url, str) for url in self._seed_urls):
+        if not isinstance(self._seed_urls, list) or not all(isinstance(url, str)
+                                                            for url in self._seed_urls):
             raise IncorrectSeedURLError("Seed URLs must be a list of strings")
 
         if not all(
                 url.startswith(('http://mordovia-news.ru', 'https://mordovia-news.ru'))
                 for url in self._seed_urls
         ):
-            raise IncorrectSeedURLError("Seed URLs must belong to Mordovia News domain (http or https)")
+            raise IncorrectSeedURLError("Seed URLs must belong to Mordovia domain (http or https)")
 
         if not isinstance(self._num_articles, int) or self._num_articles <= 0:
             raise IncorrectNumberOfArticlesError("Number of articles must be a positive integer")
@@ -134,24 +135,66 @@ class Config:
             raise IncorrectVerifyError("Headless mode must be a boolean")
 
     def get_seed_urls(self) -> list[str]:
+        """
+        Return the list of seed URLs used for crawling.
+
+        Returns:
+            list[str]: A list of seed URLs.
+        """
         return self._seed_urls
 
     def get_num_articles(self) -> int:
+        """
+        Return the number of articles to process.
+
+        Returns:
+            int: The total number of articles.
+        """
         return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
+        """
+        Return the HTTP headers used in requests.
+
+        Returns:
+            dict[str, str]: A dictionary of HTTP headers.
+        """
         return self._headers
 
     def get_encoding(self) -> str:
+        """
+        Return the character encoding used for processing.
+
+        Returns:
+            str: The encoding name (e.g., 'utf-8').
+        """
         return self._encoding
 
     def get_timeout(self) -> int:
+        """
+        Return the timeout value (in seconds) for network requests.
+
+        Returns:
+            int: Timeout duration in seconds.
+        """
         return self._timeout
 
     def get_verify_certificate(self) -> bool:
+        """
+        Indicate whether SSL certificate verification is enabled.
+
+        Returns:
+            bool: True if SSL certificates are verified, False otherwise.
+        """
         return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
+        """
+        Indicate whether headless mode is enabled for browser automation.
+
+        Returns:
+            bool: True if headless mode is enabled, False otherwise.
+        """
         return self._headless_mode
 
 
