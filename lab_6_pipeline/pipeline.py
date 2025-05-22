@@ -105,7 +105,7 @@ class CorpusManager:
                 # Извлекаем ID из имени файла
                 article_id = int(file_path.stem.split("_")[0])
 
-                # Проверяем существование meta-файла
+                # Проверяем существование meta
                 meta_file = self.path_to_raw_txt_data / f"{article_id}_meta.json"
                 if not meta_file.exists():
                     continue  # Пропускаем файлы без meta
