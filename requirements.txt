@@ -2,6 +2,7 @@ beautifulsoup4==4.13.4
 lxml==5.4.0
 networkx==3.4.2
 numpy==1.26.4
+pydantic==2.6.4
 requests==2.32.3
 smart-open==6.4.0
 spacy-conll==3.0.0
