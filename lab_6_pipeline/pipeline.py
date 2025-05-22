@@ -161,7 +161,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         if not model_path.exists():
             raise FileNotFoundError('No such file.')
         nlp = spacy_udpipe.load_from_path(lang='ru', path=str(model_path))
-        nlp.add_pipe('conll-formatter',
+        nlp.add_pipe('conll_formatter',
                      last=True,
                      config={'conversion_maps': {'XPOS': {'': '_'}}, 'include_headers': True})
         return nlp
@@ -370,7 +370,7 @@ def main() -> None:
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
-    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
+    pipeline = TextProcessingPipeline(corpus_manager, analyzer=udpipe_analyzer)
     pipeline.run()
 
 
