@@ -103,51 +103,35 @@ class Config:
         Ensure configuration parameters are not corrupt.
         """
 
-        config_dto = self._extract_config_content()
+        if not isinstance(self._config.headers, dict):
+            raise IncorrectHeadersError("Headers must be a dictionary")
 
-        if not isinstance(config_dto.headers, dict):
-            raise IncorrectHeadersError
+        if not self._config.seed_urls:
+            raise IncorrectSeedURLError("Seed URLs cannot be empty")
 
-        # Validate individual headers
-        for header_value in config_dto.headers.values():
-            if '\n' in str(header_value):
-                raise IncorrectHeadersError("Headers cannot contain newline characters")
+        if not all(isinstance(url, str) and url.startswith('http') for url in self._config.seed_urls):
+            raise IncorrectSeedURLError("All seed URLs must be valid HTTP/HTTPS URLs")
 
-        if not isinstance(config_dto.seed_urls, list):
-            raise IncorrectSeedURLError
+        if not isinstance(self._config.total_articles, int) or self._config.total_articles < 1:
+            raise IncorrectNumberOfArticlesError(
+                f"Number of articles must be positive integer, got {self._config.total_articles}"
+            )
 
-        url_pattern = r"https?://.*/"
-        for url in config_dto.seed_urls:
-            if not isinstance(url, str) or not re.match(url_pattern, url):
-                raise IncorrectSeedURLError
+        if self._config.total_articles > NUM_ARTICLES_UPPER_LIMIT:
+            raise NumberOfArticlesOutOfRangeError(
+                f"Number of articles exceeds limit of {NUM_ARTICLES_UPPER_LIMIT}"
+            )
 
-        if (
-                not isinstance(config_dto.total_articles, int)
-                or isinstance(config_dto.total_articles, bool)
-                or config_dto.total_articles < 1
-        ):
-            raise IncorrectNumberOfArticlesError
+        if not isinstance(self._config.encoding, str):
+            raise IncorrectEncodingError("Encoding must be a string")
 
-        if config_dto.total_articles > NUM_ARTICLES_UPPER_LIMIT:
-            raise NumberOfArticlesOutOfRangeError
+        if not (TIMEOUT_LOWER_LIMIT < self._config.timeout < TIMEOUT_UPPER_LIMIT):
+            raise IncorrectTimeoutError(
+                f"Timeout must be between {TIMEOUT_LOWER_LIMIT} and {TIMEOUT_UPPER_LIMIT} seconds"
+            )
 
-        if not isinstance(config_dto.headers, dict):
-            raise IncorrectHeadersError
-
-        if not isinstance(config_dto.encoding, str):
-            raise IncorrectEncodingError
-
-        if (
-                not isinstance(config_dto.timeout, int)
-                or not TIMEOUT_LOWER_LIMIT < config_dto.timeout < TIMEOUT_UPPER_LIMIT
-        ):
-            raise IncorrectTimeoutError
-
-        if not isinstance(config_dto.should_verify_certificate, bool):
-            raise IncorrectVerifyError
-
-        if not isinstance(config_dto.headless_mode, bool):
-            raise IncorrectVerifyError
+        if not isinstance(self._config.should_verify_certificate, bool):
+            raise IncorrectVerifyError("Certificate verification flag must be boolean")
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -223,18 +207,20 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         requests.models.Response: A response from a request
     """
     try:
-        sleep_time = randint(1, 3)
-        sleep(sleep_time)
+        sleep(randint(1, 3))  # Random delay between requests
 
-        request = requests.get(
+        response = requests.get(
             url,
             headers=config.get_headers(),
             timeout=config.get_timeout(),
             verify=config.get_verify_certificate()
         )
-        request.encoding = config.get_encoding()
-        return request
-    except requests.RequestException:
+        response.raise_for_status()  # Raises exception for 4XX/5XX responses
+        response.encoding = config.get_encoding()
+        return response
+
+    except requests.RequestException as e:
+        print(f"Request failed for {url}: {str(e)}")
         response = requests.models.Response()
         response.status_code = 404
         return response
@@ -359,6 +345,21 @@ class HTMLParser:
         self._config = config
         self.article = Article(self._full_url, self._article_id)
 
+    def _save_meta(self) -> None:
+        """
+        Save article metadata to _meta.json file.
+        """
+        meta_data = {
+            "id": self._article_id,
+            "title": self.article.title,
+            "author": self.article.author,
+            "url": self._full_url
+        }
+
+        meta_path = ASSETS_PATH / f"{self._article_id}_meta.json"
+        with open(meta_path, 'w', encoding='utf-8') as meta_file:
+            json.dump(meta_data, meta_file, ensure_ascii=False, indent=4)
+
     def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
         """
         Find text of article.
@@ -368,14 +369,9 @@ class HTMLParser:
         """
 
         "change"
-        main_bs = article_soup.find(
-            'div',
-            class_='entry-content',
-            )
-        text_tag = main_bs.find_all("p")
-
+        main_bs = article_soup.find('div', class_='entry-content')
+        text_tag = main_bs.find_all("p") if main_bs else []
         find_text = [text.get_text(strip=True) for text in text_tag]
-
         self.article.text = "\n".join(find_text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
@@ -390,13 +386,11 @@ class HTMLParser:
                 article_soup.find('title')
         self.article.title = title.get_text(strip=True) if title else "Без названия"
 
-        # Дата
         date = article_soup.find('time', class_='entry-date') or \
                article_soup.find('time') or \
                article_soup.find('span', class_='date')
         self.article.date = self.unify_date_format(date.get_text(strip=True)) if date else datetime.datetime.now()
 
-        # Автор
         author = article_soup.find('span', class_='author') or \
                  article_soup.find('a', class_='author') or \
                  article_soup.find('span', class_='byline')
@@ -439,6 +433,7 @@ class HTMLParser:
             soup = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(soup)
             self._fill_article_with_meta_information(soup)
+            self._save_meta()
             return self.article
         except Exception as e:
             print(f"Error parsing article: {str(e)}")
