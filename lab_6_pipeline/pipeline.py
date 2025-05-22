@@ -540,32 +540,32 @@ class PatternSearchPipeline(PipelineProtocol):
         """
         Search for a pattern in documents and writes found information to JSON file.
         """
-        for article in self._corpus_manager.get_articles().values():
-            article_path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
-            doc = self._analyzer.from_conllu(cast(Article, article_path))
-            grph = self._make_graphs(doc)
-            matching = self._find_pattern(grph)
-
-            if matching:
-                res = {}
-                for ind, nod in matching.items():
-                    res[ind] = []
-                    for i in nod:
-                        nd = {
-                            "upos": i.upos,
-                            "text": i.text,
-                            "children": [{
-                                "upos": child.upos,
-                                "text": child.text,
-                                "children": [{
-                                    "upos": grandchild.upos,
-                                    "text": grandchild.text
-                                } for grandchild in child.children]
-                            } for child in i.children]
-                        }
-                        res[ind].append(nd)
-                article.set_pos_info(res)
-                to_meta(article)
+        # for article in self._corpus_manager.get_articles().values():
+        #     article_path = article.get_file_path(kind=ArtifactType.UDPIPE_CONLLU)
+        #     doc = self._analyzer.from_conllu(cast(Article, article_path))
+        #     grph = self._make_graphs(doc)
+        #     matching = self._find_pattern(grph)
+        #
+        #     if matching:
+        #         res = {}
+        #         for ind, nod in matching.items():
+        #             res[ind] = []
+        #             for i in nod:
+        #                 nd = {
+        #                     "upos": i.upos,
+        #                     "text": i.text,
+        #                     "children": [{
+        #                         "upos": child.upos,
+        #                         "text": child.text,
+        #                         "children": [{
+        #                             "upos": grandchild.upos,
+        #                             "text": grandchild.text
+        #                         } for grandchild in child.children]
+        #                     } for child in i.children]
+        #                 }
+        #                 res[ind].append(nd)
+        #         article.set_pos_info(res)
+        #         to_meta(article)
 
 
 def main() -> None:
