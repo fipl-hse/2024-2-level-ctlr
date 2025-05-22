@@ -79,18 +79,18 @@ class CorpusManager:
         if not any(self.path_to_raw_txt_data.iterdir()):
             raise EmptyDirectoryError("Directory is empty")
 
-        raws = list(self.path_to_raw_txt_data.glob('*_raw.txt'))
-        metas = list(self.path_to_raw_txt_data.glob('*_meta.json'))
+        # raws =
+        # metas =
 
         raw, meta = [], []
 
-        for f in raws:
+        for f in list(self.path_to_raw_txt_data.glob('*_raw.txt')):
             n_id = int(f.name.split("_")[0])
             raw.append(n_id)
             if f.stat().st_size == 0:
                 raise InconsistentDatasetError("File is empty")
 
-        for f in metas:
+        for f in list(self.path_to_raw_txt_data.glob('*_meta.json')):
             n_id = int(f.name.split("_")[0])
             meta.append(n_id)
             if f.stat().st_size == 0:
