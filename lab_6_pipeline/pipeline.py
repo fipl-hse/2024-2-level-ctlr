@@ -291,7 +291,7 @@ class StanzaAnalyzer(LibraryWrapper):
             download_method=None
         )
 
-        return nlp
+        return cast(AbstractCoNLLUAnalyzer, nlp)
 
 
     def analyze(self, texts: list[str]) -> list[StanzaDocument]:
@@ -341,7 +341,7 @@ class StanzaAnalyzer(LibraryWrapper):
         with open(path, "r", encoding="utf-8") as file:
             conllu = file.read()
         data = parser.parse_conll_text_as_spacy(conllu[:-1])
-        return data
+        return cast(StanzaDocument, data)
 
     def get_document(self, doc: StanzaDocument) -> UnifiedCoNLLUDocument:
         """
