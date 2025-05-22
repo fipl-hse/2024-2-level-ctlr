@@ -23,6 +23,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.visualizer import visualize
 
 
 class InconsistentDatasetError(Exception):
@@ -217,7 +218,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
         parser = ConllParser(self._analyzer)
-        doc = parser.parse_conll_file_as_spacy(conllu_path)
+        doc = parser.parse_conll_file_as_spacy(conllu_path, input_encoding="utf-8")
+        if not doc._.conll_str:
+            raise EmptyFileError("The conllu file is empty")
         return doc
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
@@ -308,6 +311,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self.analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -319,12 +324,33 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
+        conllu_test = article.get_conllu_info()
+        pos_freq_dict = {
+            "NOUN": conllu_test.count("\tNOUN\t"),
+            "PUNCT": conllu_test.count("\tPUNCT\t"),
+            "ADP": conllu_test.count("\tADP\t"),
+            "ADJ": conllu_test.count("\tADJ\t"),
+            "PROPN": conllu_test.count("\tPROPN\t"),
+            "ADV": conllu_test.count("\tADV\t"),
+            "VERB": conllu_test.count("\tVERB\t"),
+            "CCONJ": conllu_test.count("\tCCONJ\t"),
+            "NUM": conllu_test.count("\tNUM\t"),
+            "X": conllu_test.count("\tX\t")
+        }
+        return pos_freq_dict
+
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
-
+        for article in self._corpus.get_articles().values():
+            ud_data = self.analyzer.from_conllu(article)
+            article.set_conllu_info(ud_data._.conll_str)
+            freq = self._count_frequencies(article)
+            article.set_pos_info(freq)
+            io.to_meta(article)
+            visualize(article, ASSETS_PATH / (str(article.article_id)+"_image.png"))
 
 class PatternSearchPipeline(PipelineProtocol):
     """
@@ -392,6 +418,8 @@ def main() -> None:
     udpipe_analyzer = UDPipeAnalyzer()
     pipeline = TextProcessingPipeline(manager, udpipe_analyzer)
     pipeline.run()
+    pos_pipeline = POSFrequencyPipeline(manager, udpipe_analyzer)
+    pos_pipeline.run()
 
 
 if __name__ == "__main__":
