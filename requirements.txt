@@ -11,6 +11,7 @@ logging518==1.0.0
 matplotlib==3.10.3
 mypy==1.9.0
 networkx==3.4.2
+numpy==1.26.4
 pandas-stubs==2.1.4.231227
 pandas==2.2.1
 pydantic==2.9.2

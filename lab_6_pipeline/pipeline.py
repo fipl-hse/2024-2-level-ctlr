@@ -127,21 +127,11 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = self._corpus.get_articles()
-
-        for article in articles.values():
-            for char in ['–', '—', '−', '…']:
-                article.text = article.text.replace(char, '')
+        analyzed_texts = self._analyzer.analyze([article.text for article
+                                                 in self._corpus.get_articles().values()])
+        for article_id, article in enumerate(self._corpus.get_articles().values()):
             to_cleaned(article)
-
-        if not self._analyzer:
-            return
-
-        texts = [article.text for article in articles.values()]
-        conllu_results = self._analyzer.analyze(texts)
-
-        for article, conllu in zip(articles.values(), conllu_results):
-            article.set_conllu_info(conllu)
+            article.set_conllu_info(analyzed_texts[article_id])
             self._analyzer.to_conllu(article)
 
 
@@ -189,7 +179,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
-        return [self._analyzer(text)._.conll_str for text in texts]
+        return [f'{self._analyzer(text)._.conll_str}\n' for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -198,10 +188,11 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
-        conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
-        conllu_content = article.get_conllu_info()
-        with open(conllu_path, "w", encoding="utf-8") as file:
-            file.write(conllu_content)
+        conllu_info = article.get_conllu_info()
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        with open(path, 'w', encoding='utf-8') as file:
+            file.write(conllu_info)
+
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
