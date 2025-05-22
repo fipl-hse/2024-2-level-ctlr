@@ -213,7 +213,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         if not path.exists() or path.stat().st_size == 0:
             raise EmptyFileError
 
-        return CoNLL.conll2doc(input_file=str(path))
+        return CoNLL.conll2doc(input_file=path)
 
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
