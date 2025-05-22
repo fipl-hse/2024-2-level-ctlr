@@ -95,7 +95,7 @@ class CorpusManager:
 
         if len(raw) != len(meta):
             raise InconsistentDatasetError(
-                f"The amounts of meta and raw files are not equal")
+                "The amounts of meta and raw files are not equal")
 
         for ids in (sorted(raw), sorted(meta)):
             for i in range(1, len(ids)):
