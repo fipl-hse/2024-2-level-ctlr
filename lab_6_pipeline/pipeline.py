@@ -8,7 +8,7 @@ import re
 
 import spacy_udpipe
 from networkx import DiGraph
-from spacy_conll import ConllParser
+from spacy_conll import ConllParser, init_parser
 
 from core_utils.article import io
 from core_utils.article.article import Article, ArtifactType
@@ -215,6 +215,10 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        parser = ConllParser(self._analyzer)
+        doc = parser.parse_conll_file_as_spacy(conllu_path)
+        return doc
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
