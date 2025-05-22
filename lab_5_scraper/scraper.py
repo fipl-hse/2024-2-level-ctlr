@@ -238,7 +238,6 @@ class Crawler:
         Find articles.
         """
         seed_urls = self.config.get_seed_urls()
-        print(seed_urls)
         for seed_url in seed_urls:
             if len(self.urls) >= self.config.get_num_articles():
                 break
