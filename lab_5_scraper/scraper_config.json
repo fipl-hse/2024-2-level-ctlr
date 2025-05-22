@@ -1,9 +1,25 @@
 {
-    "seed_urls": [],
-    "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
-    "timeout": 0,
+    "seed_urls": [
+        "https://ugra-news.ru/rubrics/society/",
+        "https://ugra-news.ru/rubrics/politics/",
+        "https://ugra-news.ru/rubrics/economics/",
+        "https://ugra-news.ru/rubrics/health/",
+        "https://ugra-news.ru/rubrics/culture/",
+        "https://ugra-news.ru/rubrics/sport/",
+        "https://ugra-news.ru/rubrics/incidents/",
+        "https://ugra-news.ru/rubrics/in-the-country/",
+        "https://ugra-news.ru/rubrics/6923/",
+        "https://ugra-news.ru/rubrics/analytics/",
+        "https://ugra-news.ru/rubrics/potrebitel/"],
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Cookie": "tmr_lvid=dbe60b543a4feb39afc5b8f60527a57d; tmr_lvidTS=1744201437704; _ym_uid=1744201438271151472; _ym_d=1744201438; adtech_uid=1887cbf9-444e-413f-b081-e335755f7449%3Augra-news.ru; top100_id=t1.2773601.1183721386.1744201438048; domain_sid=XMGyMKx-1p9TmBfkmGktR%3A1744310944112; PHPSESSID=z6t5xIr8d9iO9gUWfApKxVnia6KdEeDq; _ym_isad=2; BITRIX_SM_BANNERS=0_88_30_18042025%2C0_76_30_18042025%2C0_66_8_18042025%2C0_54_8_18042025%2C0_34_2_18042025; tmr_detect=0%7C1744392107797; t3_sid_2773601=s1.1993751281.1744394204351.1744394207139.10.4.0.0"
+    },
+    "total_articles_to_find_and_parse": 1,
+    "encoding": "utf-8",
+    "timeout": 5,
     "should_verify_certificate": true,
     "headless_mode": true
 }
