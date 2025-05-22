@@ -395,6 +395,10 @@ def main() -> None:
     crawler = Crawler(configuration)
     crawler.find_articles()
 
+    for file in ASSETS_PATH.glob("*"):
+        if file.is_file():
+            file.unlink()
+
     for article_id, url in enumerate(crawler.urls, start=1):
         parser = HTMLParser(
             full_url=url,
