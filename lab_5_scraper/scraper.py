@@ -12,13 +12,11 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
+
 from core_utils.article.article import Article
 from core_utils.article.io import to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-from bs4.element import Tag
-import html
-import re
 
 
 class IncorrectSeedURLError(Exception):
@@ -236,7 +234,7 @@ class Crawler:
         self.config = config
         self.urls = []
 
-    def _extract_url(self, article_bs: Tag, base_url: str) -> str:
+    def _extract_url(self, article_bs: BeautifulSoup, base_url: str) -> str:
         """
         Find and retrieve url from HTML.
         """
@@ -338,14 +336,25 @@ class HTMLParser:
         article_top = article_soup.find('div', class_='block--article_top')
         if article_top:
             title_tag = article_top.find('h1')
-            self.article.title = html.unescape(title_tag.text.strip()) if title_tag else "NOT FOUND"
+            self.article.title = title_tag.text.strip() if title_tag else "NOT FOUND"
         else:
             self.article.title = "NOT FOUND"
         self.article.topics = []
-        match = re.search(r'/(\d{4})/(\d{2})/(\d{2})/', self.full_url)
-        if match:
-            year, month, day = match.groups()
-            self.article.date = datetime.datetime(int(year), int(month), int(day))
+        parts = self.full_url.split('/')
+        date_parts = []
+
+        for part in parts:
+            if part.isdigit() and (len(part) == 4 or len(part) == 2):
+                date_parts.append(part)
+                if len(date_parts) == 3:
+                    break
+
+        if len(date_parts) == 3:
+            year, month, day = date_parts[0], date_parts[1], date_parts[2]
+            try:
+                self.article.date = datetime.datetime(int(year), int(month), int(day))
+            except ValueError:
+                self.article.date = datetime.datetime.now()
         else:
             self.article.date = datetime.datetime.now()
 
