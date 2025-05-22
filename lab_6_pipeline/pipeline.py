@@ -77,6 +77,7 @@ class CorpusManager:
         if all_raw_ids != good_raw:
             raise InconsistentDatasetError('IDs of raw files have slips')
 
+
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
