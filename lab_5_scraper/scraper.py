@@ -237,7 +237,7 @@ class Crawler:
         """
         for seed_url in self.get_search_urls():
             response = make_request(seed_url, self.config)
-            if not response or response.status_code != 200:
+            if not response or response.status_code > 400:
                 continue
 
             soup = BeautifulSoup(response.text, 'lxml')

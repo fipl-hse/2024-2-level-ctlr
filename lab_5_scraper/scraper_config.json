@@ -5,9 +5,9 @@
     "Accept-language": "ru,en;q=0.9,uk;q=0.8",
     "Cookie": "csrftoken=rBaqcYFMMCAJmNDA5zHT4PZA3CWOfsXm"
     },
-    "total_articles_to_find_and_parse": 5,
+    "total_articles_to_find_and_parse": 50,
     "encoding": "utf-8",
-    "timeout": 0,
+    "timeout": 5,
     "should_verify_certificate": true,
     "headless_mode": true
 }
