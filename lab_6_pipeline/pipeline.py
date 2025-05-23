@@ -142,17 +142,13 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = dict(sorted(self.corpus_manager.get_articles().items()))
+        articles = [article for _, article in sorted(self.corpus_manager.get_articles().items(), key=lambda x: x[0])]
 
-        for article in articles.values():
+        for article in articles:
             to_cleaned(article)
-
-        if self._analyzer:
-            cleaned_texts = [article.text for article in articles.values()]
-            analyzed_texts = self._analyzer.analyze(cleaned_texts)
-
-            for article, conllu in zip(articles.values(), analyzed_texts):
-                article.set_conllu_info(conllu)
+            if self._analyzer:
+                analyzed_text = self._analyzer.analyze([article.text])[0]
+                article.set_conllu_info(analyzed_text)
                 self._analyzer.to_conllu(article)
 
 
@@ -391,7 +387,7 @@ def main() -> None:
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
-    pipeline = TextProcessingPipeline(corpus_manager, analyzer=udpipe_analyzer)
+    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
     pipeline.run()
 
 
