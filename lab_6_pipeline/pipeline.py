@@ -7,8 +7,8 @@ import pathlib
 import string
 
 from networkx import DiGraph
-from core_utils.article.article import Article
-from core_utils.article.io import to_cleaned
+from core_utils.article.article import Article, get_article_id_from_filepath
+from core_utils.article.io import from_raw, to_cleaned
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -91,23 +91,8 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        raw_files = sorted(
-            f for f in self.path_to_raw_txt_data.glob('*_raw.txt')
-            if f.stem.split('_')[0].isdigit()
-        )
-
-        for raw_file in raw_files:
-            article_id = int(raw_file.stem.split('_')[0])
-
-            with open(raw_file, 'r', encoding='utf-8') as file:
-                text = file.read().strip()
-
-            if not text:
-                continue
-
-            article = Article(url=None, article_id=article_id)
-            article.text = text
-            self._storage[article_id] = article
+        self._storage = {get_article_id_from_filepath(filepath): from_raw(filepath)
+                         for filepath in self.path_to_raw_txt_data.glob('*_raw.txt')}
 
     def get_articles(self) -> dict:
         """
