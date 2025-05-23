@@ -356,6 +356,8 @@ class HTMLParser:
         """
         Save article metadata to _meta.json file.
         """
+        ASSETS_PATH.mkdir(parents=True, exist_ok=True)
+
         meta_data = {
             "id": self._article_id,
             "title": self.article.title,
@@ -435,7 +437,7 @@ class HTMLParser:
         try:
             response = make_request(self._full_url, self._config)
             if response.status_code != 200:
-                return False
+                return self.article  # Return empty article instead of False
 
             soup = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(soup)
@@ -444,7 +446,7 @@ class HTMLParser:
             return self.article
         except Exception as e:
             print(f"Error parsing article: {str(e)}")
-            return False
+            return self.article
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
     Create ASSETS_PATH folder if no created and remove existing folder.
