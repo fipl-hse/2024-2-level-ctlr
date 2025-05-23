@@ -102,36 +102,17 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-
         if not isinstance(self._config.headers, dict):
             raise IncorrectHeadersError("Headers must be a dictionary")
+
+        if not isinstance(self._config.seed_urls, list):
+            raise IncorrectSeedURLError("Seed URLs must be a list")
 
         if not self._config.seed_urls:
             raise IncorrectSeedURLError("Seed URLs cannot be empty")
 
         if not all(isinstance(url, str) and url.startswith('http') for url in self._config.seed_urls):
             raise IncorrectSeedURLError("All seed URLs must be valid HTTP/HTTPS URLs")
-
-        if not isinstance(self._config.total_articles, int) or self._config.total_articles < 1:
-            raise IncorrectNumberOfArticlesError(
-                f"Number of articles must be positive integer, got {self._config.total_articles}"
-            )
-
-        if self._config.total_articles > NUM_ARTICLES_UPPER_LIMIT:
-            raise NumberOfArticlesOutOfRangeError(
-                f"Number of articles exceeds limit of {NUM_ARTICLES_UPPER_LIMIT}"
-            )
-
-        if not isinstance(self._config.encoding, str):
-            raise IncorrectEncodingError("Encoding must be a string")
-
-        if not (TIMEOUT_LOWER_LIMIT < self._config.timeout < TIMEOUT_UPPER_LIMIT):
-            raise IncorrectTimeoutError(
-                f"Timeout must be between {TIMEOUT_LOWER_LIMIT} and {TIMEOUT_UPPER_LIMIT} seconds"
-            )
-
-        if not isinstance(self._config.should_verify_certificate, bool):
-            raise IncorrectVerifyError("Certificate verification flag must be boolean")
 
     def get_seed_urls(self) -> list[str]:
         """
