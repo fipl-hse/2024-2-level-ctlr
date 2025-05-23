@@ -5,11 +5,11 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 import re
+from typing import cast
 
 import spacy_udpipe
 from networkx import DiGraph
 from spacy_conll import ConllParser
-from typing import cast
 
 from core_utils.article import io
 from core_utils.article.article import Article, ArtifactType
