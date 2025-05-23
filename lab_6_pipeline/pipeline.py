@@ -2,8 +2,6 @@
 Pipeline for CONLL-U formatting.
 """
 
-import os
-import re
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
@@ -66,50 +64,45 @@ class CorpusManager:
         Validate folder with assets.
         """
         if not self.path_to_raw_txt_data.exists():
-            raise FileNotFoundError("File not found")
-
+            raise FileNotFoundError("Directory does not exist")
         if not self.path_to_raw_txt_data.is_dir():
-            raise NotADirectoryError("Path leads to something other than Directory")
+            raise NotADirectoryError("Path is not a directory")
 
-        files_list = list(self.path_to_raw_txt_data.iterdir())
-        if len(files_list) == 0:
+        if not any(self.path_to_raw_txt_data.iterdir()):
             raise EmptyDirectoryError("Directory is empty")
 
-        for file in self.path_to_raw_txt_data.iterdir():
-            if os.stat(file).st_size == 0:
-                raise InconsistentDatasetError("One of the files is empty")
+        raw_files = list(self.path_to_raw_txt_data.glob("*_raw.txt"))
+        meta_files = list(self.path_to_raw_txt_data.glob("*_meta.json"))
 
-            json_count = [file for file in files_list if '.json' in str(file)]
-            json_count = sorted(json_count, key=lambda m: int(str(m.stem).split('_')[0]))
-            article_count = [file for file in files_list if 'raw.txt' in str(file)]
-            article_count = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
-            print(article_count)
 
-            if len(json_count) != len(article_count):
-                raise InconsistentDatasetError("Number of meta files doesn't match the number of articles")
+        if len(raw_files) != len(meta_files):
+            raise InconsistentDatasetError("Mismatch between raw and meta files")
 
-            for file_id, file_name in enumerate(article_count):
-                if str(file_name.stem).startswith(str(file_id)) and str(json_count[file_id].stem).startswith(
-                     str(file_id)):
-                    raise InconsistentDatasetError('Slip ups in ID detected')
-
-                return None
+        for file in (*raw_files, *meta_files):
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"Empty file: {file.name}")
 
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
-        files_list = list(self.path_to_raw_txt_data.iterdir())
-        files_new = []
-        for file in files_list:
-            if re.match('[0-9]+_raw', str(file.stem)):
-                files_new.append(file)
-        files_new = sorted(files_new, key=lambda m: int(str(m.stem).split('_')[0]))
-        for file_id, file in enumerate(files_new):
-            if str(file).endswith('raw.txt'):
-                article = from_raw(file)
-                self._storage[file_id + 1] = article
+        valid_pairs = []
+
+        for raw_file in self.path_to_raw_txt_data.glob("*_raw.txt"):
+            try:
+                article_id = int(raw_file.stem.split("_")[0])
+                meta_file = self.path_to_raw_txt_data / f"{article_id}_meta.json"
+
+                if meta_file.exists():
+                    valid_pairs.append((article_id, raw_file))
+
+            except (ValueError, IndexError):
+                continue
+
+        for article_id, raw_file in sorted(valid_pairs, key=lambda x: x[0]):
+            article = from_raw(raw_file)
+            self._storage[article_id] = article
 
     def get_articles(self) -> dict:
         """
