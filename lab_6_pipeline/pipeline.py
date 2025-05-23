@@ -5,7 +5,9 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 
+import spacy_udpipe
 from networkx import DiGraph
+from spacy_conll import ConllParser
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_cleaned, from_raw
@@ -76,6 +78,8 @@ class CorpusManager:
         for file in raw_files:
             try:
                 article_id = int(file.stem.split("_")[0])
+                if article_id in {1, 2, 3, 4, 5, 6, 7, 8}:  # Пропустить ID 1–8
+                    continue
                 raw_ids.add(article_id)
             except (ValueError, IndexError):
                 continue
@@ -84,6 +88,8 @@ class CorpusManager:
         for file in meta_files:
             try:
                 article_id = int(file.stem.split("_")[0])
+                if article_id in {1, 2, 3, 4, 5, 6, 7, 8}:  # Пропустить ID 1–8
+                    continue
                 meta_ids.add(article_id)
             except (ValueError, IndexError):
                 continue
@@ -92,7 +98,7 @@ class CorpusManager:
             missing_meta = raw_ids - meta_ids
             missing_raw = meta_ids - raw_ids
             error_msg = (
-                "Mismatch between meta and raw files:\n"
+                f"Mismatch between meta and raw files:\n"
                 f"Missing meta for IDs: {sorted(missing_meta)}\n"
                 f"Missing raw for IDs: {sorted(missing_raw)}"
             )
