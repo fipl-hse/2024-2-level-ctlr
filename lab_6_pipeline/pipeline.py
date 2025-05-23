@@ -70,22 +70,29 @@ class CorpusManager:
         if not any(self.path_to_raw_txt_data.iterdir()):
             raise EmptyDirectoryError(f"Directory {self.path_to_raw_txt_data} is empty")
 
-        raw_files = [filepath.name for filepath in self.path_to_raw_txt_data.glob('*_raw.txt')]
-        meta_files = [filepath.name for filepath in self.path_to_raw_txt_data.glob('*_meta.json')]
+        raw_files = sorted(
+            f for f in self.path_to_raw_txt_data.glob('*_raw.txt')
+            if f.stem.split('_')[0].isdigit()
+        )
 
-        if len(raw_files) != len(meta_files):
+        meta_files = sorted(
+            f for f in self.path_to_raw_txt_data.glob('*_meta.json')
+            if f.stem.split('_')[0].isdigit()
+        )
+
+        if meta_files and len(raw_files) != len(meta_files):
             raise InconsistentDatasetError("Number of raw and meta files doesn't match")
 
-        meta_template = [f'{count}_meta.json' for count in range(1, len(meta_files) + 1)]
-        if set(meta_files) != set(meta_template):
-            raise InconsistentDatasetError('IDs of meta files are inconsistent.')
-        raw_template = [f'{count}_raw.txt' for count in range(1, len(raw_files) + 1)]
-        if set(raw_files) != set(raw_template):
-            raise InconsistentDatasetError('IDs of raw files are inconsistent.')
-        for mask in ['*_raw.txt', '*_meta.json']:
-            for filepath in self.path_to_raw_txt_data.glob(mask):
-                if filepath.stat().st_size == 0:
-                    raise InconsistentDatasetError(f'File {filepath} is empty.')
+        raw_ids = []
+        for file in raw_files:
+            file_id = int(file.stem.split('_')[0])
+            raw_ids.append(file_id)
+
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"File {file.name} is empty")
+
+        if meta_files and (raw_ids != sorted(raw_ids) or raw_ids != list(range(1, len(raw_ids) + 1))):
+            raise InconsistentDatasetError("IDs are not sequential or have gaps")
 
     def _scan_dataset(self) -> None:
         """

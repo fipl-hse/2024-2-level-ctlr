@@ -15,7 +15,7 @@ import requests.compat
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
-from core_utils.article.io import to_meta, to_raw
+from core_utils.article.io import to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
@@ -309,19 +309,6 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title = article_soup.find('h1') or article_soup.find('title')
-        self.article.title = title.get_text(strip=True) if title else self.full_url
-
-        author = article_soup.find(class_=lambda x: x and 'author' in x.lower())
-        self.article.author = author.get_text(strip=True) if author else 'Unknown author'
-
-        date_element = (article_soup.find('time') or
-                        article_soup.find(class_=lambda x: x and 'date' in x.lower()))
-        if date_element:
-            date_str = date_element.get('datetime') or date_element.get_text(strip=True)
-            self.article.date = self.unify_date_format(date_str)
-        else:
-            self.article.date = datetime.datetime.now()
 
     @staticmethod
     def unify_date_format(date_str: str) -> datetime.datetime:
@@ -334,12 +321,6 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        for fmt in ('%Y-%m-%d', '%d.%m.%Y', '%B %d, %Y', '%d %B %Y', '%Y-%m-%dT%H:%M:%S'):
-            try:
-                return datetime.datetime.strptime(date_str, fmt)
-            except ValueError:
-                continue
-        return datetime.datetime.fromisoformat(date_str.split('T')[0])
 
     def parse(self) -> Union[Article, bool, list]:
         """
@@ -352,7 +333,6 @@ class HTMLParser:
         if response.ok:
             article_bs = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(article_bs)
-            self._fill_article_with_meta_information(article_bs)
         return self.article
 
 
@@ -384,7 +364,6 @@ def main() -> None:
         article = parser.parse()
         if isinstance(article, Article):
             to_raw(article)
-            to_meta(article)
 
 
 if __name__ == "__main__":
