@@ -68,11 +68,14 @@ class CorpusManager:
         if not self.path_to_raw_txt_data.is_dir():
             raise NotADirectoryError("Path is not a directory")
 
-        if not any(self.path_to_raw_txt_data.iterdir()):
+        files_list = list(self.path_to_raw_txt_data.iterdir())
+        if len(files_list) == 0:
             raise EmptyDirectoryError("Directory is empty")
 
-        raw_files = list(self.path_to_raw_txt_data.glob("*_raw.txt"))
-        meta_files = list(self.path_to_raw_txt_data.glob("*_meta.json"))
+        json_count = [file for file in files_list if '.json' in str(file)]
+        meta_files = sorted(json_count, key=lambda m: int(str(m.stem).split('_')[0]))
+        article_count = [file for file in files_list if 'raw.txt' in str(file)]
+        raw_files = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
 
         if len(raw_files) != len(meta_files):
             raise InconsistentDatasetError("Mismatch between raw and meta files")
