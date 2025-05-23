@@ -3,19 +3,21 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
-import pathlib
-from typing import Pattern, Union
+import datetime
 import json
-from core_utils.config_dto import ConfigDTO
-from core_utils.article.article import Article
-from core_utils.article.io import to_raw, to_meta
-from core_utils.constants import CRAWLER_CONFIG_PATH, ASSETS_PATH
+import pathlib
+import random
 import shutil
+import time
+from typing import Pattern, Union
+
 import requests
 from bs4 import BeautifulSoup
-import time
-import random
-import datetime
+
+from core_utils.article.article import Article
+from core_utils.article.io import to_meta, to_raw
+from core_utils.config_dto import ConfigDTO
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
 class IncorrectSeedURLError(Exception):
@@ -242,13 +244,15 @@ class Crawler:
             if not response.ok:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
-            for block in soup.find_all('a', class_='in main'):
+
+            for block in soup.find_all('a', class_='news'):
                 url = self._extract_url(block)
                 if url and url not in self.urls and \
                         len(self.urls) < self.config.get_num_articles():
-                    self.urls.append(url)
+                    self.urls.append(f'https://www.ks87.ru{url}')
                 else:
                     break
+        print(self.urls)
 
     def get_search_urls(self) -> list:
         """
@@ -289,7 +293,7 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        div = article_soup.find('div', class_='in mane')
+        div = article_soup.find('div', class_='content-inner-desc clearfix')
         text = []
         if div is not None:
             for block in div:
@@ -305,21 +309,21 @@ class HTMLParser:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
         title = article_soup.find('h1',
-                                  itemprop=['headline',
-                                            'headline name']).get_text(strip=True)
+                                  class_=['page-title']).get_text(strip=True)
+        print(title)
         self.article.title = title
-        div_author = article_soup.find('div', class_='authors')
+        div_author = article_soup.find('strong')
         if div_author is None:
             self.article.author = ['NOT FOUND']
         else:
             if div_author.get_text():
                 authors = (div_author.get_text(strip=True)).split(',')
                 self.article.author = authors
-        div_topic = article_soup.find('div', class_='tags')
+        div_topic = article_soup.find_all('span', class_='breadcrumbs-item active')[1]
         if div_topic.get_text():
             topics = (div_topic.get_text(strip=True)).split(',')
             self.article.topics = topics
-        date_str = article_soup.find_all('time')[0].get_text(strip=True)
+        date_str = article_soup.find('div', class_='content-inner-date').get_text(strip=True)
         date = self.unify_date_format(date_str)
         self.article.date = date
 
@@ -331,7 +335,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
-        return datetime.datetime.strptime(date_str, "%d.%m.%Y %H:%M")
+        return datetime.datetime.strptime(date_str, "%d.%m.%Y")
 
     def parse(self) -> Union[Article, bool, list]:
         """
