@@ -3,13 +3,19 @@ Pipeline for CONLL-U formatting.
 """
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
-import pathlib
+from collections import defaultdict
+from dataclasses import asdict
 
 import spacy_udpipe
-from networkx import DiGraph
+import stanza
+from networkx import DiGraph, to_dict_of_lists
+from networkx.algorithms.isomorphism import categorical_node_match, GraphMatcher
+from spacy_conll.parser import ConllParser
+from stanza.models.common.doc import Document
+from stanza.utils.conll import CoNLL
 
-from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import to_cleaned
+from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
+from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
