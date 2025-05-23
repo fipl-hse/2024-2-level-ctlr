@@ -273,7 +273,7 @@ class Crawler:
                 continue
             soup = BeautifulSoup(response.text, 'lxml')
             url = self._extract_url(soup)
-            while url and len(self.urls) <= self._config.get_num_articles():
+            while url and len(self.urls) < self._config.get_num_articles():
                 self.urls.append(url)
                 url = self._extract_url(soup)
 

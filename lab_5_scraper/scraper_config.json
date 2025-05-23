@@ -11,7 +11,7 @@
         "Referer": "https://yandex.ru/search?clid=1906725&text=my+headers&rdrnd=827866&lr=213&redircnt=1746886131.1",
         "Sec-Fetch-Dest": "document",
         "Accept-Language": "ru"},
-    "total_articles_to_find_and_parse": 20,
+    "total_articles_to_find_and_parse": 1,
     "encoding": "utf-8",
     "timeout": 30,
     "should_verify_certificate": true,
