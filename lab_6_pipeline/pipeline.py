@@ -2,12 +2,16 @@
 Pipeline for CONLL-U formatting.
 """
 
+
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 
+import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article
+from core_utils.article.io import from_raw, to_cleaned
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -18,6 +22,24 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
+
+class InconsistentDatasetError(Exception):
+    """
+    IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Directory is empty
+    """
+
+
+class EmptyFileError(Exception):
+    """
+    The file is empty
+    """
 
 
 class CorpusManager:
@@ -32,16 +54,57 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError("Directory does not exist")
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError("Path is not a directory")
+
+        files_list = list(self.path_to_raw_txt_data.iterdir())
+        if len(files_list) == 0:
+            raise EmptyDirectoryError("Directory is empty")
+
+        json_count = [file for file in files_list if '.json' in str(file)]
+        meta_files = sorted(json_count, key=lambda m: int(str(m.stem).split('_')[0]))
+        article_count = [file for file in files_list if 'raw.txt' in str(file)]
+        raw_files = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
+
+        if len(raw_files) != len(meta_files):
+            raise InconsistentDatasetError("Mismatch between raw and meta files")
+
+        for file in (*raw_files, *meta_files):
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"Empty file: {file.name}")
+
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        valid_pairs = []
+
+        for raw_file in self.path_to_raw_txt_data.glob("*_raw.txt"):
+            try:
+                article_id = int(raw_file.stem.split("_")[0])
+                meta_file = self.path_to_raw_txt_data / f"{article_id}_meta.json"
+
+                if meta_file.exists():
+                    valid_pairs.append((article_id, raw_file))
+
+            except (ValueError, IndexError):
+                continue
+
+        for article_id, raw_file in sorted(valid_pairs, key=lambda x: x[0]):
+            article = from_raw(raw_file)
+            self._storage[article_id] = article
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +113,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,11 +131,16 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus_manager = corpus_manager
+        self.analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = self.corpus_manager.get_articles()
+        for i, article in articles.items():
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -293,6 +362,10 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    udpipe_analyzer = UDPipeAnalyzer()
+    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
+    pipeline.run()
 
 
 if __name__ == "__main__":
