@@ -76,7 +76,9 @@ class CorpusManager:
         good_raw = {f'{i}_raw.txt' for i in range(1, len(all_raw_ids) + 1)}
         if all_raw_ids != good_raw:
             raise InconsistentDatasetError('IDs of raw files have slips')
-
+        for text_file in self._path_to_raw_txt_data.glob('*_raw.txt'):
+            if text_file.stat().st_size == 0:
+                raise EmptyFileError(f"Empty text file found: {text_file.name}")
 
     def _scan_dataset(self) -> None:
         """
