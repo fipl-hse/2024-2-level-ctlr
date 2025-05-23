@@ -67,6 +67,8 @@ class CorpusManager:
         """
         Validate folder with assets.
         """
+        # re.match("[0-9]+_raw[.]txt", file.name)
+        # re.match("[0-9]+_meta[.]json", file.name)
         if not self.path_to_raw.exists():
             raise FileNotFoundError("The path to articles doesn't lead to an existing directory")
         if not self.path_to_raw.is_dir():
@@ -75,8 +77,8 @@ class CorpusManager:
             raise EmptyDirectoryError("The path to articles leads to an empty directory")
         indices = [1, 1]
         files_to_check = [file.name for file in self.path_to_raw.iterdir()
-                          if re.match("[0-9]+_raw[.]txt", file.name) or
-                          re.match("[0-9]+_meta[.]json", file.name)]
+                          if file.is_file() and
+                          (file.name.endswith("_raw.txt") or file.name.endswith("_meta.json"))]
         for file_name in sorted(files_to_check,
                                 key=lambda name: int(name[:name.index("_")])):
             current_ind = int("meta" in file_name)
