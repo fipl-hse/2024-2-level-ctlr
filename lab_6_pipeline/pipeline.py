@@ -147,11 +147,14 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         articles = self._corpus.get_articles().values()
-        analyzed = self._analyzer.analyze([article.text for article in articles])
-        for ind, article in enumerate(articles):
+        for article in articles:
             to_cleaned(article)
-            article.set_conllu_info(analyzed[ind])
-            self._analyzer.to_conllu(article)
+
+        if self._analyzer:
+            analyzed = self._analyzer.analyze([article.text for article in articles])
+            for ind, article in enumerate(articles):
+                article.set_conllu_info(analyzed[ind])
+                self._analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -181,7 +184,7 @@ class UDPipeAnalyzer(LibraryWrapper):
             last=True,
             config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
         )
-        return cast(AbstractCoNLLUAnalyzer, model)
+        return model # type: ignore
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -547,8 +550,8 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    path_to_raw_data = pathlib.Path(__file__).parent.parent / "tmp" / "articles"
-    corpus = CorpusManager(path_to_raw_txt_data=path_to_raw_data)
+    # path_to_raw_data = pathlib.Path(__file__).parent.parent / "tmp" / "articles"
+    corpus = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
 
     basic_analyzer = UDPipeAnalyzer()
     basic_txt_pipeline = TextProcessingPipeline(corpus_manager=corpus,
