@@ -106,7 +106,6 @@ class Config:
         if not isinstance(config_data.encoding, str):
             raise IncorrectEncodingError('Encoding must be specified as a string')
 
-
         if (not isinstance(config_data.timeout, int) or
             config_data.timeout < 0 or
             config_data.timeout > 60):
@@ -117,7 +116,6 @@ class Config:
 
         if not isinstance(config_data.headless_mode, bool):
             raise IncorrectVerifyError('Headless mode must either be true or false')
-
 
     def get_seed_urls(self) -> list[str]:
         """
@@ -231,7 +229,6 @@ class Crawler:
         """
         url = article_bs.find("a").get("href")
         link = f'https://www.riakchr.ru{str(url)}'
-        print(link)
         return link
 
     def find_articles(self) -> None:

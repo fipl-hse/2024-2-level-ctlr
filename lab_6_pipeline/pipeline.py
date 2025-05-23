@@ -82,7 +82,6 @@ class CorpusManager:
         json_count = sorted(json_count, key=lambda m: int(str(m.stem).split('_')[0]))
         article_count = [file for file in files_list if 'raw.txt' in str(file)]
         article_count = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
-        print(article_count)
 
         if len(json_count) != len(article_count):
             raise InconsistentDatasetError("Number of meta files doesn't match the number of articles")
@@ -144,12 +143,14 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         articles = self.corpus_manager.get_articles()
         texts_to_conllu = [from_raw(article.get_raw_text_path()).get_raw_text() for article in articles.values()]
-        conllu_docs = self._analyzer.analyze(texts_to_conllu)
+        if self._analyzer is not None:
+            conllu_docs = self._analyzer.analyze(texts_to_conllu)
         for article_id, article in enumerate(articles.values()):
             article.text = re.sub(r' ', '', article.text)
             to_cleaned(article)
-            article.set_conllu_info(conllu_docs[article_id])
-            self._analyzer.to_conllu(article)
+            if self._analyzer is not None:
+                article.set_conllu_info(conllu_docs[article_id])
+                self._analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -391,7 +392,7 @@ def main() -> None:
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
-    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
+    pipeline = TextProcessingPipeline(corpus_manager)
     pipeline.run()
 
 
