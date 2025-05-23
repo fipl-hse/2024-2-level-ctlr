@@ -3,6 +3,7 @@ Pipeline for CONLL-U formatting.
 """
 
 import os
+import re
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
