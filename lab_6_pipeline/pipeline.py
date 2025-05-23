@@ -74,7 +74,6 @@ class CorpusManager:
         raw_files = list(self.path_to_raw_txt_data.glob("*_raw.txt"))
         meta_files = list(self.path_to_raw_txt_data.glob("*_meta.json"))
 
-
         if len(raw_files) != len(meta_files):
             raise InconsistentDatasetError("Mismatch between raw and meta files")
 
