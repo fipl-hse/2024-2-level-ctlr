@@ -297,11 +297,14 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        div_body = article_soup.find("div")
-        texts = []
-        for p in div_body:
-            texts.append(p.get_text())
-        self.article.text = " ".join(texts)
+        div_body = article_soup.find_all("div")
+        if div_body:
+            texts = []
+            for p in div_body:
+                texts.append(p.get_text())
+            self.article.text = "\n".join(texts)
+        else:
+            self.article.text = "NOT FOUND"
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
