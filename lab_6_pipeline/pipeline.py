@@ -355,5 +355,6 @@ def main() -> None:
     pipeline = TextProcessingPipeline(corpus_manager)
     pipeline.run()
 
+
 if __name__ == "__main__":
     main()
