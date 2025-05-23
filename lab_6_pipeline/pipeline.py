@@ -65,18 +65,22 @@ class CorpusManager:
             raise FileNotFoundError(f"File '{self._path_to_raw_txt_data}' does not exist")
         if not self._path_to_raw_txt_data.is_dir():
             raise NotADirectoryError(f"Path '{self._path_to_raw_txt_data}' does not lead to directory")
+
         dir_of_raw_files = list(self._path_to_raw_txt_data.glob('*_raw.txt'))
-        dir_of_meta_files = list(self._path_to_raw_txt_data.glob('*_meta.json'))
-        if not dir_of_raw_files and not dir_of_meta_files:
+
+        if not dir_of_raw_files:
             raise EmptyDirectoryError(f'Directory is empty: {self._path_to_raw_txt_data} :(')
 
         all_raw_ids = set()
         for raw in dir_of_raw_files:
             if raw.stat().st_size == 0:
                 raise InconsistentDatasetError(f'The file {raw} is empty')
+
             if raw.name.endswith('_raw.txt'):
                 all_raw_ids.add(raw.name)
+
         good_raw = {f'{i}_raw.txt' for i in range(1, len(all_raw_ids) + 1)}
+
         if all_raw_ids != good_raw:
             raise InconsistentDatasetError('IDs of raw files have slips')
 
