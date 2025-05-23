@@ -7,7 +7,6 @@ import pathlib
 
 import spacy_udpipe
 from networkx import DiGraph
-from spacy_conll import ConllParser
 
 from core_utils.article.article import Article
 from core_utils.article.io import to_cleaned, from_raw
