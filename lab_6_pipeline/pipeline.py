@@ -9,6 +9,7 @@ import re
 import spacy_udpipe
 from networkx import DiGraph
 from spacy_conll import ConllParser
+from typing import cast
 
 from core_utils.article import io
 from core_utils.article.article import Article, ArtifactType
@@ -74,8 +75,8 @@ class CorpusManager:
             raise EmptyDirectoryError("The path to articles leads to an empty directory")
         indices = [1, 1]
         files_to_check = [file.name for file in self.path_to_raw.iterdir()
-                          if re.match("[0-9]+_raw.txt", file.stem) or
-                          re.match("[0-9]+_meta.json", file.stem)]
+                          if re.match("[0-9]+_raw[.]txt", file.name) or
+                          re.match("[0-9]+_meta[.]json", file.name)]
         for file_name in sorted(files_to_check,
                                 key=lambda name: int(name[:name.index("_")])):
             current_ind = int("meta" in file_name)
@@ -133,11 +134,14 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         articles = self._corpus.get_articles()
         listed_articles = list(articles.values())
-        analyzed_articles = self.analyzer.analyze([art.text for art in listed_articles])
+        analyzed_articles = self.analyzer.analyze(
+            [art.text for art in listed_articles]
+        ) if self.analyzer else []
         for art_id, article in enumerate(listed_articles):
             io.to_cleaned(article)
-            article.set_conllu_info(analyzed_articles[art_id])
-            self.analyzer.to_conllu(article)
+            if analyzed_articles:
+                article.set_conllu_info(analyzed_articles[art_id])
+                self.analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -201,6 +205,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
         with open(conllu_path, "w", encoding="utf-8") as conllu_f:
             conllu_f.write(conllu_info)
+            conllu_f.write("\n")
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -213,11 +218,15 @@ class UDPipeAnalyzer(LibraryWrapper):
             UDPipeDocument: Document ready for parsing
         """
         conllu_path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        if not conllu_path.stat().st_size:
+            raise EmptyFileError("At least one conllu file is empty")
+        with open(conllu_path, "r", encoding="utf-8") as conllu_file:
+            conllu_content = conllu_file.read()[:-1]
         parser = ConllParser(self._analyzer)
-        doc = parser.parse_conll_file_as_spacy(conllu_path, input_encoding="utf-8")
+        doc = parser.parse_conll_text_as_spacy(conllu_content)
         if not doc._.conll_str:
             raise EmptyFileError("The conllu file is empty")
-        return doc
+        return cast(UDPipeDocument, doc)
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
