@@ -331,21 +331,18 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
-        conllu_test = article.get_conllu_info()
-        pos_freq_dict = {
-            "NOUN": conllu_test.count("\tNOUN\t"),
-            "PUNCT": conllu_test.count("\tPUNCT\t"),
-            "ADP": conllu_test.count("\tADP\t"),
-            "ADJ": conllu_test.count("\tADJ\t"),
-            "PROPN": conllu_test.count("\tPROPN\t"),
-            "ADV": conllu_test.count("\tADV\t"),
-            "VERB": conllu_test.count("\tVERB\t"),
-            "CCONJ": conllu_test.count("\tCCONJ\t"),
-            "NUM": conllu_test.count("\tNUM\t"),
-            "X": conllu_test.count("\tX\t")
-        }
-        return pos_freq_dict
-
+        pos_freq_dict = {}
+        conllu_text = article.get_conllu_info()
+        text_lines = conllu_text.split("\n")
+        for line in text_lines:
+            if "\t" in line:
+                separators = list(re.finditer("\t", line))
+                pos = line[separators[2].end() : separators[3].start()]
+                pos_freq_dict[pos] = pos_freq_dict.get(pos, 0) + 1
+        dict_for_graph = {}
+        for key, value in pos_freq_dict.items():
+            dict_for_graph[key+"_"+str(value)] = value
+        return dict_for_graph
 
     def run(self) -> None:
         """
@@ -423,7 +420,7 @@ def main() -> None:
     """
     manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
-    pipeline = TextProcessingPipeline(manager, udpipe_analyzer)
+    pipeline = TextProcessingPipeline(manager)
     pipeline.run()
     pos_pipeline = POSFrequencyPipeline(manager, udpipe_analyzer)
     pos_pipeline.run()
