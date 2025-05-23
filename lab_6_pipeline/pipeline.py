@@ -4,11 +4,9 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-
-from typing import Dict
-from networkx import DiGraph
 import string
 
+from networkx import DiGraph
 from core_utils.article.article import Article
 from core_utils.article.io import to_cleaned
 from core_utils.pipeline import (
@@ -55,8 +53,7 @@ class CorpusManager:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
         self.path_to_raw_txt_data = path_to_raw_txt_data
-        self._storage: Dict[int, Article] = {}
-
+        self._storage = {}
         self._validate_dataset()
         self._scan_dataset()
 
@@ -73,32 +70,22 @@ class CorpusManager:
         if not any(self.path_to_raw_txt_data.iterdir()):
             raise EmptyDirectoryError(f"Directory {self.path_to_raw_txt_data} is empty")
 
-        raw_files = sorted(
-            f for f in self.path_to_raw_txt_data.glob('*_raw.txt')
-            if f.stem.split('_')[0].isdigit()
-        )
-        meta_files = sorted(
-            f for f in self.path_to_raw_txt_data.glob('*_meta.json')
-            if f.stem.split('_')[0].isdigit()
-        )
+        raw_files = [filepath.name for filepath in self.path_to_raw_txt_data.glob('*_raw.txt')]
+        meta_files = [filepath.name for filepath in self.path_to_raw_txt_data.glob('*_meta.json')]
 
         if len(raw_files) != len(meta_files):
             raise InconsistentDatasetError("Number of raw and meta files doesn't match")
 
-        raw_ids = []
-        for file in raw_files:
-            try:
-                file_id = int(file.stem.split('_')[0])
-                raw_ids.append(file_id)
-            except (ValueError, IndexError):
-                continue
-
-        if sorted(raw_ids) != raw_ids or len(raw_ids) != len(set(raw_ids)):
-            raise InconsistentDatasetError("IDs are not unique or not in order")
-
-        for file in raw_files + meta_files:
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"File {file.name} is empty")
+        meta_template = [f'{count}_meta.json' for count in range(1, len(meta_files) + 1)]
+        if set(meta_files) != set(meta_template):
+            raise InconsistentDatasetError('IDs of meta files are inconsistent.')
+        raw_template = [f'{count}_raw.txt' for count in range(1, len(raw_files) + 1)]
+        if set(raw_files) != set(raw_template):
+            raise InconsistentDatasetError('IDs of raw files are inconsistent.')
+        for mask in ['*_raw.txt', '*_meta.json']:
+            for filepath in self.path_to_raw_txt_data.glob(mask):
+                if filepath.stat().st_size == 0:
+                    raise InconsistentDatasetError(f'File {filepath} is empty.')
 
     def _scan_dataset(self) -> None:
         """
@@ -110,15 +97,17 @@ class CorpusManager:
         )
 
         for raw_file in raw_files:
-            try:
-                article_id = int(raw_file.stem.split('_')[0])
-                with open(raw_file, 'r', encoding='utf-8') as file:
-                    text = file.read().strip()
-                article = Article(url=None, article_id=article_id)
-                article.text = text
-                self._storage[article_id] = article
-            except (ValueError, IndexError, IOError):
+            article_id = int(raw_file.stem.split('_')[0])
+
+            with open(raw_file, 'r', encoding='utf-8') as file:
+                text = file.read().strip()
+
+            if not text:
                 continue
+
+            article = Article(url=None, article_id=article_id)
+            article.text = text
+            self._storage[article_id] = article
 
     def get_articles(self) -> dict:
         """
@@ -159,10 +148,9 @@ class TextProcessingPipeline(PipelineProtocol):
                 continue
 
             cleaned_text = article.text.lower()
-
             cleaned_text = cleaned_text.translate(
-                str.maketrans('', '', string.punctuation)
-            )
+                str.maketrans('', '', string.punctuation))
+            cleaned_text = ' '.join(cleaned_text.split())  # Normalize whitespace
 
             article.cleaned_text = cleaned_text
             to_cleaned(article)
