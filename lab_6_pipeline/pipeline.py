@@ -66,19 +66,22 @@ class CorpusManager:
         if not dir_of_raw_files and not dir_of_meta_files:
             raise EmptyDirectoryError(f'Directory is empty: {self._path_to_raw_txt_data}')
 
-        all_raw_ids = set()
+        issues = []
         for raw in dir_of_raw_files:
             if raw.stat().st_size == 0:
-                raise EmptyFileError(f'The file {raw} is empty')
+                issues.append(f'The file {raw} is empty')
+
+        all_raw_ids = set()
+        for raw in dir_of_raw_files:
             if raw.name.endswith('_raw.txt'):
                 all_raw_ids.add(raw.name)
 
-        good_raw = {f'{i}_raw.txt' for i in range(1, len(all_raw_ids) + 1)}
+        good_raw = {f'{i}_raw.txt' for i in range(1, len(dir_of_raw_files) + 1)}
         if all_raw_ids != good_raw:
-            raise InconsistentDatasetError('IDs of raw files have slips')
-        for text_file in self._path_to_raw_txt_data.glob('*_raw.txt'):
-            if text_file.stat().st_size == 0:
-                raise EmptyFileError(f"Empty text file found: {text_file.name}")
+            issues.append('IDs of raw files have slips')
+
+        if issues:
+            raise InconsistentDatasetError('; '.join(issues))
 
     def _scan_dataset(self) -> None:
         """
