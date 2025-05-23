@@ -9,7 +9,7 @@ from typing import cast
 
 import spacy_udpipe
 from networkx import DiGraph
-from spacy_conll import ConllParser
+from spacy_conll import ConllParser  # type: ignore[import-not-found, import-untyped]
 
 from core_utils.article import io
 from core_utils.article.article import Article, ArtifactType
