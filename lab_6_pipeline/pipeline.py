@@ -2,6 +2,8 @@
 Pipeline for CONLL-U formatting.
 """
 
+import os
+
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 
@@ -9,7 +11,8 @@ import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article
-from core_utils.article.io import to_cleaned, from_raw
+from core_utils.article.io import from_raw, to_cleaned
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -20,7 +23,6 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
-from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 
 
 class InconsistentDatasetError(Exception):
@@ -76,21 +78,21 @@ class CorpusManager:
             if os.stat(file).st_size == 0:
                 raise InconsistentDatasetError("One of the files is empty")
 
-        json_count = [file for file in files_list if '.json' in str(file)]
-        json_count = sorted(json_count, key=lambda m: int(str(m.stem).split('_')[0]))
-        article_count = [file for file in files_list if 'raw.txt' in str(file)]
-        article_count = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
-        print(article_count)
+            json_count = [file for file in files_list if '.json' in str(file)]
+            json_count = sorted(json_count, key=lambda m: int(str(m.stem).split('_')[0]))
+            article_count = [file for file in files_list if 'raw.txt' in str(file)]
+            article_count = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
+            print(article_count)
 
-        if len(json_count) != len(article_count):
-            raise InconsistentDatasetError("Number of meta files doesn't match the number of articles")
+            if len(json_count) != len(article_count):
+                raise InconsistentDatasetError("Number of meta files doesn't match the number of articles")
 
-        for file_id, file_name in enumerate(article_count):
-            if str(file_name.stem).startswith(str(file_id)) and str(json_count[file_id].stem).startswith(
-                    str(file_id)):
-                raise InconsistentDatasetError('Slip ups in ID detected')
+            for file_id, file_name in enumerate(article_count):
+                if str(file_name.stem).startswith(str(file_id)) and str(json_count[file_id].stem).startswith(
+                     str(file_id)):
+                    raise InconsistentDatasetError('Slip ups in ID detected')
 
-        return None
+                return None
 
 
     def _scan_dataset(self) -> None:
@@ -107,7 +109,6 @@ class CorpusManager:
             if str(file).endswith('raw.txt'):
                 article = from_raw(file)
                 self._storage[file_id + 1] = article
-
 
     def get_articles(self) -> dict:
         """
