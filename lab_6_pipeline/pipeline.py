@@ -78,6 +78,10 @@ class CorpusManager:
         if len(raw_files) != len(meta_files):
             raise InconsistentDatasetError
 
+        for file in raw_files + meta_files:
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f'Empty file: {file} :(')
+
         for meta, raw in zip(meta_files, raw_files):
             meta_ids = get_article_id_from_filepath(meta)
             raw_ids = get_article_id_from_filepath(raw)
@@ -133,11 +137,6 @@ class TextProcessingPipeline(PipelineProtocol):
         articles = list(self._corpus.get_articles().values())
 
         for article in articles:
-            article.text = (article.text
-                            .replace('\u00A0', '')
-                            .lower())
-            article.text = re.sub(r'[^\w\s]', '', article.text)
-
             to_cleaned(article)
 
         if self._analyzer:
@@ -202,6 +201,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
         with open(path, 'w', encoding='utf-8') as file:
             file.write(article.get_conllu_info())
+            file.write("\n")
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
