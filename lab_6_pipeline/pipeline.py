@@ -152,7 +152,7 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = sorted(self._corpus.get_articles().items(), key=lambda x: x[0])
+        articles = sorted(self.corpus_manager.get_articles().items(), key=lambda x: x[0])
 
         for _, article in articles:
             article.text = article.text.replace('\xa0', ' ')
