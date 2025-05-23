@@ -86,7 +86,7 @@ In addition, you must take into account that:
 Let’s explain the first line
 ``1	Красивая красивый ADJ _ Case=Nom|Degree=Pos|Gender=Fem|Number=Sing 3 amod _ _``
 from `Desired output <https://github.com/fipl-hse/2023-2-level-ctlr/blob/main/lab_6_pipeline/tests/
-test_files/reference_score_six_test.conllu>`__ for mark 6:
+test_files/reference_udpipe_test.conllu>`__ for mark 6:
 
 -  ``1`` - ID
 -  ``Красивая`` - text of the token
