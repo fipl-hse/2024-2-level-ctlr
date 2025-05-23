@@ -152,20 +152,14 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = self.corpus_manager.get_articles()
-        for article_id, article in articles.items():
-            raw_text_path = self.corpus_manager.path / f"{article_id}_raw.txt"
-            with open(raw_text_path, 'r', encoding='utf-8') as file:
-                raw_text = file.read()
+        articles = sorted(self.corpus_manager.get_articles().items(), key=lambda x: x[0])
 
-            text = raw_text.replace('\xa0', ' ')
-            article.text = text
-            to_cleaned(article)
+        [to_cleaned(article) for _, article in articles]
 
-            if self._analyzer:
-                analyzed_texts = self._analyzer.analyze([raw_text])
-                conllu_markup = analyzed_texts[0]
-                article.set_conllu_info(conllu_markup)
+        if self._analyzer:
+            analyses = self._analyzer.analyze([a.text for _, a in articles])
+            for (art_id, article), analysis in zip(articles, analyses):
+                article.set_conllu_info(analysis)
                 self._analyzer.to_conllu(article)
 
 
