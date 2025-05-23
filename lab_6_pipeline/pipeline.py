@@ -107,18 +107,14 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        for filepath in self.path.glob("*_raw.txt"):
-            file_name_elements = filepath.stem.split('_')
-            if not (len(file_name_elements) >= 1 and file_name_elements[0].isdigit()):
-                return
-            article_id = int(file_name_elements[0])
-            if not (filepath.stat().st_size > 0):
-                return
-            with open(filepath, 'r', encoding='utf-8') as file:
-                raw_text = file.read()
-                article = Article(url=None, article_id=article_id)
-                article.text = raw_text
-                self._storage[article_id] = article
+        for filepath in self.path.glob('*_raw.txt'):
+            filename = filepath.name
+            if filename.endswith('_raw.txt'):
+                prefix = filename[:-8]
+                if prefix.isdigit():
+                    article_id = int(prefix)
+                    article = from_raw(filepath)
+                    self._storage[article_id] = article
 
     def get_articles(self) -> dict:
         """
