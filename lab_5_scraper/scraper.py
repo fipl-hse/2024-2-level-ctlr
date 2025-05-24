@@ -277,12 +277,12 @@ class Crawler:
             loaded_html = make_request(seed_url, self.config)
             if loaded_html.status_code >= 400:
                 continue
-            soup = BeautifulSoup(loaded_html.text, "html.parser")
+            soup = BeautifulSoup(loaded_html.text, "lxml")
             links = soup.find_all("a", href=True)
             for link in links:
                 if not any(art_prefix in link["href"] for art_prefix in ("news/", "article/")):
                     continue
-                link_soup = BeautifulSoup(str(link), "html.parser")
+                link_soup = BeautifulSoup(str(link), "lxml")
                 link_str = (str(urlparse(seed_url).scheme) + "://" +
                             str(urlparse(seed_url).netloc) +
                             self._extract_url(link_soup))
@@ -323,14 +323,14 @@ class CrawlerRecursive(Crawler):
         loaded_html = make_request(self.start_url, self.config)
         if loaded_html.status_code >= 400:
             return
-        soup = BeautifulSoup(loaded_html.text, "html.parser")
+        soup = BeautifulSoup(loaded_html.text, "lxml")
         links = soup.find_all("a", href=True)
         for link in links:
             if any(not_seed in link["href"] for not_seed in (
                 "#", ".png", "javascript:", "mailto:", "tel:", "http"
             )):
                 continue
-            link_soup = BeautifulSoup(str(link), "html.parser")
+            link_soup = BeautifulSoup(str(link), "lxml")
             link_str = (str(urlparse(self.start_url).scheme) + "://" +
                         str(urlparse(self.start_url).netloc) +
                         self._extract_url(link_soup))
@@ -418,7 +418,7 @@ class HTMLParser:
             self.article.author.append(author.text.strip())
         else:
             lower_author = article_soup.find("p", style=re.compile("text-align: ?right"))
-            if lower_author:
+            if lower_author and len(lower_author.text) < 50:
                 self.article.author.append(lower_author.text.strip())
             else:
                 self.article.author.append("NOT FOUND")
@@ -445,7 +445,7 @@ class HTMLParser:
         if not isinstance(self.article.url, str):
             raise ValueError("The article URL is not a string")
         loaded_html = make_request(self.article.url, self.config)
-        article_bs = BeautifulSoup(loaded_html.text, "html.parser")
+        article_bs = BeautifulSoup(loaded_html.text, "lxml")
         self._fill_article_with_text(article_bs)
         self._fill_article_with_meta_information(article_bs)
         return self.article
