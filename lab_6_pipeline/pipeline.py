@@ -420,7 +420,7 @@ def main() -> None:
     """
     manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
-    pipeline = TextProcessingPipeline(manager)
+    pipeline = TextProcessingPipeline(manager, udpipe_analyzer)
     pipeline.run()
     pos_pipeline = POSFrequencyPipeline(manager, udpipe_analyzer)
     pos_pipeline.run()
