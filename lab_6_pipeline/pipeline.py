@@ -1,8 +1,9 @@
 """
 Pipeline for CONLL-U formatting.
 """
-import json
+
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
+import json
 import pathlib
 import re
 from typing import cast
@@ -67,8 +68,6 @@ class CorpusManager:
         """
         Validate folder with assets.
         """
-        # re.match("[0-9]+_raw[.]txt", file.name)
-        # re.match("[0-9]+_meta[.]json", file.name)
         if not self.path_to_raw.exists():
             raise FileNotFoundError("The path to articles doesn't lead to an existing directory")
         if not self.path_to_raw.is_dir():
