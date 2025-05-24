@@ -1,7 +1,7 @@
 """
 Pipeline for CONLL-U formatting.
 """
-
+import json
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 import re
@@ -96,10 +96,19 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        for file in self.path_to_raw.iterdir():
-            if re.match("[0-9]+_raw", file.stem):
+        storage_files = tuple(self.path_to_raw.iterdir())
+        file_names = {file.name: file for file in storage_files}
+        for file in storage_files:
+            if re.match("[0-9]+_raw.txt", file.name):
                 article_id = int(file.stem[:file.stem.index("_")])
-                article = io.from_raw(file)
+                article_url: str | None = None
+                article_meta = file_names.get(str(article_id) + "_meta.json", "")
+                if article_meta:
+                    with open(article_meta, "r", encoding="utf-8") as meta_file:
+                        article_url = json.load(meta_file)["url"]
+                article = io.from_raw(file, Article(url=article_url, article_id=article_id))
+                # I know that pipeline doesn't need to know article URLs,
+                # but the scraper tests work on students' data and fail if URLs are empty
                 self._storage[article_id] = article
 
     def get_articles(self) -> dict:

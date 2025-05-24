@@ -484,7 +484,7 @@ def main() -> None:
     with open(ASSETS_PATH / "article_urls.txt", "r", encoding="utf-8") as art_file:
         crawler.urls = art_file.readlines()
     for art_id, art_url in enumerate(crawler.urls):
-        parser = HTMLParser(full_url=art_url, article_id=art_id+1, config=config)
+        parser = HTMLParser(full_url=art_url.strip(), article_id=art_id+1, config=config)
         parsed_article = parser.parse()
         if not isinstance(parsed_article, Article):
             raise ValueError("Parsing failed")
