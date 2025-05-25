@@ -265,20 +265,21 @@ class Crawler:
                 response.raise_for_status()
                 response.encoding = self.config._encoding
 
-                soup = BeautifulSoup(response.content, 'html.parser', from_encoding='utf-8')
-                links = soup.find_all('a', href=True)
 
-                for link in links:
-                    href = link['href']
-                    full_url = urljoin(seed_url, href)
-                    if self.is_valid_article_url(full_url):
-                        if full_url not in self.urls:
-                            self.urls.append(full_url)
-                        if len(self.urls) >= total_needed:
-                            return
 
             except requests.RequestException:
                 continue
+            soup = BeautifulSoup(response.content, 'html.parser', from_encoding='utf-8')
+            links = soup.find_all('a', href=True)
+
+            for link in links:
+                href = link['href']
+                full_url = urljoin(seed_url, href)
+                if self.is_valid_article_url(full_url):
+                    if full_url not in self.urls:
+                        self.urls.append(full_url)
+                    if len(self.urls) >= total_needed:
+                        return
 
 
     def get_search_urls(self) -> list:
@@ -389,17 +390,14 @@ class HTMLParser:
             'октября': 'Oct', 'ноября': 'Nov', 'декабря': 'Dec'
         }
 
-        try:
-            parts = date_str.strip().split()
-            if len(parts) >= 3:
-                day = parts[0]
-                month = months.get(parts[1], 'Jan')
-                year = parts[2]
-                date_str_en = f"{day} {month} {year}"
-                return datetime.datetime.strptime(date_str_en, '%d %b %Y')
-            else:
-                return datetime.datetime.now()
-        except Exception:
+        parts = date_str.strip().split()
+        if len(parts) >= 3:
+            day = parts[0]
+            month = months.get(parts[1], 'Jan')
+            year = parts[2]
+            date_str_en = f"{day} {month} {year}"
+            return datetime.datetime.strptime(date_str_en, '%d %b %Y')
+        else:
             return datetime.datetime.now()
 
     def parse(self) -> Union[Article, bool, list]:
