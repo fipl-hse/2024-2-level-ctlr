@@ -34,7 +34,6 @@ from core_utils.visualizer import visualize
 UDPIPE_MODEL_PATH = (PROJECT_ROOT /
                      "lab_6_pipeline" /
                      "assets" / "model" /
-                     "russian-syntagrus-ud-2.0-170801.udpipe" /
                      "russian-syntagrus-ud-2.0-170801.udpipe")
 
 
