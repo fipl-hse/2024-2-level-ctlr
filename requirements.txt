@@ -1,8 +1,11 @@
 beautifulsoup4==4.12.3
-ghapi==0.1.19
+ghapi==1.0.4
+logging518==1.0.0
+matplotlib==3.10.3
 networkx==3.4.2
+pillow==11.2.1
 pydantic==2.9.2
-pytest==6.2.5
+pytest==8.1.1
 requests==2.32.3
 spacy-conll==4.0.1
 spacy-udpipe==1.0.0
