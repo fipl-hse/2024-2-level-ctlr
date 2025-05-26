@@ -609,7 +609,7 @@ class PatternSearchPipeline(PipelineProtocol):
                 for sent_idx, matches in self._find_pattern(doc_graphs=doc_graph).items():
                     serializable_matches = []
                     for match in matches:
-                        stack: list[tuple[TreeNode, dict]] = [(match, None)]
+                        stack: list[tuple[TreeNode, dict | None]] = [(match, None)]
                         root_dict = None
                         while stack:
                             current_node, parent_dict = stack.pop()
