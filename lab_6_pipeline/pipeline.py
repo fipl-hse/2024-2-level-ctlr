@@ -4,12 +4,14 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from collections import Counter
 
+import spacy_conll
 import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import from_raw, to_cleaned
+from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -21,6 +23,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from core_utils.visualizer import visualize
 
 
 class EmptyDirectoryError(Exception):
@@ -109,7 +112,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
-        return self._storage
+        return dict(sorted(self._storage.items()))
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -134,12 +137,11 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        available_articles = dict(sorted(self._corpus.get_articles().items()))
-        for article in available_articles.values():
+        for article in self._corpus.get_articles().values():
             to_cleaned(article)
         analyzed_texts = self._analyzer.analyze([text.text for text
-                                                 in list(available_articles.values())])
-        for article_id, conllu_article in available_articles.items():
+                                                 in list(self._corpus.get_articles().values())])
+        for article_id, conllu_article in self._corpus.get_articles().items():
             conllu_article.set_conllu_info(analyzed_texts[article_id - 1])
             self._analyzer.to_conllu(conllu_article)
 
@@ -214,6 +216,15 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        conllu_parser = spacy_conll.parser.ConllParser(self._analyzer)
+        path_to_conllu = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        if path_to_conllu.stat().st_size == 0:
+            raise EmptyFileError('The file is empty.')
+        with open(path_to_conllu, 'r', encoding='utf-8') as conllu_to_read:
+            conllu_to_parse = conllu_to_read.read()
+        parsed_doc: UDPipeDocument = (conllu_parser.parse_conll_text_as_spacy
+                                      (conllu_to_parse.strip('\n')))
+        return parsed_doc
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -303,6 +314,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -314,11 +327,22 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
+        ud_info = self._analyzer.from_conllu(article)
+        pos = [get_pos.pos_ for get_pos in ud_info]
+        return dict(Counter(pos))
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
+        articles = self._corpus.get_articles()
+        for article_to_vis in articles.values():
+            from_meta(article_to_vis.get_meta_file_path(), article_to_vis)
+            pos_freq = self._count_frequencies(article_to_vis)
+            article_to_vis.set_pos_info(pos_freq)
+            to_meta(article_to_vis)
+            visualize(article=article_to_vis,
+                      path_to_save=ASSETS_PATH / f'{article_to_vis.article_id}_image.png')
 
 
 class PatternSearchPipeline(PipelineProtocol):
@@ -387,6 +411,8 @@ def main() -> None:
     udpipe_analyzer = UDPipeAnalyzer()
     pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
     pipeline.run()
+    visualizer = POSFrequencyPipeline(corpus_manager, udpipe_analyzer)
+    visualizer.run()
 
 
 if __name__ == "__main__":
