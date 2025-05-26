@@ -336,7 +336,7 @@ class StanzaAnalyzer(LibraryWrapper):
         if not path.stat().st_size:
             raise EmptyFileError(path)
 
-        return CoNLL.conll2doc(input_file=str(path))
+        return CoNLL.conll2doc(input_file=path)
 
     def get_document(self, doc: StanzaDocument) -> UnifiedCoNLLUDocument:
         """
@@ -609,7 +609,7 @@ class PatternSearchPipeline(PipelineProtocol):
                 for sent_idx, matches in self._find_pattern(doc_graphs=doc_graph).items():
                     serializable_matches = []
                     for match in matches:
-                        stack = [(match, None)]
+                        stack: list[tuple[TreeNode, dict]] = [(match, None)]
                         root_dict = None
                         while stack:
                             current_node, parent_dict = stack.pop()
@@ -624,7 +624,7 @@ class PatternSearchPipeline(PipelineProtocol):
                                 parent_dict['children'].append(current_dict)
 
                             for child in reversed(current_node.children):
-                                stack.append((child, current_dict))
+                                stack.append((child, cast(dict, current_dict)))
 
                         serializable_matches.append(root_dict)
 
