@@ -83,7 +83,9 @@ class CorpusManager:
         if len(raw_names) != len(meta_names):
             raise InconsistentDatasetError('Number of meta and raw files is not equal.')
 
-        if any(True for filepath in self.path.iterdir() if filepath.stat().st_size == 0):
+        if any(True for filepath in self.path.iterdir()
+               if filepath.stat().st_size == 0 and
+                  ('raw' in filepath.name or 'meta' in filepath.name)):
             raise InconsistentDatasetError('The file is empty.')
 
         raw_check = [f"{i}_raw.txt" for i in range(1, len(raw_names) + 1)]
