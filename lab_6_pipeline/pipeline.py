@@ -395,9 +395,8 @@ class POSFrequencyPipeline:
             dict[str, int]: POS frequencies
         """
         pos_dict = {}
-        # sentences = self._analyzer.from_conllu(article).sents
         unified_doc = self._analyzer.get_document(self._analyzer.from_conllu(article))
-        for ind, sent in unified_doc.items():
+        for sent in unified_doc.values():
             for word in sent.words:
                 pos = word.upos
                 if pos not in pos_dict:
@@ -469,7 +468,7 @@ class PatternSearchPipeline(PipelineProtocol):
         graphs = []
         unified_doc = self._analyzer.get_document(doc)
 
-        for sent_idx, sentence in unified_doc.items():
+        for sentence in unified_doc.values():
             current_graph = DiGraph()
 
             for word in sentence.words:
@@ -532,25 +531,6 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             dict[int, list[TreeNode]]: A dictionary with pattern matches
         """
-        # pattern = DiGraph()
-        # pattern.add_node(1, label=self._node_labels[0])
-        # pattern.add_node(2, label=self._node_labels[1])
-        # pattern.add_node(3, label=self._node_labels[2])
-        # pattern.add_edge(1, 2)
-        # pattern.add_edge(2, 3)
-        #
-        # result = {}
-        #
-        # for sent_idx, sent_graph in enumerate(doc_graphs):
-        #     matches = []
-        #
-        #     matcher = DiGraphMatcher(
-        #         sent_graph,
-        #         pattern,
-        #         node_match=lambda n1, n2: n1['label'] == n2['label']
-        #     )
-        #
-        #     for mapping in matcher.subgraph_isomorphisms_iter():
         pattern = DiGraph()
         pattern.add_node(1, label=self._node_labels[0])
         pattern.add_node(2, label=self._node_labels[1])
@@ -571,38 +551,38 @@ class PatternSearchPipeline(PipelineProtocol):
 
             for mapping in matcher.subgraph_isomorphisms_iter():
                 if 1 in mapping.values():
-                    graph_to_pattern = mapping
+                    # graph_to_pattern = mapping
                     pattern_to_graph = {v: k for k, v in mapping.items()}
                 else:
                     pattern_to_graph = mapping
-                    graph_to_pattern = {v: k for k, v in mapping.items()}
+                    # graph_to_pattern = {v: k for k, v in mapping.items()}
 
-                verb_node = pattern_to_graph[1]
-                propn_node = pattern_to_graph[2]
-                adp_node = pattern_to_graph[3]
+                # verb_node = pattern_to_graph[1]
+                # propn_node = pattern_to_graph[2]
+                # adp_node = pattern_to_graph[3]
 
-                if not (sent_graph.has_edge(verb_node, propn_node) and
-                        sent_graph.has_edge(propn_node, adp_node)):
+                if not (sent_graph.has_edge(pattern_to_graph[1], pattern_to_graph[2]) and
+                        sent_graph.has_edge(pattern_to_graph[2], pattern_to_graph[3])):
                     continue
 
-                verb_attrs = sent_graph.nodes[verb_node]
+                # verb_attrs = sent_graph.nodes[pattern_to_graph[1]]
                 verb_tree = TreeNode(
-                    upos=verb_attrs['label'],
-                    text=verb_attrs.get('text', ''),
+                    upos=sent_graph.nodes[pattern_to_graph[1]]['label'],
+                    text=sent_graph.nodes[pattern_to_graph[1]].get('text', ''),
                     children=[]
                 )
 
-                propn_attrs = sent_graph.nodes[propn_node]
+                # propn_attrs = sent_graph.nodes[pattern_to_graph[2]]
                 propn_tree = TreeNode(
-                    upos=propn_attrs['label'],
-                    text=propn_attrs.get('text', ''),
+                    upos=sent_graph.nodes[pattern_to_graph[2]]['label'],
+                    text=sent_graph.nodes[pattern_to_graph[2]].get('text', ''),
                     children=[]
                 )
 
-                adp_attrs = sent_graph.nodes[adp_node]
+                # adp_attrs = sent_graph.nodes[pattern_to_graph[3]]
                 adp_tree = TreeNode(
-                    upos=adp_attrs['label'],
-                    text=adp_attrs.get('text', ''),
+                    upos=sent_graph.nodes[pattern_to_graph[3]]['label'],
+                    text=sent_graph.nodes[pattern_to_graph[3]].get('text', ''),
                     children=[]
                 )
 
@@ -622,11 +602,11 @@ class PatternSearchPipeline(PipelineProtocol):
         for article in self._corpus_manager.get_articles().values():
             conllu = self._analyzer.from_conllu(article=article)
             doc_graph = self._make_graphs(doc=conllu)
-            patterns = self._find_pattern(doc_graphs=doc_graph)
+            # patterns = self._find_pattern(doc_graphs=doc_graph)
 
-            if patterns:
+            if self._find_pattern(doc_graphs=doc_graph):
                 serializable_patterns = {}
-                for sent_idx, matches in patterns.items():
+                for sent_idx, matches in self._find_pattern(doc_graphs=doc_graph).items():
                     serializable_matches = []
                     for match in matches:
                         stack = [(match, None)]
