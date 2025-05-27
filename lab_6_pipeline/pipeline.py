@@ -166,7 +166,7 @@ class UDPipeAnalyzer(LibraryWrapper):
 
     def __init__(self) -> None:
         """
-        Initialize an instance of the UDPipeAnalyzer class.
+        Initialize an instance of the UDPipeAnalyzer clаss.
         """
         self._analyzer = self._bootstrap()
 
