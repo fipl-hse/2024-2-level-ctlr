@@ -127,7 +127,7 @@ class Config:
         if self._timeout <= 0 or self._timeout > 60:
             raise IncorrectTimeoutError("timeout must be between 0 and 60")
 
-        if not (isinstance(self._should_verify_certificate, bool)
+        if (not isinstance(self._should_verify_certificate, bool)
                 or not isinstance(self._headless_mode, bool)):
             raise IncorrectVerifyError("verify is not bool")
 
