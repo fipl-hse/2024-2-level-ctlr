@@ -60,6 +60,7 @@ class IncorrectVerifyError(Exception):
     Verify certificate value must either be True or False
     """
 
+
 class Config:
     """
     Class for unpacking and validating configurations.
@@ -112,8 +113,7 @@ class Config:
         if self._num_articles > 150:
             raise NumberOfArticlesOutOfRangeError("number of articles must be between 1 and 150")
 
-        if not isinstance(self._num_articles, int) or \
-            self._num_articles < 0:
+        if not (isinstance(self._num_articles, int) or self._num_articles < 0):
             raise IncorrectNumberOfArticlesError('incorrect number of articles')
 
         if not isinstance(self._headers, dict):
@@ -127,8 +127,8 @@ class Config:
         if self._timeout <= 0 or self._timeout > 60:
             raise IncorrectTimeoutError("timeout must be between 0 and 60")
 
-        if not isinstance(self._should_verify_certificate, bool) or \
-            not isinstance(self._headless_mode, bool):
+        if not (isinstance(self._should_verify_certificate, bool)
+                or not isinstance(self._headless_mode, bool)):
             raise IncorrectVerifyError("verify is not bool")
 
     def get_seed_urls(self) -> list[str]:
@@ -263,6 +263,7 @@ class Crawler:
                 return full_url
 
         return ''
+
     def find_articles(self) -> None:
         """
         Find articles.
@@ -346,6 +347,7 @@ class HTMLParser:
         if topic_element and topic_element.find('a'):
             self.article.topics.append(
                 topic_element.find('a').get_text(strip=True))
+
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unify date format.

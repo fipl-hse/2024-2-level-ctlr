@@ -6,12 +6,11 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 
-import spacy_udpipe
 from networkx import DiGraph
 
 from core_utils.article.article import Article
 from core_utils.article.io import from_raw, to_cleaned
-from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
+from core_utils.constants import ASSETS_PATH
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -83,7 +82,6 @@ class CorpusManager:
         for file in (*raw_files, *meta_files):
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f"Empty file: {file.name}")
-
 
     def _scan_dataset(self) -> None:
         """
@@ -362,9 +360,9 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+    corman = CorpusManager(ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
-    pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
+    pipeline = TextProcessingPipeline(corman, udpipe_analyzer)
     pipeline.run()
 
 
