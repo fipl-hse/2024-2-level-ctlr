@@ -82,13 +82,12 @@ class CorpusManager:
             if raw_id != meta_id:
                 raise InconsistentDatasetError(f"ID mismatch between {raw.name} and {meta.name}")
 
-        if len(raw_files) != len(meta_files):
-            raise InconsistentDatasetError("Mismatch between raw and meta files")
-
         for file in (*raw_files, *meta_files):
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f"Empty file: {file.name}")
 
+        if len(raw_files) != len(meta_files):
+            raise InconsistentDatasetError("Mismatch between raw and meta files")
 
     def _scan_dataset(self) -> None:
         """
