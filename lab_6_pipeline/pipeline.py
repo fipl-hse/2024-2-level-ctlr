@@ -76,6 +76,12 @@ class CorpusManager:
         article_count = [file for file in files_list if 'raw.txt' in str(file)]
         raw_files = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
 
+        for raw, meta in zip(raw_files, meta_files):
+            raw_id = raw.stem.split('_')[0]
+            meta_id = meta.stem.split('_')[0]
+            if raw_id != meta_id:
+                raise InconsistentDatasetError(f"ID mismatch between {raw.name} and {meta.name}")
+
         if len(raw_files) != len(meta_files):
             raise InconsistentDatasetError("Mismatch between raw and meta files")
 
@@ -83,11 +89,6 @@ class CorpusManager:
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f"Empty file: {file.name}")
 
-        for raw, meta in zip(raw_files, meta_files):
-            raw_id = raw.stem.split('_')[0]
-            meta_id = meta.stem.split('_')[0]
-            if raw_id != meta_id:
-                raise InconsistentDatasetError(f"ID mismatch between {raw.name} and {meta.name}")
 
     def _scan_dataset(self) -> None:
         """
