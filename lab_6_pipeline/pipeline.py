@@ -83,6 +83,12 @@ class CorpusManager:
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f"Empty file: {file.name}")
 
+        for raw, meta in zip(raw_files, meta_files):
+            raw_id = raw.stem.split('_')[0]
+            meta_id = meta.stem.split('_')[0]
+            if raw_id != meta_id:
+                raise InconsistentDatasetError(f"ID mismatch between {raw.name} and {meta.name}")
+
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.

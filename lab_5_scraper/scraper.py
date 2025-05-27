@@ -406,9 +406,11 @@ def main() -> None:
         article = parser.parse()
 
         if article.text.strip():
-            if isinstance(article, Article):
+            try:
                 to_raw(article)
                 to_meta(article)
+            except Exception as e:
+                print(f"Failed to save article {article_id}: {e}")
 
 
 if __name__ == "__main__":
