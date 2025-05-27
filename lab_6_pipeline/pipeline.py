@@ -446,24 +446,6 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             list[DiGraph]: Graphs for the sentences in the document
         """
-        # graphs = []
-        # for sent in doc.sents:
-        #     current_graph = DiGraph()
-        #
-        #     for token in sent:
-        #         current_graph.add_node(token.i, label=token.pos_, text=token.text)
-        #
-        #     for token in sent:
-        #         if token.head.i != token.i:
-        #             current_graph.add_edge(
-        #                 u_of_edge=token.head.i,
-        #                 v_of_edge=token.i,
-        #                 label=token.pos_
-        #             )
-        #
-        #     graphs.append(current_graph)
-        # return graphs
-
         graphs = []
         unified_doc = self._analyzer.get_document(doc)
 
@@ -550,35 +532,26 @@ class PatternSearchPipeline(PipelineProtocol):
 
             for mapping in matcher.subgraph_isomorphisms_iter():
                 if 1 in mapping.values():
-                    # graph_to_pattern = mapping
                     pattern_to_graph = {v: k for k, v in mapping.items()}
                 else:
                     pattern_to_graph = mapping
-                    # graph_to_pattern = {v: k for k, v in mapping.items()}
-
-                # verb_node = pattern_to_graph[1]
-                # propn_node = pattern_to_graph[2]
-                # adp_node = pattern_to_graph[3]
 
                 if not (sent_graph.has_edge(pattern_to_graph[1], pattern_to_graph[2]) and
                         sent_graph.has_edge(pattern_to_graph[2], pattern_to_graph[3])):
                     continue
 
-                # verb_attrs = sent_graph.nodes[pattern_to_graph[1]]
                 verb_tree = TreeNode(
                     upos=sent_graph.nodes[pattern_to_graph[1]]['label'],
                     text=sent_graph.nodes[pattern_to_graph[1]].get('text', ''),
                     children=[]
                 )
 
-                # propn_attrs = sent_graph.nodes[pattern_to_graph[2]]
                 propn_tree = TreeNode(
                     upos=sent_graph.nodes[pattern_to_graph[2]]['label'],
                     text=sent_graph.nodes[pattern_to_graph[2]].get('text', ''),
                     children=[]
                 )
 
-                # adp_attrs = sent_graph.nodes[pattern_to_graph[3]]
                 adp_tree = TreeNode(
                     upos=sent_graph.nodes[pattern_to_graph[3]]['label'],
                     text=sent_graph.nodes[pattern_to_graph[3]].get('text', ''),
@@ -601,7 +574,6 @@ class PatternSearchPipeline(PipelineProtocol):
         for article in self._corpus_manager.get_articles().values():
             conllu = self._analyzer.from_conllu(article=article)
             doc_graph = self._make_graphs(doc=conllu)
-            # patterns = self._find_pattern(doc_graphs=doc_graph)
 
             if self._find_pattern(doc_graphs=doc_graph):
                 serializable_patterns = {}
@@ -637,23 +609,8 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
-    # corpus = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
-    #
-    # basic_analyzer = UDPipeAnalyzer()
-    # basic_txt_pipeline = TextProcessingPipeline(corpus_manager=corpus,
-    #                                             analyzer=basic_analyzer)
-    #
-    # pos_pipeline = POSFrequencyPipeline(corpus_manager=corpus,
-    #                                     analyzer=basic_analyzer)
-    #
-    # pattern_search_pipeline = PatternSearchPipeline(corpus_manager=corpus,
-    # analyzer=basic_analyzer,
-    # pos=("VERB", "NOUN", "ADP"))
-    #
-    # basic_txt_pipeline.run()
-    # pos_pipeline.run()
-    # pattern_search_pipeline.run()
     corpus = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
+
 
 
     udpipe_analyzer = UDPipeAnalyzer()
@@ -676,6 +633,7 @@ def main() -> None:
         pos=("VERB", "PROPN", "ADP")
     )
     udpipe_pattern_pipeline.run()
+
 
 
     stanza_analyzer = StanzaAnalyzer()
