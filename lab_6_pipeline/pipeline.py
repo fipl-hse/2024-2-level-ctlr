@@ -79,15 +79,14 @@ class CorpusManager:
         for raw, meta in zip(raw_files, meta_files):
             raw_id = raw.stem.split('_')[0]
             meta_id = meta.stem.split('_')[0]
-            if raw_id != meta_id:
+            if len(raw_files) != len(meta_files):
                 raise InconsistentDatasetError(f"ID mismatch between {raw.name} and {meta.name}")
 
         for file in (*raw_files, *meta_files):
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError(f"Empty file: {file.name}")
 
-        if len(raw_files) != len(meta_files):
-            raise InconsistentDatasetError("Mismatch between raw and meta files")
+
 
     def _scan_dataset(self) -> None:
         """
