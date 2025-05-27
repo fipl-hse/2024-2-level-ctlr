@@ -12,7 +12,9 @@ from core_utils.article.article import Article
 import json
 import requests
 from bs4 import BeautifulSoup
-
+from time import sleep
+from random import randint
+from core_utils.article.io import to_raw
 
 class IncorrectSeedURLError(Exception):
     """
@@ -224,13 +226,10 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        base_link = 'https://край-дорогобужский.рф'
-        articles = article_bs.findall('div', {'class':'item__title'})
-        for art in articles:
-            href = art.find('a'['href'])
-            base_link+= href
-            if isinstance(base_link, str) and base_link not in self.urls:
-                return base_link
+        article = article_bs.find('a', class_ = '')
+        href = article.get('href') if article else None
+        if isinstance(href, str):
+            return href
         return ''
 
     def find_articles(self) -> None:
@@ -284,7 +283,10 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        content = article_soup.find('div', clas = "item-content" )
+        content = article_soup.find('div', class_ = "entry-content clear" )
+        text_marker = content.find_all('p')
+        gettext = [text.get_text(strip=True) for text in text_marker]
+        self.article.text = '\n'.join(gettext)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
@@ -293,7 +295,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-
+        response = make_request(self.full_url, self.config)
+        if response.ok:
+            article_bs = BeautifulSoup(response.text, 'lxml')
+            self._fill_article_with_text(article_bs)
+        return self.article
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unify date format.
@@ -330,6 +336,18 @@ def main() -> None:
     """
     Entrypoint for scrapper module.
     """
+    configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
+    prepare_environment(ASSETS_PATH)
+    crawler = Crawler(config=configuration)
+    crawler.find_articles()
+    for i, url in enumerate(crawler.urls):
+        sleep(randint(5,15))
+        parser = HTMLParser(url, i+1, configuration)
+        article = parser.parse()
+        if isinstance(article, Article):
+            to_raw(article)
+
+
 
 
 if __name__ == "__main__":
