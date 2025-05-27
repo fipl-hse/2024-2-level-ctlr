@@ -37,7 +37,7 @@ class CorpusManager:
         """
         Validate folder with assets.
         """
-
+еуе
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
