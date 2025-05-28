@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 from time import sleep
 from random import randint
 from core_utils.article.io import to_raw
+import datetime
 
 class IncorrectSeedURLError(Exception):
     """
@@ -310,6 +311,7 @@ class HTMLParser:
         Returns:
             datetime.datetime: Datetime object
         """
+        return datetime.datetime.strptime(date_str,'%d.%m.%Y')
 
     def parse(self) -> Union[Article, bool, list]:
         """
