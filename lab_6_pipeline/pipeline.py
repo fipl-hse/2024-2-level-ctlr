@@ -68,9 +68,6 @@ class CorpusManager:
         raw_files = list(self._path_to_raw_txt_data.glob("*_raw.txt"))
         meta_files = list(self._path_to_raw_txt_data.glob("*_meta.json"))
 
-        if not raw_files or not meta_files:
-            raise EmptyDirectoryError("Directory does not contain expected files")
-
         raw_ids = set()
         meta_ids = set()
 
@@ -91,6 +88,9 @@ class CorpusManager:
                 meta_ids.add(file_id)
             except (ValueError, IndexError):
                 continue
+
+        if not raw_files or not meta_files:
+            raise EmptyDirectoryError("Directory does not contain expected files")
 
         if raw_ids != meta_ids:
             raise InconsistentDatasetError("Mismatch between raw and meta file IDs")
