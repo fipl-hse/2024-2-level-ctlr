@@ -4,10 +4,14 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from typing import cast
 
 from networkx import DiGraph
+from spacy_conll import ConllParser  # type: ignore[import-not-found, import-untyped]
 
-from core_utils.article.article import Article
+from core_utils.article.article import Article, ArtifactType
+from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -19,7 +23,22 @@ from core_utils.pipeline import (
     UnifiedCoNLLUDocument,
 )
 
+class InconsistentDatasetError(Exception):
+    """
+    IDs contain slips, number of meta and raw files is not equal, files are empty
+    """
 
+
+class EmptyFileError(Exception):
+    """
+    Raised when an article file is empty.
+    """
+
+
+class EmptyDirectoryError(Exception):
+    """
+    Directory is empty
+    """
 class CorpusManager:
     """
     Work with articles and store them.
@@ -32,16 +51,50 @@ class CorpusManager:
         Args:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
+        self.path_to_raw_txt_data = path_to_raw_txt_data
+        self._storage = {}
+        self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError('not existent path')
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError('path does not lead to directory')
+        ids = {int(file_path.name.split('_')[0])
+               for file_path in self.path_to_raw_txt_data.glob('*_raw.txt')}
+        if not ids:
+            raise EmptyDirectoryError('directory is empty')
+        expected_ids = set(range(1, len(ids) + 1))
+        if ids != expected_ids:
+            raise InconsistentDatasetError('ids contain slips')
+        for file in self.path_to_raw_txt_data.glob('*_raw.txt'):
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError('file is empty')
+        if (len(list(self.path_to_raw_txt_data.glob('*_meta.json'))) !=
+                len(list(self.path_to_raw_txt_data.glob('*_raw.txt')))):
+            raise InconsistentDatasetError('numbers of meta and txt are not equal')
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        path_list = sorted(
+            self.path_to_raw_txt_data.glob("*_raw.txt"),
+            key=lambda x: int(x.stem.split("_")[0])
+        )
+
+        for path in path_list:
+            try:
+                article_id = int(path.stem.split("_")[0])
+            except ValueError:
+                continue
+
+            article = Article(url=None, article_id=article_id)
+            self._storage[article_id] = from_raw(path, article)
 
     def get_articles(self) -> dict:
         """
@@ -50,6 +103,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self._storage
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -67,11 +121,22 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus_manager = corpus_manager
+        self._analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        punct = ['—', '«', '»']
+        articles = self.corpus_manager.get_articles()
+
+        for article in articles.values():
+            article.text = article.text.replace('\u00A0', ' ')
+            for x in punct:
+                article.text = article.text.replace(x, '')
+            to_cleaned(article)
+            article.save()
 
 
 class UDPipeAnalyzer(LibraryWrapper):
