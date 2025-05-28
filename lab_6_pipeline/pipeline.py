@@ -8,7 +8,7 @@ import pathlib
 
 import spacy_udpipe
 from networkx import DiGraph
-from spacy_conll import ConllParser  # type: ignore
+from spacy_conll import ConllParser  #type: ignore[import-untyped, import-not-found]
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_cleaned
