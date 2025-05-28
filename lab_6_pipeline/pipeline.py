@@ -4,7 +4,6 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-import re
 from networkx import DiGraph
 
 from core_utils.article.article import Article
@@ -54,8 +53,8 @@ class CorpusManager:
         """
         self._path_to_raw_txt_data = path_to_raw_txt_data
         self._storage = {}
-        self._scan_dataset()
         self._validate_dataset()
+        self._scan_dataset()
 
     def _validate_dataset(self) -> None:
         """
@@ -65,22 +64,18 @@ class CorpusManager:
             raise FileNotFoundError(f"File '{self._path_to_raw_txt_data}' does not exist")
         if not self._path_to_raw_txt_data.is_dir():
             raise NotADirectoryError(f"Path '{self._path_to_raw_txt_data}' does not lead to directory")
-
         dir_of_raw_files = list(self._path_to_raw_txt_data.glob('*_raw.txt'))
-
-        if not dir_of_raw_files:
+        dir_of_meta_files = list(self._path_to_raw_txt_data.glob('*_meta.json'))
+        if not dir_of_raw_files and not dir_of_meta_files:
             raise EmptyDirectoryError(f'Directory is empty: {self._path_to_raw_txt_data} :(')
 
         all_raw_ids = set()
         for raw in dir_of_raw_files:
             if raw.stat().st_size == 0:
                 raise InconsistentDatasetError(f'The file {raw} is empty')
-
             if raw.name.endswith('_raw.txt'):
                 all_raw_ids.add(raw.name)
-
         good_raw = {f'{i}_raw.txt' for i in range(1, len(all_raw_ids) + 1)}
-
         if all_raw_ids != good_raw:
             raise InconsistentDatasetError('IDs of raw files have slips')
 
@@ -88,14 +83,9 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        raw_files = self._path_to_raw_txt_data.glob('*_raw.txt')
-        for file in raw_files:
-            match = re.match(r'(\d+)_raw\.txt', file.name)
-            if not match:
-                continue
-
-            article_id = int(match.group(1))
-            article = Article(url=None, article_id=article_id)
+        for file in self._path_to_raw_txt_data.glob('*_raw.txt'):
+            article = from_raw(file, article=None)
+            article_id = int(file.name[:-8])
             self._storage[article_id] = article
 
     def get_articles(self) -> dict:
@@ -131,17 +121,7 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         for article in self._corpus_manager.get_articles().values():
-            raw_text_path = article.get_raw_text_path()
-            article = from_raw(raw_text_path, article)
-
-            raw_text = article.text
-            if raw_text:
-                text = raw_text.lower()
-                text = re.sub(r'[^\w\s]', '', text)
-                text = ' '.join(text.split())
-
-                (article.get_cleaned_text())
-                to_cleaned(article)
+            to_cleaned(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
