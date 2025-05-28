@@ -89,7 +89,7 @@ class CorpusManager:
             except (ValueError, IndexError):
                 continue
 
-        if not raw_files or not meta_files:
+        if not raw_files and not meta_files:
             raise EmptyDirectoryError("Directory does not contain expected files")
 
         if raw_ids != meta_ids:
