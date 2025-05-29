@@ -136,8 +136,6 @@ class TextProcessingPipeline(PipelineProtocol):
             for x in punct:
                 article.text = article.text.replace(x, '')
             to_cleaned(article)
-            article.save()
-
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
