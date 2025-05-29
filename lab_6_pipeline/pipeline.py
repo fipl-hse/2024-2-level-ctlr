@@ -4,6 +4,7 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from pathlib import Path
 
 import spacy_udpipe
 from networkx import DiGraph
@@ -78,8 +79,9 @@ class CorpusManager:
         if not meta_files or not raw_files:
             raise InconsistentDatasetError("Missing meta or text files")
 
-        meta_ids = {f.stem for f in meta_files}
-        raw_ids = {f.stem for f in raw_files}
+        meta_ids = {f.stem.replace('_meta', '') for f in meta_files}
+        raw_ids = {f.stem.replace('_raw', '') for f in raw_files}
+
         if meta_ids != raw_ids:
             raise InconsistentDatasetError("Mismatched meta and text file sets")
 
@@ -401,6 +403,12 @@ class PatternSearchPipeline(PipelineProtocol):
         Search for a pattern in documents and writes found information to JSON file.
         """
 
+path = Path('lab_6_pipeline/assets')
+meta_ids = {f.stem.replace('_meta', '') for f in path.glob('*_meta.json')}
+raw_ids = {f.stem.replace('_raw', '') for f in path.glob('*_raw.txt')}
+
+print("Only in meta:", meta_ids - raw_ids)
+print("Only in raw:", raw_ids - meta_ids)
 
 def main() -> None:
     """
