@@ -183,7 +183,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         result = []
         for text in texts:
             analyzed_text = self._analyzer(text)._.conll_str
-            result.append(f'{analyzed_text}')
+            result.append(f'{analyzed_text}\n')
 
         return result
 
@@ -197,6 +197,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
         with open(path, 'w', encoding='utf-8') as file:
             file.write(article.get_conllu_info())
+            file.write("\n")
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
