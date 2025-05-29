@@ -92,10 +92,11 @@ class CorpusManager:
             except (ValueError, IndexError):
                 continue
 
-        valid_ids = sorted(set(raw_ids) & set(meta_ids))
+        for raw, meta in zip(raw_files, meta_files):
+            if len(raw_files) != len(meta_files):
+                raise InconsistentDatasetError(f"ID mismatch between {raw.name} and {meta.name}")
 
-        if not valid_ids:
-            raise InconsistentDatasetError("No valid raw/meta file pairs found")
+        valid_ids = sorted(set(raw_ids) & set(meta_ids))
 
         if valid_ids != list(range(1, len(valid_ids) + 1)):
             raise InconsistentDatasetError("IDs contain slips")
