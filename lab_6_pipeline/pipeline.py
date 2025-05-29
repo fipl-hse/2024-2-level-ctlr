@@ -3,15 +3,14 @@ Pipeline for CONLL-U formatting.
 """
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
-from collections import Counter
 import pathlib
 
-from networkx import DiGraph
 import spacy_udpipe
+from networkx import DiGraph
 from spacy_conll import ConllParser
 
-from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import to_meta, from_raw
+from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
+from core_utils.article.io import from_raw, to_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -196,7 +195,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         with open(path, "r", encoding="utf-8") as f:
             conllu_text = f.read()
             parser = ConllParser(self._analyzer)
-            doc = cast(UDPipeDocument, parser.parse_conll_text_as_spacy(conllu_text.strip()))
+            doc = parser.parse_conll_text_as_spacy(conllu_text.strip())
             return doc
 
 def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
@@ -304,7 +303,14 @@ class POSFrequencyPipeline:
         doc = self._analyzer.from_conllu(article)
         unified_doc = self._analyzer.get_document(doc)
         pos_tags = [token["upos"] for sentence in unified_doc.values() for token in sentence]
-        return dict(Counter(pos_tags))
+
+        freq = {}
+        for tag in pos_tags:
+            if tag in freq:
+                freq[tag] += 1
+            else:
+                freq[tag] = 1
+        return freq
 
     def run(self) -> None:
         """
