@@ -7,11 +7,11 @@ import pathlib
 
 import spacy_udpipe
 from networkx import DiGraph
+from spacy_conll import ConllParser
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import to_meta
+from core_utils.article.io import to_meta, from_raw
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
-from core_utils.article.io import from_raw
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -19,24 +19,29 @@ from core_utils.pipeline import (
     PipelineProtocol,
     StanzaDocument,
     TreeNode,
+    UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
 
-from core_utils.pipeline import UDPipeDocument
-from collections import Counter
-from core_utils.visualizer import visualize
-from conllu import parse
 
 class InconsistentDatasetError(Exception):
-    pass
+    """
+    Raised when files are empty, files' IDs contain slips
+    or number of raw and meta files is not equal.
+    """
 
 
 class EmptyFileError(Exception):
-    pass
+    """
+    Raised when file is empty.
+    """
 
 
 class EmptyDirectoryError(Exception):
-    pass
+    """
+    Raised when directory is empty.
+    """
+
 
 class CorpusManager:
     """
