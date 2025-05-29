@@ -7,6 +7,7 @@ import datetime
 import json
 import time
 import pathlib
+import shutil
 import urllib.parse
 from random import randint
 from typing import Pattern, Union
@@ -16,6 +17,7 @@ from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
+from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 import core_utils.article.io as article_io
 
 
@@ -234,7 +236,6 @@ class Crawler:
         Find articles.
         """
         seed_urls = self.config.get_seed_urls()
-        # number_of_articles = self.config.get_num_articles()
         for seed_url in seed_urls:
             response = make_request(seed_url, self.config)
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -244,6 +245,8 @@ class Crawler:
                     absolute_url = urllib.parse.urljoin(seed_url, url)
                     if url not in self.urls:
                         self.urls.append(absolute_url)
+                    if len(self.urls) >= self.config.get_num_articles():
+                        return None
 
     def get_search_urls(self) -> list:
         """
@@ -287,7 +290,6 @@ class HTMLParser:
         """
         all_body = article_soup.find_all("p")
 
-        # texts = []
         for p in all_body:
             self.article.text += p.text
 
@@ -333,17 +335,35 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
         base_path (Union[pathlib.Path, str]): Path where articles stores
     """
     base_path: Union[pathlib.Path, str]
+    if pathlib.Path(base_path).exists():
+        shutil.rmtree(base_path)
+    pathlib.Path(base_path).mkdir(parents=True)
 
 
 def main() -> None:
     """
     Entrypoint for scrapper module.
     """
-    parser = HTMLParser("http://vzm-vesti.ru/2025/05/29/с-инициативой-по-жизни/", 1,
-                        config=Config(pathlib.Path("scraper_config.json")))
-    parser.parse()
-    article_io.to_raw(parser.article)
+    print("start")
+    configuration = Config(CRAWLER_CONFIG_PATH)
+    crawler = Crawler(config=configuration)
+    crawler.find_articles()
+    prepare_environment(ASSETS_PATH)
+    print(crawler.urls)
+
+    article_id = 1
+    for url in crawler.urls:
+        print(url)
+        parser = HTMLParser(url, article_id, configuration)
+        parser.parse()
+        article_id += 1
+        article_io.to_raw(parser.article)
+    # print(article)
+    # parser = HTMLParser("http://vzm-vesti.ru/2025/05/29/с-инициативой-по-жизни/", 1,
+                       # configuration)
+    # parser.parse()
+    # article_io.to_raw(parser.article)
 
 
-if __name__ == "__main__":  # second change
+if __name__ == "__main__":
     main()
