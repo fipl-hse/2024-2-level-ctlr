@@ -7,9 +7,9 @@ import pathlib
 
 import spacy_udpipe
 from networkx import DiGraph
-from spacy_conll import ConllParser
+from spacy_conll import ConllParser  # type: ignore
 
-from core_utils.article.article import Article, ArtifactType, get_article_id_from_filepath
+from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
