@@ -4,7 +4,6 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-from pathlib import Path
 
 import spacy_udpipe
 from networkx import DiGraph
@@ -168,14 +167,15 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
-        model_path = PROJECT_ROOT / 'lab_6_pipeline' / 'assets' / 'model' / 'russian-syntagrus-ud-2.0-170801.udpipe'
-        model = spacy_udpipe.load_from_path(lang='ru', path=str(model_path))
-        model.add_pipe(
-            factory_name='conll_formatter',
-            last=True,
-            config={'conversion_maps': {'XPOS': {'': '_'}}, 'include_headers': True},
-        )
-        return model
+        assets_path = PROJECT_ROOT / 'lab_6_pipeline' / 'assets' / 'model'
+        model_path = assets_path / 'russian-syntagrus-ud-2.0-170801.udpipe'
+        if not model_path.exists():
+            raise FileNotFoundError('No such file.')
+        nlp = spacy_udpipe.load_from_path(lang='ru', path=str(model_path))
+        nlp.add_pipe('conll_formatter',
+                     last=True,
+                     config={'conversion_maps': {'XPOS': {'': '_'}}, 'include_headers': True})
+        return nlp
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -187,7 +187,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
-        return [self._analyzer(text)._.conllu_str for text in texts]
+        return [self._analyzer(text)._.conll_str for text in texts]
         
 
     def to_conllu(self, article: Article) -> None:
@@ -312,6 +312,7 @@ class POSFrequencyPipeline:
         self._corpus = corpus_manager
         self._analyzer = analyzer
 
+
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
         Count POS frequency in Article.
@@ -322,17 +323,6 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
-        doc = self._analyzer.from_conllu(article)
-        unified_doc = self._analyzer.get_document(doc)
-        pos_tags = [token["upos"] for sentence in unified_doc.values() for token in sentence]
-
-        freq = {}
-        for tag in pos_tags:
-            if tag in freq:
-                freq[tag] += 1
-            else:
-                freq[tag] = 1
-        return freq
 
     def run(self) -> None:
         """
@@ -403,12 +393,6 @@ class PatternSearchPipeline(PipelineProtocol):
         Search for a pattern in documents and writes found information to JSON file.
         """
 
-path = Path('lab_6_pipeline/assets')
-meta_ids = {f.stem.replace('_meta', '') for f in path.glob('*_meta.json')}
-raw_ids = {f.stem.replace('_raw', '') for f in path.glob('*_raw.txt')}
-
-print("Only in meta:", meta_ids - raw_ids)
-print("Only in raw:", raw_ids - meta_ids)
 
 def main() -> None:
     """
