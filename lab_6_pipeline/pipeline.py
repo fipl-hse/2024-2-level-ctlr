@@ -57,6 +57,7 @@ class CorpusManager:
         """
         self.path_to_raw = path_to_raw_txt_data
         self.articles: dict[int, Article] = {}
+        self._storage = {}
         self._validate_dataset()
         self._scan_dataset()
 
@@ -93,7 +94,11 @@ class CorpusManager:
         Register each dataset entry.
         """
         for raw_file in self.path_to_raw.glob("*.txt"):
-            article = from_raw(raw_file)
+            try:
+                article = from_raw(raw_file)
+            except ValueError:
+                print(f"Warning: Некорректное имя файла {raw_file.name}")
+                continue
             self.articles[article.article_id] = article
 
     def get_articles(self) -> dict:
