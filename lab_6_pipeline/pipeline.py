@@ -66,30 +66,28 @@ class CorpusManager:
             raise FileNotFoundError(f'Directory not found: {self.path}')
 
         if not self.path.is_dir():
-            raise NotADirectoryError(f'Path is not a directory: {self.path} ')
+            raise NotADirectoryError(f'Path is not a directory: {self.path}')
 
-        raw_files = list(self.path.glob('*_raw.txt'))
-        meta_files = list(self.path.glob('*_meta.json'))
+        if not any(self.path.iterdir()):
+            raise EmptyDirectoryError
 
-        if not raw_files and not meta_files:
-            raise EmptyDirectoryError(f'No data files found in directory: {self.path}')
+        if not all(file.stat().st_size for file in self.path.iterdir()
+                   if file.name.endswith('_meta.json') or file.name.endswith('_raw.txt')):
+            raise InconsistentDatasetError('There are empty meta or raw files')
 
-        if len(raw_files) != len(meta_files):
-            raise InconsistentDatasetError
+        meta_list = [file.name for file in self.path.iterdir() if file.name.endswith('_meta.json')]
+        raw_list = [file.name for file in self.path.iterdir() if file.name.endswith('_raw.txt')]
 
-        for file in raw_files + meta_files:
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f'Empty file: {file} :(')
+        if len(raw_list) != len(meta_list):
+            raise InconsistentDatasetError(f'Meta and text amounts are different,'
+                                           f' {len(raw_list)}, {len(meta_list)}')
 
-        for meta, raw in zip(meta_files, raw_files):
-            meta_ids = get_article_id_from_filepath(meta)
-            raw_ids = get_article_id_from_filepath(raw)
+        raw_perfect = [f'{i}_raw.txt' for i in range(1, len(raw_list) + 1)]
+        meta_perfect = [f'{i}_meta.json' for i in range(1, len(meta_list) + 1)]
 
-            if not raw_ids or not meta_ids:
-                raise InconsistentDatasetError('Missing data or metadata files')
-
-            if raw_ids != meta_ids:
-                raise InconsistentDatasetError('Data and metadata IDs do not match')
+        if set(raw_perfect) != set(raw_list) or set(meta_perfect) != set(meta_list):
+            raise InconsistentDatasetError(f'Numbering of files is inconsistent'
+                                           f'{len(raw_perfect)}, {len(meta_perfect)}')
 
     def _scan_dataset(self) -> None:
         """
