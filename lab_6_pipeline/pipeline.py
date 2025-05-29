@@ -197,10 +197,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
-        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
-        conllu_text = article.get_conllu_info().strip()
-        with open(path, 'w', encoding='utf-8') as file:
-            file.write(conllu_text)
+        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), 'w', encoding='UTF-8') as file:
+            file.write(article.get_conllu_info())
+            file.write("\n")
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -212,6 +211,14 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        if not path.stat().st_size:
+            raise EmptyFileError
+        parser = ConllParser(cast(Language, self._analyzer))
+        with open(path, 'r', encoding='UTF-8') as file:
+            conllu = file.read()
+        data: UDPipeDocument = parser.parse_conll_text_as_spacy(conllu[:-1])
+        return data
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
