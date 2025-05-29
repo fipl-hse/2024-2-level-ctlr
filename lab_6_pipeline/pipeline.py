@@ -71,15 +71,15 @@ class CorpusManager:
         if not raw_files and not meta_files:
             raise EmptyDirectoryError("Directory is empty")
 
-        raw_ids = set()
-        meta_ids = set()
+        raw_ids = []
+        meta_ids = []
 
         for file in raw_files:
             try:
                 file_id = int(file.name.split("_")[0])
                 if file.stat().st_size == 0:
                     raise InconsistentDatasetError(f"File {file} is empty")
-                raw_ids.add(file_id)
+                raw_ids.append(file_id)
             except (ValueError, IndexError):
                 continue
 
@@ -88,7 +88,7 @@ class CorpusManager:
                 file_id = int(file.name.split("_")[0])
                 if file.stat().st_size == 0:
                     raise InconsistentDatasetError(f"File {file} is empty")
-                meta_ids.add(file_id)
+                meta_ids.append(file_id)
             except (ValueError, IndexError):
                 continue
 
