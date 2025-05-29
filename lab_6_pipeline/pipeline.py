@@ -5,7 +5,6 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 import re
-from typing import List
 
 from networkx import DiGraph
 
