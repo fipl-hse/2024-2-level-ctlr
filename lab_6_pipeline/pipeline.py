@@ -65,10 +65,13 @@ class CorpusManager:
             raise FileNotFoundError(f"{path} does not exist")
         if not path.is_dir():
             raise NotADirectoryError(f"{path} is not a directory")
-        if not any(self.path_to_raw_txt_data.iterdir()):
-            raise EmptyDirectoryError
+
+        if not any(path.iterdir()):
+            raise EmptyDirectoryError(f"{path} is empty")
+
         raw_files = list(path.glob('**/*_raw.txt'))
         meta_files = list(path.glob('**/*_meta.json'))
+
         raw_ids = set()
         meta_ids = set()
 
@@ -79,22 +82,25 @@ class CorpusManager:
                 continue
             file_id = int(parts[0])
             if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"File {file} is empty")
+                raise InconsistentDatasetError(f"Raw file {file} is empty")
             raw_ids.add(file_id)
 
-            for meta_file in meta_files:
-                filename = meta_file.name
-                parts = filename.split("_")
-                if len(parts) < 2 or not parts[0].isdigit():
-                    continue
-                file_id = int(parts[0])
-                if file.stat().st_size == 0:
-                    raise InconsistentDatasetError(f"File {file} is empty")
-                meta_ids.add(file_id)
+        for meta_file in meta_files:
+            filename = meta_file.name
+            parts = filename.split("_")
+            if len(parts) < 2 or not parts[0].isdigit():
+                continue
+            file_id = int(parts[0])
+            if meta_file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"Meta file {meta_file} is empty")
+            meta_ids.add(file_id)
+
         if raw_ids != meta_ids or not raw_ids or not meta_ids:
             raise InconsistentDatasetError("Number of meta files and raw files are not consistent")
-        if sorted(raw_ids) != list(range(min(sorted(raw_ids)), max(sorted(raw_ids)) + 1)):
-            raise InconsistentDatasetError("Files are not sorted")
+
+        sorted_ids = sorted(raw_ids)
+        if sorted_ids != list(range(min(sorted_ids), max(sorted_ids) + 1)):
+            raise InconsistentDatasetError("File IDs are not continuous and sorted")
 
     def _scan_dataset(self) -> None:
         """
