@@ -23,6 +23,7 @@ from core_utils.pipeline import (
     UnifiedCoNLLUDocument,
 )
 
+
 class InconsistentDatasetError(Exception):
     """
     IDs contain slips, number of meta and raw files is not equal, files are empty
