@@ -64,15 +64,17 @@ class CorpusManager:
         """
         Validate folder with assets.
         """
-        if not self.path_to_raw.exists() or not self.path_to_raw.is_dir():
-            raise NotADirectoryError(f"Path {self.path_to_raw} does not exist or is not a directory")
+        if not self.path_to_raw.exists():
+            raise FileNotFoundError(f"Path {self.path_to_raw} does not exist")
+        if not self.path_to_raw.is_dir():
+            raise NotADirectoryError(f"Path {self.path_to_raw} is not a directory")
 
         files = list(self.path_to_raw.glob("*"))
         if not files:
             raise EmptyDirectoryError(f"Directory {self.path_to_raw} is empty")
 
-        meta_files = list(self.path_to_raw.glob("*.meta"))
-        raw_files = list(self.path_to_raw.glob("*.txt"))
+        meta_files = list(self.path_to_raw.glob("*_meta.json"))
+        raw_files = list(self.path_to_raw.glob("*_raw.txt"))
         if not meta_files or not raw_files:
             raise InconsistentDatasetError("Missing meta or text files")
 
