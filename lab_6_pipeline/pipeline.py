@@ -74,9 +74,9 @@ class CorpusManager:
         for file in self.path_to_raw_txt_data.glob('*_raw.txt'):
             if file.stat().st_size == 0:
                 raise InconsistentDatasetError('file is empty')
-        if (len(list(self.path_to_raw_txt_data.glob('*_meta.json'))) !=
-                len(list(self.path_to_raw_txt_data.glob('*_raw.txt')))):
-            raise InconsistentDatasetError('numbers of meta and txt are not equal')
+        # if (len(list(self.path_to_raw_txt_data.glob('*_meta.json'))) !=
+        #         len(list(self.path_to_raw_txt_data.glob('*_raw.txt')))):
+        #     raise InconsistentDatasetError('numbers of meta and txt are not equal')
 
     def _scan_dataset(self) -> None:
         """
@@ -128,14 +128,22 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        punct = ['—', '«', '»']
+        add_punct = ['—', '«', '»']
         articles = self.corpus_manager.get_articles()
 
         for article in articles.values():
             article.text = article.text.replace('\u00A0', ' ')
-            for x in punct:
+            for x in add_punct:
                 article.text = article.text.replace(x, '')
             to_cleaned(article)
+
+        texts = [article.text for article in articles.values()]
+        analyzed = self._analyzer.analyze(texts)
+
+        for i, article in enumerate(articles.values()):
+            article.set_conllu_info(analyzed[i])
+            self._analyzer.to_conllu(article)
+
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
