@@ -6,6 +6,7 @@ Pipeline for CONLL-U formatting.
 import pathlib
 from typing import cast
 
+import spacy_udpipe
 from networkx import DiGraph
 from spacy_conll import ConllParser  # type: ignore[import-not-found, import-untyped]
 
@@ -22,7 +23,6 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
-
 
 class InconsistentDatasetError(Exception):
     """
@@ -158,6 +158,20 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        # скачиваем модель (делается только один раз при отсутствии)
+        spacy_udpipe.download("ru")
+        # загружаем её из кэша
+        self._analyzer = spacy_udpipe.load("ru")
+        # добавляем pipe для конвертации в CoNLL-U
+        self._analyzer.add_pipe(
+            factory_name="conll_formatter",
+            last=True,
+            config={
+                "conversion_maps": {"XPOS": {"": "_"}},
+                "include_headers": True,
+            },
+        )
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -166,6 +180,24 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        model_path = (PROJECT_ROOT
+                      / 'lab_6_pipeline'
+                      / 'assets'
+                      / 'model'
+                      / 'russian-syntagrus-ud-2.0-170801.udpipe'
+                      )
+        if not model_path.exists():
+            raise FileNotFoundError(f"UDPipe model not found at {model_path}")
+        model = spacy_udpipe.load_from_path(lang="ru", path=str(model_path))
+
+        model.add_pipe(
+            factory_name='conll_formatter',
+            last=True,
+            config={'conversion_maps': {'XPOS': {'': '_'}},
+                    'include_headers': True},
+        )
+        return model
+
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -177,6 +209,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        return [str(self._analyzer(text)._.conll_str) for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -185,6 +218,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        with open(path, 'w', encoding='utf-8') as file:
+            file.write(article.get_conllu_info())
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -196,6 +232,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+
 
     def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
