@@ -3,12 +3,12 @@ Pipeline for CONLL-U formatting.
 """
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
+from collections import Counter
 import pathlib
 
-import spacy_udpipe
 from networkx import DiGraph
-from spacy_conll import ConllParser  # type: ignore
-from typing import cast
+import spacy_udpipe
+from spacy_conll import ConllParser
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import to_meta, from_raw
@@ -23,7 +23,6 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
-from collections import Counter
 
 
 class InconsistentDatasetError(Exception):
