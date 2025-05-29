@@ -5,9 +5,13 @@ Pipeline for CONLL-U formatting.
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 
+import spacy_udpipe
 from networkx import DiGraph
 
-from core_utils.article.article import Article
+from core_utils.article.article import Article, ArtifactType
+from core_utils.article.io import to_meta
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
+from core_utils.article.io import from_raw
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -15,10 +19,24 @@ from core_utils.pipeline import (
     PipelineProtocol,
     StanzaDocument,
     TreeNode,
-    UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
 
+from core_utils.pipeline import UDPipeDocument
+from collections import Counter
+from core_utils.visualizer import visualize
+from conllu import parse
+
+class InconsistentDatasetError(Exception):
+    pass
+
+
+class EmptyFileError(Exception):
+    pass
+
+
+class EmptyDirectoryError(Exception):
+    pass
 
 class CorpusManager:
     """
@@ -41,11 +59,16 @@ class CorpusManager:
         """
         Validate folder with assets.
         """
+        if not self.path_to_raw.exists() or not self.path_to_raw.is_dir():
+            raise FileNotFoundError(f"Path {self.path_to_raw} does not exist or is not a directory")
 
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
         """
+        for raw_file in self.path_to_raw.glob("*.txt"):
+            article = from_raw(raw_file)
+            self.articles[article.article_id] = article
 
     def get_articles(self) -> dict:
         """
@@ -54,6 +77,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
+        return self.articles
 
 
 class TextProcessingPipeline(PipelineProtocol):
@@ -71,11 +95,28 @@ class TextProcessingPipeline(PipelineProtocol):
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper | None): Analyzer instance
         """
+        self.corpus_manager = corpus_manager
+        self.analyzer = analyzer
 
     def run(self) -> None:
         """
         Perform basic preprocessing and write processed text to files.
         """
+        articles = self.corpus_manager.get_articles()
+        if not articles:
+            print("[WARNING] No articles found.")
+            return
+
+        texts = [article.text for article in articles.values()]
+        if not texts:
+            print("[WARNING] Articles contain no text.")
+            return
+
+        docs = self.analyzer.analyze(texts)
+
+        for article, doc in zip(articles.values(), docs):
+            article.set_conllu_info(doc)
+            self.analyzer.to_conllu(article)
 
 
 class UDPipeAnalyzer(LibraryWrapper):
@@ -90,6 +131,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         Initialize an instance of the UDPipeAnalyzer class.
         """
+        super().__init__()
+        self._analyzer = self._bootstrap()
 
     def _bootstrap(self) -> AbstractCoNLLUAnalyzer:
         """
@@ -98,6 +141,14 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             AbstractCoNLLUAnalyzer: Analyzer instance
         """
+        model_path = PROJECT_ROOT / 'lab_6_pipeline' / 'assets' / 'model' / 'russian-syntagrus-ud-2.0-170801.udpipe'
+        model = spacy_udpipe.load_from_path(lang='ru', path=str(model_path))
+        model.add_pipe(
+            factory_name='conll_formatter',
+            last=True,
+            config={'conversion_maps': {'XPOS': {'': '_'}}, 'include_headers': True},
+        )
+        return model
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -109,6 +160,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
+        return [self._analyzer(text)._.conllu_str for text in texts]
+        
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -117,6 +170,9 @@ class UDPipeAnalyzer(LibraryWrapper):
         Args:
             article (Article): Article containing information to save
         """
+        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU), 'w', encoding='utf-8') as f:
+            f.write(article.get_conllu_info())
+            f.write('\n')
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
@@ -128,8 +184,15 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UDPipeDocument: Document ready for parsing
         """
+        path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        if pathlib.Path(path).stat().st_size == 0:
+            raise EmptyFileError('no conllu file')
+        with open(path, "r", encoding="utf-8") as f:
+            conllu_text = f.read()
+            sentences = parse(conllu_text)
+            return sentences
 
-    def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
+def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
         Present ConLLU document's sentence tokens as a unified structure.
 
@@ -139,6 +202,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             UnifiedCoNLLUDocument: Dictionary of token features within document sentences
         """
+        return doc.to_unified()
 
 
 class StanzaAnalyzer(LibraryWrapper):
@@ -217,6 +281,8 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -228,11 +294,23 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
+        doc = self._analyzer.from_conllu(article)
+        unified_doc = self._analyzer.get_document(doc)
+        pos_tags = [token["upos"] for sentence in unified_doc.values() for token in sentence]
+        return dict(Counter(pos_tags))
 
     def run(self) -> None:
         """
         Visualize the frequencies of each part of speech.
         """
+        articles = self._corpus.get_articles()
+        for article in articles.values():
+            freqs = self._count_frequencies(article)
+            article.set_pos_info(freqs)
+            to_meta(article)
+
+            image_path = article.get_image_path()
+            visualize(article, image_path)
 
 
 class PatternSearchPipeline(PipelineProtocol):
@@ -297,6 +375,14 @@ def main() -> None:
     """
     Entrypoint for pipeline module.
     """
+    corpus = CorpusManager(ASSETS_PATH)
+    analyzer = UDPipeAnalyzer()
+
+    processing = TextProcessingPipeline(corpus, analyzer)
+    processing.run()
+
+    pos_pipeline = POSFrequencyPipeline(corpus, analyzer)
+    pos_pipeline.run()
 
 
 if __name__ == "__main__":
