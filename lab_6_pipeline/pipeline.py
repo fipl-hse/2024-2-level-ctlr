@@ -7,7 +7,8 @@ import pathlib
 
 import spacy_udpipe
 from networkx import DiGraph
-from spacy_conll import ConllParser
+from spacy_conll import ConllParser  # type: ignore
+from typing import cast
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import to_meta, from_raw
@@ -22,6 +23,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+from collections import Counter
 
 
 class InconsistentDatasetError(Exception):
@@ -194,8 +196,9 @@ class UDPipeAnalyzer(LibraryWrapper):
             raise EmptyFileError('no conllu file')
         with open(path, "r", encoding="utf-8") as f:
             conllu_text = f.read()
-            sentences = parse(conllu_text)
-            return sentences
+            parser = ConllParser(self._analyzer)
+            doc = cast(UDPipeDocument, parser.parse_conll_text_as_spacy(conllu_text.strip()))
+            return doc
 
 def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -314,8 +317,6 @@ class POSFrequencyPipeline:
             article.set_pos_info(freqs)
             to_meta(article)
 
-            image_path = article.get_image_path()
-            visualize(article, image_path)
 
 
 class PatternSearchPipeline(PipelineProtocol):
