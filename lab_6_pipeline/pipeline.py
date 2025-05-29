@@ -71,15 +71,15 @@ class CorpusManager:
         if not raw_files and not meta_files:
             raise EmptyDirectoryError("Directory is empty")
 
-        raw_ids = []
-        meta_ids = []
+        raw_ids = {}
+        meta_ids = {}
 
         for file in raw_files:
             try:
                 file_id = int(file.name.split("_")[0])
                 if file.stat().st_size == 0:
                     raise InconsistentDatasetError(f"File {file} is empty")
-                raw_ids.append(file_id)
+                raw_ids[file_id] = file
             except (ValueError, IndexError):
                 continue
 
@@ -88,15 +88,25 @@ class CorpusManager:
                 file_id = int(file.name.split("_")[0])
                 if file.stat().st_size == 0:
                     raise InconsistentDatasetError(f"File {file} is empty")
-                meta_ids.append(file_id)
+                meta_ids[file_id] = file
             except (ValueError, IndexError):
                 continue
 
+        valid_ids = sorted(set(raw_ids) & set(meta_ids))
+
+        if not valid_ids:
+            raise InconsistentDatasetError("No valid raw/meta file pairs found")
+
+        if valid_ids != list(range(1, len(valid_ids) + 1)):
+            raise InconsistentDatasetError("IDs contain slips")
+
+        """
         if raw_ids != meta_ids:
             raise InconsistentDatasetError("Mismatch between raw and meta file IDs")
 
         if sorted(raw_ids) != list(range(1, len(raw_ids) + 1)):
             raise InconsistentDatasetError("Dataset contains non-consecutive IDs")
+        """
 
     def _scan_dataset(self) -> None:
         """
@@ -146,9 +156,7 @@ class TextProcessingPipeline(PipelineProtocol):
 
         for article in articles.values():
             article.text = article.text.replace('\xa0', ' ')
-            # Приводим текст к нижнему регистру и удаляем пунктуацию
             article.text = article.get_cleaned_text()
-            # Сохраняем очищенный текст в файл N_cleaned.txt
             to_cleaned(article)
 
 
