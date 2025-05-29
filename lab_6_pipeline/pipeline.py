@@ -76,27 +76,34 @@ class CorpusManager:
         meta_ids = set()
 
         for file in raw_files:
-            filename = file.name
-            parts = filename.split("_")
-            if len(parts) < 2 or not parts[0].isdigit():
+            filename = file.stem  # Get filename without extension
+            if "_raw" not in filename:
                 continue
-            file_id = int(parts[0])
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"Raw file {file} is empty")
+            prefix = filename.split("_raw")[0]
+            if not prefix.isdigit():
+                continue
+            file_id = int(prefix)
             raw_ids.add(file_id)
 
-        for meta_file in meta_files:
-            filename = meta_file.name
-            parts = filename.split("_")
-            if len(parts) < 2 or not parts[0].isdigit():
+        for file in meta_files:
+            filename = file.stem  # Get filename without extension
+            if "_meta" not in filename:
                 continue
-            file_id = int(parts[0])
-            if meta_file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"Meta file {meta_file} is empty")
+            prefix = filename.split("_meta")[0]
+            if not prefix.isdigit():
+                continue
+            file_id = int(prefix)
             meta_ids.add(file_id)
 
-        if raw_ids != meta_ids or not raw_ids or not meta_ids:
-            raise InconsistentDatasetError("Number of meta files and raw files are not consistent")
+        if raw_ids != meta_ids:
+            missing_raw = meta_ids - raw_ids
+            missing_meta = raw_ids - meta_ids
+            error_msg = []
+            if missing_raw:
+                error_msg.append(f"Missing raw files for IDs: {missing_raw}")
+            if missing_meta:
+                error_msg.append(f"Missing meta files for IDs: {missing_meta}")
+            raise InconsistentDatasetError("; ".join(error_msg))
 
         sorted_ids = sorted(raw_ids)
         if sorted_ids != list(range(min(sorted_ids), max(sorted_ids) + 1)):
