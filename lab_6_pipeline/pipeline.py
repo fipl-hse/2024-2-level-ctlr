@@ -198,9 +198,9 @@ class UDPipeAnalyzer(LibraryWrapper):
             article (Article): Article containing information to save
         """
         path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
+        conllu_text = article.get_conllu_info().strip()
         with open(path, 'w', encoding='utf-8') as file:
-            file.write(article.get_conllu_info())
-            file.write("\n")
+            file.write(conllu_text)
 
     def from_conllu(self, article: Article) -> UDPipeDocument:
         """
