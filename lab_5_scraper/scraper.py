@@ -324,8 +324,7 @@ class HTMLParser:
         if text_div:
             paragraphs = [p.get_text(strip=True) for p in text_div.find_all('p') if p.get_text(strip=True)]
             self.article.text = '\n\n'.join(paragraphs) if paragraphs else 'NOT FOUND'
-        else:
-            self.article.text = 'NOT FOUND'
+
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
