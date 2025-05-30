@@ -60,39 +60,27 @@ class CorpusManager:
         """
         Validate folder with assets.
         """
-        path = Path(self.path_to_raw_txt_data)
-        if not path.exists():
-            raise FileNotFoundError(f"{path} does not exist")
-        if not path.is_dir():
-            raise NotADirectoryError(f"{path} is not a directory")
-        if not any(path.iterdir()):
-            raise EmptyDirectoryError(f"{path} is empty")
+        if not self.path_to_raw_txt_data.exists():
+            raise FileNotFoundError("Directory does not exist")
+        if not self.path_to_raw_txt_data.is_dir():
+            raise NotADirectoryError("Path is not a directory")
 
-        raw = [f.name for f in self.path_to_raw_txt_data.iterdir() if f.is_file() and f.name.endswith('_raw.txt')]
-        meta = [f.name for f in self.path_to_raw_txt_data.iterdir() if f.is_file() and f.name.endswith('_meta.json')]
+        files_list = list(self.path_to_raw_txt_data.iterdir())
+        if len(files_list) == 0:
+            raise EmptyDirectoryError("Directory is empty")
 
-        if len(raw) != len(meta):
-            raise InconsistentDatasetError(f'Number of meta and raw files is not equal: {len(raw)} != {len(meta)}')
+        json_count = [file for file in files_list if '.json' in str(file)]
+        meta_files = sorted(json_count, key=lambda m: int(str(m.stem).split('_')[0]))
+        article_count = [file for file in files_list if 'raw.txt' in str(file)]
+        raw_files = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
 
-        raw_ids = [int(name.split('_')[0]) for name in raw]
-        expected_raw_ids = list(range(1, len(raw) + 1))
-        if sorted(raw_ids) != expected_raw_ids:
-            missing_raw = set(expected_raw_ids) - set(raw_ids)
-            raise InconsistentDatasetError(f'raw IDs in dataset are not found: {missing_raw}')
+        for raw, meta in zip(raw_files, meta_files):
+            if len(raw_files) != len(meta_files):
+                raise InconsistentDatasetError(f"ID mismatch between {raw.name} and {meta.name}")
 
-        meta_ids = [int(name.split('_')[0]) for name in meta]
-        expected_meta_ids = list(range(1, len(meta) + 1))
-        if sorted(meta_ids) != expected_meta_ids:
-            missing_meta = set(expected_meta_ids) - set(meta_ids)
-            raise InconsistentDatasetError(f'meta IDs in dataset are not found: {missing_meta}')
-
-        for file_raw in self.path_to_raw_txt_data.glob('*_raw.txt'):
-            if file_raw.stat().st_size == 0:
-                raise InconsistentDatasetError(f'raw file {file_raw.name} is empty')
-
-        for file_meta in self.path_to_raw_txt_data.glob('*_meta.json'):
-            if file_meta.stat().st_size == 0:
-                raise InconsistentDatasetError(f'meta file {file_meta.name} is empty')
+        for file in (*raw_files, *meta_files):
+            if file.stat().st_size == 0:
+                raise InconsistentDatasetError(f"Empty file: {file.name}")
 
     def _scan_dataset(self) -> None:
         """
