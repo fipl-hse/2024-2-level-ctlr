@@ -1,5 +1,9 @@
 {
-    "seed_urls": ["https://krai-dorogobuzhskii.ru/category/novosti/"],
+    "seed_urls": ["https://krai-dorogobuzhskii.ru/tag/novosti-iz-oblasti/",
+    "https://krai-dorogobuzhskii.ru/tag/mnenie-ekspertov/",
+    "https://krai-dorogobuzhskii.ru/tag/blagoustrojstvo/",
+    "https://krai-dorogobuzhskii.ru/tag/my-vmeste/",
+    "https://krai-dorogobuzhskii.ru/tag/sport/"],
     "headers": {"User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/136.0.0.0 Safari/537.36",
         "Cookie": "_ym_uid=1748382653126668861;_ym_d=1748382653; _ym_isad=2; _ym_visorc=w",
         "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
