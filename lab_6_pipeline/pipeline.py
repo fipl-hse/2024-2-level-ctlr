@@ -3,6 +3,7 @@ Pipeline for CONLL-U formatting.
 """
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
+import re
 import pathlib
 
 from networkx import DiGraph
@@ -153,10 +154,13 @@ class TextProcessingPipeline(PipelineProtocol):
         Perform basic preprocessing and write processed text to files.
         """
         articles = self._corpus.get_articles()
+        punctuation = ['– ', '— ', '«', '»']
 
         for article in articles.values():
-            article.text = article.text.replace('\xa0', ' ')
-            article.text = article.get_cleaned_text()
+            for x in punctuation:
+                article.text = article.text.replace(x, '')
+            article.text = article.text.replace('\u00A0', ' ')
+            article.text = re.sub(r'[ \t]+', ' ', article.text)
             to_cleaned(article)
 
 
