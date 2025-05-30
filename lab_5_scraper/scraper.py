@@ -300,6 +300,21 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
+        # title = article_soup.find("head")
+        # print(title)
+        # self.article.title = title.text.strip()
+        # print(self.article.title)
+
+        # author = article_soup.find("p", "strong")
+        author = article_soup.find("p", class_="bio-name")
+        if author is None:
+            self.article.author = "NOT FOUND"
+        else:
+            self.article.author = author.text
+        # author = article_soup.find("span", class_="vcard author")
+        # author = article_soup.find("a", rel="author")
+        # print(author)
+        # print(self.article.author)
 
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
@@ -323,6 +338,7 @@ class HTMLParser:
         article_bs = BeautifulSoup(response.text, "html.parser")
 
         self._fill_article_with_text(article_bs)
+        self._fill_article_with_meta_information(article_bs)
 
         return self.article
 
@@ -349,15 +365,16 @@ def main() -> None:
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     prepare_environment(ASSETS_PATH)
-    print(crawler.urls)
+    # print(crawler.urls)
 
     article_id = 1
     for url in crawler.urls:
-        print(url)
+        # print(url)
         parser = HTMLParser(url, article_id, configuration)
         parser.parse()
         article_id += 1
         article_io.to_raw(parser.article)
+        article_io.to_meta(parser.article)
     # print(article)
     # parser = HTMLParser("http://vzm-vesti.ru/2025/05/29/с-инициативой-по-жизни/", 1,
                        # configuration)
