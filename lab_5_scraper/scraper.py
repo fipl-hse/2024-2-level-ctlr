@@ -90,11 +90,10 @@ class Config:
             config_data = json.load(file)
         for url in config_data['seed_urls']:
             if "https://krai-dorogobuzhskii.ru" not in url or not isinstance(config_data['seed_urls'],list)\
-                    or len(config_data['seed_urls'])<=1:
+                    or not config_data['seed_urls']:
                 raise IncorrectSeedURLError('Seed URL does not match standard pattern.')
 
-        if (config_data['total_articles_to_find_and_parse'] < 1 or
-                config_data['total_articles_to_find_and_parse'] > 150 or not isinstance(config_data['total_articles_to_find_and_parse'], int)):
+        if config_data['total_articles_to_find_and_parse'] < 1 or config_data['total_articles_to_find_and_parse'] > 150 or not isinstance(config_data['total_articles_to_find_and_parse'], int):
             raise NumberOfArticlesOutOfRangeError('Number of articles must be '
                                                   'in range from 1 to 150')
 
