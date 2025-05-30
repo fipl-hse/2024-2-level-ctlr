@@ -11,7 +11,7 @@ from networkx import DiGraph
 
 from core_utils.article.article import Article, ArtifactType
 from core_utils.article.io import from_raw, to_cleaned
-from core_utils.constants import PROJECT_ROOT, ASSETS_PATH
+from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
     CoNLLUDocument,
@@ -22,6 +22,7 @@ from core_utils.pipeline import (
     UDPipeDocument,
     UnifiedCoNLLUDocument,
 )
+
 UDPIPE_MODEL_PATH = (PROJECT_ROOT /
                      "lab_6_pipeline" /
                      "assets" / "model" /
