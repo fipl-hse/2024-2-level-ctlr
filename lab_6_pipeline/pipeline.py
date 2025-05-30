@@ -2,7 +2,6 @@
 Pipeline for CONLL-U formatting.
 """
 
-
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
 from collections import defaultdict
