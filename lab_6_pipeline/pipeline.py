@@ -10,7 +10,7 @@ from networkx import DiGraph
 from spacy_conll import ConllParser  # type: ignore
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
+from core_utils.article.io import from_raw, to_cleaned, to_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
