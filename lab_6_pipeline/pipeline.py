@@ -65,42 +65,34 @@ class CorpusManager:
             raise FileNotFoundError(f"{path} does not exist")
         if not path.is_dir():
             raise NotADirectoryError(f"{path} is not a directory")
-
         if not any(path.iterdir()):
             raise EmptyDirectoryError(f"{path} is empty")
 
-        raw_files = list(path.glob('**/*_raw.txt'))
-        meta_files = list(path.glob('**/*_meta.json'))
+        raw = [f.name for f in self.path_to_raw_txt_data.iterdir() if f.is_file() and f.name.endswith('_raw.txt')]
+        meta = [f.name for f in self.path_to_raw_txt_data.iterdir() if f.is_file() and f.name.endswith('_meta.json')]
 
-        raw_ids = set()
-        meta_ids = set()
+        if len(raw) != len(meta):
+            raise InconsistentDatasetError(f'Number of meta and raw files is not equal: {len(raw)} != {len(meta)}')
 
-        for file in raw_files:
-            filename = file.name
-            parts = filename.split("_")
-            if len(parts) < 2 or not parts[0].isdigit():
-                continue
-            file_id = int(parts[0])
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"Raw file {file} is empty")
-            raw_ids.add(file_id)
+        raw_ids = [int(name.split('_')[0]) for name in raw]
+        expected_raw_ids = list(range(1, len(raw) + 1))
+        if sorted(raw_ids) != expected_raw_ids:
+            missing_raw = set(expected_raw_ids) - set(raw_ids)
+            raise InconsistentDatasetError(f'raw IDs in dataset are not found: {missing_raw}')
 
-        for meta_file in meta_files:
-            filename = meta_file.name
-            parts = filename.split("_")
-            if len(parts) < 2 or not parts[0].isdigit():
-                continue
-            file_id = int(parts[0])
-            if meta_file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"Meta file {meta_file} is empty")
-            meta_ids.add(file_id)
+        meta_ids = [int(name.split('_')[0]) for name in meta]
+        expected_meta_ids = list(range(1, len(meta) + 1))
+        if sorted(meta_ids) != expected_meta_ids:
+            missing_meta = set(expected_meta_ids) - set(meta_ids)
+            raise InconsistentDatasetError(f'meta IDs in dataset are not found: {missing_meta}')
 
-        if len(raw_ids) != len(meta_ids):
-            raise InconsistentDatasetError("Number of meta files and raw files are not consistent")
+        for file_raw in self.path_to_raw_txt_data.glob('*_raw.txt'):
+            if file_raw.stat().st_size == 0:
+                raise InconsistentDatasetError(f'raw file {file_raw.name} is empty')
 
-        sorted_ids = sorted(raw_ids)
-        if sorted_ids != list(range(min(sorted_ids), max(sorted_ids) + 1)):
-            raise InconsistentDatasetError("File IDs are not continuous and sorted")
+        for file_meta in self.path_to_raw_txt_data.glob('*_meta.json'):
+            if file_meta.stat().st_size == 0:
+                raise InconsistentDatasetError(f'meta file {file_meta.name} is empty')
 
     def _scan_dataset(self) -> None:
         """
@@ -377,7 +369,7 @@ def main() -> None:
     """
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     analyzer = UDPipeAnalyzer()
-    pipeline = TextProcessingPipeline(corpus_manager=corpus_manager, analyzer=analyzer)
+    pipeline = TextProcessingPipeline(corpus_manager, analyzer=analyzer)
     pipeline.run()
 
 
