@@ -135,7 +135,6 @@ class Article:
             "date": self._date_to_text() or None,
             "author": self.author,
             "topics": self.topics,
-            "map": self.map,
             "pos_frequencies": self.pos_frequencies,
             "pattern_matches": self.pattern_matches,
         }
