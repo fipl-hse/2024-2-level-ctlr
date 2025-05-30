@@ -5,9 +5,9 @@ import datetime
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes, unused-import, undefined-variable, unused-argument
 import json
-import time
 import pathlib
 import shutil
+import time
 import urllib.parse
 from random import randint
 from typing import Pattern, Union
@@ -16,9 +16,9 @@ import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
+import core_utils.article.io as article_io
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-import core_utils.article.io as article_io
 
 
 class IncorrectEncodingError(Exception):
