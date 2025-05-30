@@ -300,9 +300,9 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        # title = article_soup.find("head")
+        title = article_soup.find("head")
         # print(title)
-        # self.article.title = title.text.strip()
+        self.article.title = title.text.strip()
         # print(self.article.title)
 
         # author = article_soup.find("p", "strong")
@@ -365,7 +365,6 @@ def main() -> None:
     crawler = Crawler(config=configuration)
     crawler.find_articles()
     prepare_environment(ASSETS_PATH)
-    # print(crawler.urls)
 
     article_id = 1
     for url in crawler.urls:
