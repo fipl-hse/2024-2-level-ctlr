@@ -56,7 +56,7 @@ class CorpusManager:
             path_to_raw_txt_data (pathlib.Path): Path to raw txt data
         """
         self.path_to_raw = path_to_raw_txt_data
-        self.articles: dict[int, Article] = {}
+        self.articles = {}
         self._storage = {}
         self._validate_dataset()
         self._scan_dataset()
@@ -94,11 +94,9 @@ class CorpusManager:
         Register each dataset entry.
         """
         for raw_file in self.path_to_raw.glob("*.txt"):
-            try:
-                article = from_raw(raw_file)
-            except ValueError:
-                print(f"Warning: Некорректное имя файла {raw_file.name}")
-                continue
+            article = from_raw(raw_file)
+            if not raw_file.name:
+                raise ValueError (f"Warning: Некорректное имя файла {raw_file.name}")
             self.articles[article.article_id] = article
 
     def get_articles(self) -> dict:
@@ -143,7 +141,10 @@ class TextProcessingPipeline(PipelineProtocol):
             print("[WARNING] Articles contain no text.")
             return
 
-        docs = self.analyzer.analyze(texts)
+        if self.analyzer is not None:
+            docs = self.analyzer.analyze(texts)
+        else:
+            docs = []
 
         for article, doc in zip(articles.values(), docs):
             article.set_conllu_info(doc)
@@ -221,9 +222,9 @@ class UDPipeAnalyzer(LibraryWrapper):
             raise EmptyFileError('no conllu file')
         with open(path, "r", encoding="utf-8") as f:
             conllu_text = f.read()
-            parser = ConllParser(self._analyzer)
-            doc = parser.parse_conll_text_as_spacy(conllu_text.strip())
-            return doc
+        parser = ConllParser(self._analyzer)
+        doc = parser.parse_conll_text_as_spacy(conllu_text.strip())
+        return doc
 
 def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
@@ -317,7 +318,6 @@ class POSFrequencyPipeline:
         self._corpus = corpus_manager
         self._analyzer = analyzer
 
-
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
         Count POS frequency in Article.
@@ -338,8 +338,6 @@ class POSFrequencyPipeline:
             freqs = self._count_frequencies(article)
             article.set_pos_info(freqs)
             to_meta(article)
-
-
 
 class PatternSearchPipeline(PipelineProtocol):
     """
@@ -406,7 +404,7 @@ def main() -> None:
     corpus = CorpusManager(ASSETS_PATH)
     analyzer = UDPipeAnalyzer()
 
-    processing = TextProcessingPipeline(corpus, analyzer)
+    processing = TextProcessingPipeline(corpus)
     processing.run()
 
     pos_pipeline = POSFrequencyPipeline(corpus, analyzer)
