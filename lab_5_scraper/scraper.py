@@ -232,9 +232,9 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        article = article_bs.find('a', class_ = '')
+        article = article_bs.findall('a')
         href = article.get('href') if article else None
-        if isinstance(href, str):
+        if isinstance(href, str) and href not in self.urls:
             return href
         return ''
 
