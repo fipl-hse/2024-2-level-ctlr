@@ -66,7 +66,7 @@ class Config:
         self._headless_mode = config.headless_mode
         self._seed_urls = config.seed_urls
         self._timeout = config.timeout
-        self._num_articles = config.num_articles
+        self._num_articles = config.total_articles
         self._should_varify_certificate = config.should_verify_certificate
 
 
@@ -89,11 +89,12 @@ class Config:
         with open(self.path_to_config, encoding ='UTF-8') as file:
             config_data = json.load(file)
         for url in config_data['seed_urls']:
-            if "https://krai-dorogobuzhskii.ru" not in url or not isinstance(config_data['seed_urls'],list):
+            if "https://krai-dorogobuzhskii.ru" not in url or not isinstance(config_data['seed_urls'],list)\
+                    or len(config_data['seed_urls'])<=1:
                 raise IncorrectSeedURLError('Seed URL does not match standard pattern.')
 
         if (config_data['total_articles_to_find_and_parse'] < 1 or
-                config_data['total_articles_to_find_and_parse'] > 150):
+                config_data['total_articles_to_find_and_parse'] > 150 or not isinstance(config_data['total_articles_to_find_and_parse'], int)):
             raise NumberOfArticlesOutOfRangeError('Number of articles must be '
                                                   'in range from 1 to 150')
 
