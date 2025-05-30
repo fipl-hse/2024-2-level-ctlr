@@ -93,13 +93,12 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        for raw_file in self.path_to_raw.glob("*.txt"):
-            try:
-                article = from_raw(raw_file)
-            except ValueError:
-                print(f"Warning: Некорректное имя файла {raw_file.name}")
-                continue
-            self.articles[article.article_id] = article
+        path_list = sorted(self.path_to_raw.glob('*_raw.txt'),
+                           key=lambda x: int(x.stem.split('_')[0]))
+        for i, path in enumerate(path_list, start=1):
+            self._storage[i] = from_raw(path,
+                                        Article(url=None,
+                                                article_id=i))
 
     def get_articles(self) -> dict:
         """
@@ -108,8 +107,7 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
-        return self.articles
-
+        return self._storage
 
 class TextProcessingPipeline(PipelineProtocol):
     """
@@ -148,7 +146,6 @@ class TextProcessingPipeline(PipelineProtocol):
         for article, doc in zip(articles.values(), docs):
             article.set_conllu_info(doc)
             self.analyzer.to_conllu(article)
-
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
