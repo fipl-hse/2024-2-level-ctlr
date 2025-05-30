@@ -128,7 +128,6 @@ class CorpusManager:
         Returns:
             dict: Storage params
         """
-        #print("get_articles() called, storage:", self._storage)
         return self._storage
 
 

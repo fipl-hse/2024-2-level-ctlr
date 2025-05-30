@@ -321,18 +321,17 @@ class HTMLParser:
             class_=["dp-q37iie-root-root", "dp-qa3f2j-root"]
         )
 
-        text_parts = []
+        text = []
 
         for block in content_blocks:
-            if block.find_parent("footer"):
-                continue
+            paragraphs = block.find_all('p')
+            for p in paragraphs:
+                if p.text.strip():
+                    text.append(p.text.strip())
+            if not text:
+                text = [block.get_text(strip=True)]
 
-            text = block.get_text(separator="\n", strip=True)
-            if text:
-                text_parts.append(text)
-
-        full_text = "\n".join(text_parts)
-        self.article.text = full_text
+        self.article.text = '\n'.join(text)
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         """
