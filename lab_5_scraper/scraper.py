@@ -94,7 +94,7 @@ class Config:
             config_data = json.load(file)
         for url in config_data['seed_urls']:
             if "https://krai-dorogobuzhskii.ru" not in url or not isinstance(config_data['seed_urls'],list)\
-                    or not config_data['seed_urls']:
+                    or not config_data['seed_urls'] or not isinstance(url, str):
                 raise IncorrectSeedURLError('Seed URL does not match standard pattern.')
 
         if config_data['total_articles_to_find_and_parse'] < 1 or config_data['total_articles_to_find_and_parse'] > 150 or not isinstance(config_data['total_articles_to_find_and_parse'], int):
@@ -102,7 +102,7 @@ class Config:
                                                   'in range from 1 to 150')
 
         if (not isinstance(config_data['total_articles_to_find_and_parse'], int) or
-                config_data['total_articles_to_find_and_parse'] <= 0):
+                config_data['total_articles_to_find_and_parse'] < 1):
             raise IncorrectNumberOfArticlesError('Number of articles must be an integer'
                                                  'and not less than 0')
 
