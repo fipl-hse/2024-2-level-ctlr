@@ -97,7 +97,6 @@ class Article:
         self.date = None
         self.author = []
         self.topics = []
-        self.map = []
         self.text = ""
         self.pos_frequencies = {}
         self._conllu_sentences = []

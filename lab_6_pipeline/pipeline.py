@@ -10,7 +10,7 @@ from networkx import DiGraph
 from spacy_conll import ConllParser  # type: ignore
 
 from core_utils.article.article import Article, ArtifactType
-from core_utils.article.io import from_raw, to_meta
+from core_utils.article.io import from_meta, from_raw, to_cleaned, to_meta
 from core_utils.constants import ASSETS_PATH, PROJECT_ROOT
 from core_utils.pipeline import (
     AbstractCoNLLUAnalyzer,
@@ -96,9 +96,7 @@ class CorpusManager:
         path_list = sorted(self.path_to_raw.glob('*_raw.txt'),
                            key=lambda x: int(x.stem.split('_')[0]))
         for i, path in enumerate(path_list, start=1):
-            self._storage[i] = from_raw(path,
-                                        Article(url=None,
-                                                article_id=i))
+            self._storage[i] = from_raw(path)
 
     def get_articles(self) -> dict:
         """
@@ -141,11 +139,16 @@ class TextProcessingPipeline(PipelineProtocol):
             print("[WARNING] Articles contain no text.")
             return
 
-        docs = self.analyzer.analyze(texts)
+        for article in articles.values():
+            article.text = article.text.replace('\u00A0', ' ')
+            to_cleaned(article)
 
-        for article, doc in zip(articles.values(), docs):
-            article.set_conllu_info(doc)
-            self.analyzer.to_conllu(article)
+        if self.analyzer is not None:
+            docs = self.analyzer.analyze(texts)
+
+            for article, doc in zip(articles.values(), docs):
+                article.set_conllu_info(doc)
+                self.analyzer.to_conllu(article)
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
@@ -190,7 +193,6 @@ class UDPipeAnalyzer(LibraryWrapper):
             list[UDPipeDocument | str]: List of documents
         """
         return [self._analyzer(text)._.conll_str for text in texts]
-
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -314,7 +316,6 @@ class POSFrequencyPipeline:
         self._corpus = corpus_manager
         self._analyzer = analyzer
 
-
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
         Count POS frequency in Article.
@@ -335,7 +336,6 @@ class POSFrequencyPipeline:
             freqs = self._count_frequencies(article)
             article.set_pos_info(freqs)
             to_meta(article)
-
 
 
 class PatternSearchPipeline(PipelineProtocol):
@@ -405,9 +405,6 @@ def main() -> None:
 
     processing = TextProcessingPipeline(corpus, analyzer)
     processing.run()
-
-    pos_pipeline = POSFrequencyPipeline(corpus, analyzer)
-    pos_pipeline.run()
 
 
 if __name__ == "__main__":
