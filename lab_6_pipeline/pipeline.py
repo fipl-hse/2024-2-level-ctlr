@@ -418,7 +418,7 @@ def main() -> None:
     """
     corman = CorpusManager(ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
-    pipeline = TextProcessingPipeline(corman)
+    pipeline = TextProcessingPipeline(corman, udpipe_analyzer)
     pipeline.run()
     visualizer = POSFrequencyPipeline(corman, udpipe_analyzer)
     visualizer.run()
