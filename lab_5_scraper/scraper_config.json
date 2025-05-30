@@ -1,12 +1,12 @@
 {
-    "seed_urls": ['https://krai-dorogobuzhskii.ru/category/novosti/'],
-    "headers": {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/136.0.0.0 Safari/537.36',
-        'Cookie': '_ym_uid=1748382653126668861;_ym_d=1748382653; _ym_isad=2; _ym_visorc=w',
-        'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+    "seed_urls": ["https://krai-dorogobuzhskii.ru/category/novosti/"],
+    "headers": {"User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)Chrome/136.0.0.0 Safari/537.36",
+        "Cookie": "_ym_uid=1748382653126668861;_ym_d=1748382653; _ym_isad=2; _ym_visorc=w",
+        "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
     },
     "total_articles_to_find_and_parse": 10,
-    "encoding": 'utf-8',
+    "encoding": "utf-8",
     "timeout": 15,
 
     "should_verify_certificate": true,
