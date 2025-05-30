@@ -301,6 +301,7 @@ class HTMLParser:
             article_bs = BeautifulSoup(response.text, 'lxml')
             self._fill_article_with_text(article_bs)
         return self.article
+
     def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
         Unify date format.
@@ -350,8 +351,5 @@ def main() -> None:
             to_raw(article)
 
 
-
-
 if __name__ == "__main__":
-    #change
     main()
