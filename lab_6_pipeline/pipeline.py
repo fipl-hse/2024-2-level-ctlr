@@ -5,6 +5,7 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from collections import defaultdict
 from typing import cast
 
 import spacy_udpipe
@@ -83,10 +84,10 @@ class CorpusManager:
         for raw, meta in zip(raw_files, meta_files):
             if len(raw_files) != len(meta_files):
                 raise InconsistentDatasetError(f"ID mismatch between {raw.name} and {meta.name}")
-
-        for file in (*raw_files, *meta_files):
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"Empty file: {file.name}")
+            if raw.stat().st_size == 0:
+                raise InconsistentDatasetError(f"Empty raw file: {raw.name}")
+            if meta.stat().st_size == 0:
+                raise InconsistentDatasetError(f"Empty meta file: {meta.name}")
 
 
 
@@ -143,20 +144,19 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        add_punct = ['—', '«', '»']
         articles = self.corpus_manager.get_articles()
         for article in articles.values():
             article.text = article.text.replace('\u00A0', ' ')
-            for x in add_punct:
-                article.text = article.text.replace(x, '')
             to_cleaned(article)
-        analyzed = self._analyzer.analyze([article.text
-                                           for article
-                                           in articles.values()])
-        for i, article in enumerate(articles.values()):
-            article.set_conllu_info(analyzed[i])
-            self._analyzer.to_conllu(article)
 
+        if self._analyzer is not None:
+            texts_to_analyze = [article.text for article in articles.values()]
+            analyzed_texts = self._analyzer.analyze(texts_to_analyze)
+
+            if analyzed_texts is not None and len(analyzed_texts) == len(texts_to_analyze):
+                for i, article in enumerate(articles.values()):
+                    article.set_conllu_info(analyzed_texts[i])
+                    self._analyzer.to_conllu(article)
 
 class UDPipeAnalyzer(LibraryWrapper):
     """
@@ -168,7 +168,7 @@ class UDPipeAnalyzer(LibraryWrapper):
 
     def __init__(self) -> None:
         """
-        Initialize an instance of the UDPipeAnalyzer clаss.
+        Initialize an instance of the UDPipeAnalyzer class.
         """
         self._analyzer = self._bootstrap()
 
@@ -338,10 +338,10 @@ class POSFrequencyPipeline:
         Returns:
             dict[str, int]: POS frequencies
         """
-        freq_pos = {}
+        freq_pos = defaultdict(int)
         for token in self._analyzer.from_conllu(article):
-            freq_pos[token.pos_] = freq_pos.get(token.pos_, 0) + 1
-        return freq_pos
+            freq_pos[token.pos_] += 1
+        return dict(freq_pos)
 
     def run(self) -> None:
         """
@@ -418,7 +418,7 @@ def main() -> None:
     """
     corman = CorpusManager(ASSETS_PATH)
     udpipe_analyzer = UDPipeAnalyzer()
-    pipeline = TextProcessingPipeline(corman, udpipe_analyzer)
+    pipeline = TextProcessingPipeline(corman)
     pipeline.run()
     visualizer = POSFrequencyPipeline(corman, udpipe_analyzer)
     visualizer.run()
