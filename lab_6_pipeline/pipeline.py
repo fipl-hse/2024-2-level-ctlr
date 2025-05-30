@@ -63,26 +63,23 @@ class CorpusManager:
         Validate folder with assets.
         """
         if not self._path_to_raw_txt_data.exists():
-            raise FileNotFoundError("Directory does not exist")
+            raise FileNotFoundError(f"File '{self._path_to_raw_txt_data}' does not exist")
         if not self._path_to_raw_txt_data.is_dir():
-            raise NotADirectoryError("Path is not a directory")
+            raise NotADirectoryError(f"Path '{self._path_to_raw_txt_data}' does not lead to directory")
+        dir_of_raw_files = list(self._path_to_raw_txt_data.glob('*_raw.txt'))
+        dir_of_meta_files = list(self._path_to_raw_txt_data.glob('*_meta.json'))
+        if not dir_of_raw_files and not dir_of_meta_files:
+            raise EmptyDirectoryError(f'Directory is empty: {self._path_to_raw_txt_data} :(')
 
-        files_list = list(self._path_to_raw_txt_data.iterdir())
-        if len(files_list) == 0:
-            raise EmptyDirectoryError("Directory is empty")
-
-        json_count = [file for file in files_list if '.json' in str(file)]
-        meta_files = sorted(json_count, key=lambda m: int(str(m.stem).split('_')[0]))
-        article_count = [file for file in files_list if 'raw.txt' in str(file)]
-        raw_files = sorted(article_count, key=lambda m: int(str(m.stem).split('_')[0]))
-
-        for raw, meta in zip(raw_files, meta_files):
-            if len(raw_files) != len(meta_files):
-                raise InconsistentDatasetError(f"ID mismatch between {raw.name} and {meta.name}")
-
-        for file in (*raw_files, *meta_files):
-            if file.stat().st_size == 0:
-                raise InconsistentDatasetError(f"Empty file: {file.name}")
+        all_raw_ids = set()
+        for raw in dir_of_raw_files:
+            if raw.stat().st_size == 0:
+                raise InconsistentDatasetError(f'The file {raw} is empty')
+            if raw.name.endswith('_raw.txt'):
+                all_raw_ids.add(raw.name)
+        good_raw = {f'{i}_raw.txt' for i in range(1, len(all_raw_ids) + 1)}
+        if all_raw_ids != good_raw:
+            raise InconsistentDatasetError('IDs of raw files have slips')
 
     def _scan_dataset(self) -> None:
         """
