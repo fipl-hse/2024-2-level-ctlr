@@ -323,12 +323,14 @@ class HTMLParser:
         self.article.title = title1.strip()
         # print(self.article.title)
 
+        self.article.author = []
         # author = article_soup.find("p", "strong")
         author = article_soup.find("p", class_="bio-name")
         if author is None:
-            self.article.author = "NOT FOUND"
+            author = "NOT FOUND"
+            self.article.author += author
         else:
-            self.article.author = author.text
+            self.article.author += author
         # author = article_soup.find("span", class_="vcard author")
         # author = article_soup.find("a", rel="author")
         # print(author)
