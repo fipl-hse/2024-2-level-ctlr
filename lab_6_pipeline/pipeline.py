@@ -4,6 +4,7 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+from typing import cast
 
 import spacy_udpipe
 from networkx import DiGraph
@@ -137,15 +138,13 @@ class TextProcessingPipeline(PipelineProtocol):
         """
         Perform basic preprocessing and write processed text to files.
         """
-        articles = list(self._corpus.get_articles().values())
-        for article in articles:
+        articles = self._corpus.get_articles().values()
+        for ind, article in enumerate(articles):
             to_cleaned(article)
 
-        if self._analyzer and articles:
-            texts = [article.text for article in articles]
-            analyzed = self._analyzer.analyze(texts)
-            for article, analysis in zip(articles, analyzed):
-                article.set_conllu_info(analysis)
+            if self._analyzer:
+                analyzed = self._analyzer.analyze([article.text for article in articles])
+                article.set_conllu_info(analyzed[ind])
                 self._analyzer.to_conllu(article)
 
 
@@ -176,7 +175,7 @@ class UDPipeAnalyzer(LibraryWrapper):
             last=True,
             config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
         )
-        return model
+        return cast(AbstractCoNLLUAnalyzer, model)
 
     def analyze(self, texts: list[str]) -> list[UDPipeDocument | str]:
         """
@@ -188,9 +187,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
-        if not texts:
-            return []
-        return [self._analyzer(text)._.conll_str for text in texts if text]
+        return [self._analyzer(text)._.conll_str for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -383,9 +380,6 @@ def main() -> None:
     Entrypoint for pipeline module.
     """
     corpus = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
-
-    if not UDPIPE_MODEL_PATH.exists():
-        raise FileNotFoundError(f"UDPipe model not found at {UDPIPE_MODEL_PATH}")
 
     udpipe_analyzer = UDPipeAnalyzer()
 
