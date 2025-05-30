@@ -4,6 +4,7 @@ Pipeline for CONLL-U formatting.
 
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
+import glob
 from collections import Counter
 
 import spacy_conll
@@ -102,10 +103,9 @@ class CorpusManager:
         """
         Register each dataset entry.
         """
-        for file in self.path.iterdir():
-            if 'raw' in file.name:
-                article_from_raw = from_raw(file)
-                self._storage[article_from_raw.article_id] = article_from_raw
+        for file in glob.glob(str(self.path / '*raw*')):
+            article_from_raw = from_raw(file)
+            self._storage[article_from_raw.article_id] = article_from_raw
 
     def get_articles(self) -> dict:
         """
@@ -190,11 +190,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         Returns:
             list[UDPipeDocument | str]: List of documents
         """
-        conllu_annotation = []
-        for text in texts:
-            analyzed_text = self._analyzer(text)
-            conllu_annotation.append(analyzed_text._.conll_str)
-        return conllu_annotation
+        return [self._analyzer(text)._.conll_str for text in texts]
 
     def to_conllu(self, article: Article) -> None:
         """
@@ -337,8 +333,7 @@ class POSFrequencyPipeline:
         """
         Visualize the frequencies of each part of speech.
         """
-        articles = self._corpus.get_articles()
-        for article_to_vis in articles.values():
+        for article_to_vis in self._corpus.get_articles().values():
             from_meta(article_to_vis.get_meta_file_path(), article_to_vis)
             pos_freq = self._count_frequencies(article_to_vis)
             article_to_vis.set_pos_info(pos_freq)
@@ -363,6 +358,9 @@ class PatternSearchPipeline(PipelineProtocol):
             analyzer (LibraryWrapper): Analyzer instance
             pos (tuple[str, ...]): Root, Dependency, Child part of speech
         """
+        self._corpus = corpus_manager
+        self._analyzer = analyzer
+        self._node_labels = pos
 
     def _make_graphs(self, doc: CoNLLUDocument) -> list[DiGraph]:
         """
@@ -374,6 +372,17 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             list[DiGraph]: Graphs for the sentences in the document
         """
+        graphs = []
+        for sent in doc.sents:
+            digraph = DiGraph()
+            for token in sent:
+                digraph.add_node(token.id, label=token.upos)
+            for token in sent:
+                if token.head == '0':
+                    continue
+                digraph.add_edge(int(token.head), token.id, label=token.deprel)
+            graphs.append(digraph)
+        return graphs
 
     def _add_children(
         self, graph: DiGraph, subgraph_to_graph: dict, node_id: int, tree_node: TreeNode
@@ -413,8 +422,10 @@ def main() -> None:
     udpipe_analyzer = UDPipeAnalyzer()
     pipeline = TextProcessingPipeline(corpus_manager, udpipe_analyzer)
     pipeline.run()
-    visualizer = POSFrequencyPipeline(corpus_manager, udpipe_analyzer)
-    visualizer.run()
+    visualizer_pos_fr = POSFrequencyPipeline(corpus_manager, udpipe_analyzer)
+    visualizer_pos_fr.run()
+    visualizer_pattern = PatternSearchPipeline(corpus_manager, udpipe_analyzer,
+                                               ("VERB", "NOUN", "ADP"))
 
 
 if __name__ == "__main__":
