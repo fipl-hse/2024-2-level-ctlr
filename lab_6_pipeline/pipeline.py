@@ -224,7 +224,7 @@ class UDPipeAnalyzer(LibraryWrapper):
             doc = parser.parse_conll_text_as_spacy(conllu_text.strip())
             return doc
 
-def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
+    def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         """
         Present ConLLU document's sentence tokens as a unified structure.
 
@@ -234,8 +234,6 @@ def get_document(self, doc: UDPipeDocument) -> UnifiedCoNLLUDocument:
         Returns:
             UnifiedCoNLLUDocument: Dictionary of token features within document sentences
         """
-        return doc.to_unified()
-
 
 class StanzaAnalyzer(LibraryWrapper):
     """
@@ -313,8 +311,6 @@ class POSFrequencyPipeline:
             corpus_manager (CorpusManager): CorpusManager instance
             analyzer (LibraryWrapper): Analyzer instance
         """
-        self._corpus = corpus_manager
-        self._analyzer = analyzer
 
     def _count_frequencies(self, article: Article) -> dict[str, int]:
         """
@@ -331,11 +327,6 @@ class POSFrequencyPipeline:
         """
         Visualize the frequencies of each part of speech.
         """
-        articles = self._corpus.get_articles()
-        for article in articles.values():
-            freqs = self._count_frequencies(article)
-            article.set_pos_info(freqs)
-            to_meta(article)
 
 
 class PatternSearchPipeline(PipelineProtocol):
