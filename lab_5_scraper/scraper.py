@@ -226,14 +226,24 @@ class Crawler:
             str: Url from HTML
         """
         url_list = []
-        if len(article_bs.find_all('a')) != 0:
-            for link in article_bs.find_all('a'):
-                link.get('href')
-                if link.text == "http://vzm-vesti.ru/wp-login.php":
-                    pass
-                else:
-                    url_list.append(link.text)
-                    # print(link.get('href'))
+        h2_articles = article_bs.find('h2', class_='post-title entry-title')
+        # print(h2_articles.find('a'))
+        for link in h2_articles.find_all('a'):
+            # print(link.get('href'))
+            link.get('href')
+            url_list.append(link.get('href'))
+        # for elem in h2_articles:
+            # print(elem)
+
+        # if len(article_bs.find_all('a')) != 0:
+            # for link in article_bs.find_all('a'):
+                # link.get('href')
+                # print(link.get('href'))
+                # if link.get('href') == "http://vzm-vesti.ru/wp-login.php":
+
+                # else:
+                    # url_list.append(link.text)
+        # print(url_list)
         return url_list
 
     def find_articles(self) -> None:
@@ -247,9 +257,10 @@ class Crawler:
             url_list = self._extract_url(soup)
             if len(url_list) != 0:
                 for url in url_list:
-                    absolute_url = urllib.parse.urljoin(seed_url, url)
+                    # absolute_url = urllib.parse.urljoin(seed_url, url)
+                    # print(absolute_url)
                     if url not in self.urls:
-                        self.urls.append(absolute_url)
+                        self.urls.append(url)
                     if len(self.urls) >= self.config.get_num_articles():
                         return None
 
