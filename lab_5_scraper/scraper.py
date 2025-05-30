@@ -232,7 +232,7 @@ class Crawler:
         Returns:
             str: Url from HTML
         """
-        article = article_bs.find('a', class_ = '')
+        article = article_bs.find('a', class_ = ' ')
         href = article.get('href') if article else None
         if isinstance(href, str):
             return href
@@ -246,7 +246,7 @@ class Crawler:
             response = make_request(seed_url, self.config)
             if len(self.urls) < self.config.get_num_articles():
                 while True:
-                    extracted_url = self._extract_url(BeautifulSoup(response.text, 'lxml'))
+                    extracted_url = self._extract_url(BeautifulSoup(response.text, 'html.parser'))
                     if extracted_url not in self.urls:
                         self.urls.append(extracted_url)
 
