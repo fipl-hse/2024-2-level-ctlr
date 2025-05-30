@@ -458,12 +458,12 @@ class PatternSearchPipeline(PipelineProtocol):
                     label=word.upos,
                     text=word.text
                 )
-
-                current_graph.add_edge(
-                    u_of_edge=word.head,
-                    v_of_edge=word.id,
-                    label=word.deprel
-                )
+                if word.head:
+                    current_graph.add_edge(
+                        u_of_edge=word.head,
+                        v_of_edge=word.id,
+                        label=word.deprel
+                    )
 
             graphs.append(current_graph)
 
@@ -482,18 +482,20 @@ class PatternSearchPipeline(PipelineProtocol):
             tree_node (TreeNode): Root node of the match
         """
         cur_node = subgraph_to_graph[node_id]
-        for parent, child, label in graph.out_edges(cur_node, data="label"):
-            if child in subgraph_to_graph.values():
-                pattern_child_id = next(k for k, v in subgraph_to_graph.items() if v == child)
-                child_attrs = graph.nodes[child]
+        for _, child, _ in graph.out_edges(cur_node, data="label"):
+            if child not in subgraph_to_graph.values():
+                continue
 
-                child_tree_node = TreeNode(
-                    upos=child_attrs["label"],
-                    text=child_attrs.get("text", ""),
-                    children=[]
-                )
-                tree_node.children.append(child_tree_node)
-                self._add_children(graph, subgraph_to_graph, pattern_child_id, child_tree_node)
+            pattern_child_id = next(k for k, v in subgraph_to_graph.items() if v == child)
+            child_attrs = graph.nodes[child]
+
+            child_tree_node = TreeNode(
+                upos=child_attrs["label"],
+                text=child_attrs.get("text", ""),
+                children=[]
+            )
+            tree_node.children.append(child_tree_node)
+            self._add_children(graph, subgraph_to_graph, pattern_child_id, child_tree_node)
 
     def _find_pattern(self, doc_graphs: list) -> dict[int, list[TreeNode]]:
         """
@@ -505,71 +507,6 @@ class PatternSearchPipeline(PipelineProtocol):
         Returns:
             dict[int, list[TreeNode]]: A dictionary with pattern matches
         """
-
-        # for idx, label in enumerate(self._node_labels):
-        #     pattern.add_node(idx, label=label)
-        #     if idx != 1:
-        #         pattern.add_edge(idx-1, idx)
-        #
-        # result = {}
-        #
-        # for sent_idx, sent_graph in enumerate(doc_graphs):
-        #     matches = []
-        #
-        #     matcher = DiGraphMatcher(
-        #         sent_graph,
-        #         pattern,
-        #         node_match=lambda n1, n2: n1.get('label', '') == n2.get('label', '')
-        #     )
-        #
-        #     for mapping in matcher.subgraph_isomorphisms_iter():
-        #         if 1 in mapping.values():
-        #             pattern_to_graph = {v: k for k, v in mapping.items()}
-        #         else:
-        #             pattern_to_graph = mapping
-        #
-        #         if not (sent_graph.has_edge(pattern_to_graph[1], pattern_to_graph[2]) and
-        #                 sent_graph.has_edge(pattern_to_graph[2], pattern_to_graph[3])):
-        #             continue
-        #
-        #         root_tree = TreeNode(
-        #             upos=sent_graph.nodes[pattern_to_graph[1]]["label"],
-        #             text=sent_graph.nodes[pattern_to_graph[1]].get("text", ""),
-        #             children=[]
-        #         )
-        #         subgraph_to_graph = {k: pattern_to_graph[k] for k in pattern_to_graph}
-        #         self._add_children(sent_graph, subgraph_to_graph, 1, root_tree)
-        #         matches.append(root_tree)
-        #     if matches:
-        #         result[sent_idx] = matches
-        #
-        # return result
-        #         verb_tree = TreeNode(
-        #             upos=sent_graph.nodes[pattern_to_graph[1]]['label'],
-        #             text=sent_graph.nodes[pattern_to_graph[1]].get('text', ''),
-        #             children=[]
-        #         )
-        #
-        #         propn_tree = TreeNode(
-        #             upos=sent_graph.nodes[pattern_to_graph[2]]['label'],
-        #             text=sent_graph.nodes[pattern_to_graph[2]].get('text', ''),
-        #             children=[]
-        #         )
-        #
-        #         adp_tree = TreeNode(
-        #             upos=sent_graph.nodes[pattern_to_graph[3]]['label'],
-        #             text=sent_graph.nodes[pattern_to_graph[3]].get('text', ''),
-        #             children=[]
-        #         )
-        #
-        #         propn_tree.children.append(adp_tree)
-        #         verb_tree.children.append(propn_tree)
-        #         matches.append(verb_tree)
-        #
-        #     if matches:
-        #         result[sent_idx] = matches
-        #
-        # return result
         pattern = DiGraph()
         for idx, label in enumerate(self._node_labels, start=1):
             pattern.add_node(idx, label=label)
