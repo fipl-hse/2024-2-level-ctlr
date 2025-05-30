@@ -228,7 +228,12 @@ class Crawler:
         url_list = []
         if len(article_bs.find_all('a')) != 0:
             for link in article_bs.find_all('a'):
-                url_list.append(link.get('href'))
+                link.get('href')
+                if link.text == "http://vzm-vesti.ru/wp-login.php":
+                    pass
+                else:
+                    url_list.append(link.text)
+                    # print(link.get('href'))
         return url_list
 
     def find_articles(self) -> None:
