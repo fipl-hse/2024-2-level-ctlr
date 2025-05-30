@@ -98,7 +98,7 @@ class Config:
                                                   'in range from 1 to 150')
 
         if (not isinstance(config_data['total_articles_to_find_and_parse'], int) or
-                config_data['total_articles_to_find_and_parse'] < 0):
+                config_data['total_articles_to_find_and_parse'] <= 0):
             raise IncorrectNumberOfArticlesError('Number of articles must be an integer'
                                                  'and not less than 0')
 
@@ -112,9 +112,9 @@ class Config:
                 or not (config_data['timeout'] < 60 and config_data['timeout'] > 0)):
             raise IncorrectTimeoutError('Timeout must be a positive integer and less than 60')
 
-        if not isinstance(config_data['should_verify_sertificate'], bool) or not \
+        if not isinstance(config_data['should_verify_certificate'], bool) or not \
                 isinstance(config_data['headless_mode'], bool):
-            raise IncorrectVerifyError('Verify sertificate value must be either True or False')
+            raise IncorrectVerifyError('Verify certificate value must be either True or False')
 
 
 
