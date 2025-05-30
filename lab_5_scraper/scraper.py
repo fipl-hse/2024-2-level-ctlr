@@ -69,8 +69,6 @@ class Config:
         self._num_articles = config.total_articles
         self._should_varify_certificate = config.should_verify_certificate
 
-
-
     def _extract_config_content(self) -> ConfigDTO:
         """
         Get config values.
@@ -80,8 +78,14 @@ class Config:
         """
         with open(self.path_to_config, encoding ='UTF-8') as file:
             config_data = json.load(file)
-        return ConfigDTO(**config_data)
-
+        return ConfigDTO( seed_urls=config_data['seed_urls'],
+            total_articles_to_find_and_parse=config_data['total_articles_to_find_and_parse'],
+            headers=config_data['headers'],
+            encoding=config_data['encoding'],
+            timeout=config_data['timeout'],
+            should_verify_certificate=config_data['should_verify_certificate'],
+            headless_mode=config_data['headless_mode']
+        )
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
