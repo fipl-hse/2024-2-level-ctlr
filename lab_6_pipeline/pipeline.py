@@ -102,14 +102,6 @@ class CorpusManager:
         if valid_ids != list(range(1, len(valid_ids) + 1)):
             raise InconsistentDatasetError("IDs contain slips")
 
-        """
-        if raw_ids != meta_ids:
-            raise InconsistentDatasetError("Mismatch between raw and meta file IDs")
-
-        if sorted(raw_ids) != list(range(1, len(raw_ids) + 1)):
-            raise InconsistentDatasetError("Dataset contains non-consecutive IDs")
-        """
-
     def _scan_dataset(self) -> None:
         """
         Register each dataset entry.
@@ -118,8 +110,7 @@ class CorpusManager:
 
         for file in raw_files:
             article_id = int(file.name.split("_")[0])
-            article = Article(url=None, article_id=article_id)
-            article = from_raw(file, article)
+            article = from_raw(file, None)
             self._storage[article_id] = article
 
     def get_articles(self) -> dict:
@@ -386,10 +377,6 @@ def main() -> None:
     corpus_manager = CorpusManager(path_to_raw_txt_data=ASSETS_PATH)
     pipeline = TextProcessingPipeline(corpus_manager)
     pipeline.run()
-    #print(corpus_manager._storage)
-
-    #for article_id, article in corpus_manager._storage.items():
-    #    print(f"ID: {article_id}, Type: {type(article)}, Article ID: {article.article_id}")
 
 
 if __name__ == "__main__":
