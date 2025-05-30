@@ -375,11 +375,6 @@ def main() -> None:
         article_id += 1
         article_io.to_raw(parser.article)
         article_io.to_meta(parser.article)
-    # print(article)
-    # parser = HTMLParser("http://vzm-vesti.ru/2025/05/29/с-инициативой-по-жизни/", 1,
-                       # configuration)
-    # parser.parse()
-    # article_io.to_raw(parser.article)
 
 
 if __name__ == "__main__":
