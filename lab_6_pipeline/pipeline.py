@@ -95,7 +95,7 @@ class CorpusManager:
                 raise InconsistentDatasetError(f"Meta file {meta_file} is empty")
             meta_ids.add(file_id)
 
-        if raw_ids != meta_ids or not raw_ids or not meta_ids:
+        if len(raw_ids) != len(meta_ids):
             raise InconsistentDatasetError("Number of meta files and raw files are not consistent")
 
         sorted_ids = sorted(raw_ids)
