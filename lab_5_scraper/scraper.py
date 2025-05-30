@@ -89,7 +89,7 @@ class Config:
         with open(self.path_to_config, encoding ='UTF-8') as file:
             config_data = json.load(file)
         for url in config_data['seed_urls']:
-            if "https://krai-dorogobuzhskii.ru" not in url:
+            if "https://krai-dorogobuzhskii.ru" not in url or not isinstance(config_data['seed_urls'],list):
                 raise IncorrectSeedURLError('Seed URL does not match standard pattern.')
 
         if (config_data['total_articles_to_find_and_parse'] < 1 or
@@ -112,7 +112,8 @@ class Config:
                 or not (config_data['timeout'] < 60 and config_data['timeout'] > 0)):
             raise IncorrectTimeoutError('Timeout must be a positive integer and less than 60')
 
-        if not isinstance(config_data['should_verify_sertificate'], bool):
+        if not isinstance(config_data['should_verify_sertificate'], bool) or not \
+                isinstance(config_data['headless_mode'], bool):
             raise IncorrectVerifyError('Verify sertificate value must be either True or False')
 
 
