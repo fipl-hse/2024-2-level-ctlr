@@ -2,9 +2,10 @@
 Pipeline for CONLL-U formatting.
 """
 
+import glob
+
 # pylint: disable=too-few-public-methods, undefined-variable, too-many-nested-blocks
 import pathlib
-import glob
 from collections import Counter
 
 import spacy_conll
@@ -424,8 +425,6 @@ def main() -> None:
     pipeline.run()
     visualizer_pos_fr = POSFrequencyPipeline(corpus_manager, udpipe_analyzer)
     visualizer_pos_fr.run()
-    visualizer_pattern = PatternSearchPipeline(corpus_manager, udpipe_analyzer,
-                                               ("VERB", "NOUN", "ADP"))
 
 
 if __name__ == "__main__":
