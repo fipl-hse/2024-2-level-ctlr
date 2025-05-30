@@ -316,9 +316,11 @@ class HTMLParser:
         Args:
             article_soup (bs4.BeautifulSoup): BeautifulSoup instance
         """
-        title = article_soup.find("head")
-        # print(title)
-        self.article.title = title.text.strip()
+        title = article_soup.find("title")
+        # print(title.text)
+        title1 = title.text.split("—")[0]
+        # print(title1)
+        self.article.title = title1.strip()
         # print(self.article.title)
 
         # author = article_soup.find("p", "strong")
