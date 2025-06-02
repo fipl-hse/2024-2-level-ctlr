@@ -1,9 +1,9 @@
-beautifulsoup4
-lxml
-matplotlib
-networkx
+beautifulsoup4==4.13.4
+lxml==5.4.0
+matplotlib==3.10.3
+networkx==3.5
 numpy==1.26.4
-requests
-spacy
-spacy-udpipe
-spacy_conll
+requests==2.32.3
+spacy-udpipe==1.0.0
+spacy==3.8.7
+spacy_conll==4.0.1
