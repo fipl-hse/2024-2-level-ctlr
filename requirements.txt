@@ -5,5 +5,5 @@ networkx
 numpy==1.26.4
 requests
 spacy
-spacy_conll
 spacy-udpipe
+spacy_conll
