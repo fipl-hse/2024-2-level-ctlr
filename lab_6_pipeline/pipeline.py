@@ -142,7 +142,7 @@ class TextProcessingPipeline(PipelineProtocol):
             texts_to_analyze = [article.text for article in articles.values()]
             analyzed_texts = self._analyzer.analyze(texts_to_analyze)
 
-            if analyzed_texts is not None and len(analyzed_texts) == len(texts_to_analyze):
+            if len(analyzed_texts) == len(texts_to_analyze):
                 for i, article in enumerate(articles.values()):
                     article.set_conllu_info(analyzed_texts[i])
                     self._analyzer.to_conllu(article)
