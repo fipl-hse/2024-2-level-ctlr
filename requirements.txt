@@ -4,6 +4,6 @@ matplotlib
 networkx
 numpy==1.26.4
 requests
-spacy-udpipe
 spacy
 spacy_conll
+spacy-udpipe
