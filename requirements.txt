@@ -7,3 +7,4 @@ requests==2.32.3
 spacy-udpipe==1.0.0
 spacy==3.8.7
 spacy_conll==4.0.1
+stanza==1.10.1
