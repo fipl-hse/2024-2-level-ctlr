@@ -73,7 +73,8 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
-        self._config = Config(path_to_config)
+        self.path_to_config = path_to_config  
+        self._config_data = self._extract_config_content() 
         self._validate_config_content()
         self._seed_urls = self._config.get_seed_urls()
         self._num_articles = self._config.get_total_articles()
@@ -109,7 +110,7 @@ class Config:
         total_articles = self._config.get_total_articles()
 
         url_pattern = re.compile(r'https?://(www\.)?.+')
-        if not isinstance(config.seed_urls, list) or not config.seed_urls:
+        if not isinstance(self._config_data.seed_urls, list) or not config.seed_urls:
             raise IncorrectSeedURLError("seed_urls must be a non-empty list")
         for url in config.seed_urls:
             if not re.match(url_pattern, url):
