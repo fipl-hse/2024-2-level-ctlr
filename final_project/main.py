@@ -4,6 +4,7 @@ Final project implementation.
 
 # pylint: disable=unused-import
 from pathlib import Path
+from lab_6_pipeline.pipeline import UDPipeAnalyzer
 
 
 def main() -> None:
