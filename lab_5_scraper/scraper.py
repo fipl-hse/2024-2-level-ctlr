@@ -220,7 +220,7 @@ def make_request(url: str, config: Config) -> requests.models.Response:
     response = requests.get(url,
                             headers=config.get_headers(),
                             timeout=config.get_timeout(),
-                            verify=config.should_verify_certificate())
+                            verify=config.get_verify_certificate())
 
     response.raise_for_status()
     return response
@@ -269,8 +269,8 @@ class Crawler:
         """
         Find articles.
         """
-        max_articles = self._config.get_num_articles()
-        seed_urls = self._config.get_seed_urls()
+        max_articles = self.config.get_num_articles()
+        seed_urls = self.config.get_seed_urls()
         for url in seed_urls:
             if len(self.urls) >= max_articles:
                 break
