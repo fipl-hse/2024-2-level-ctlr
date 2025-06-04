@@ -63,13 +63,13 @@ class Config:
         self.path_to_config = path_to_config
         self._config_data = self._extract_config_content()
         self._validate_config_content()
-        self._seed_urls = self._config_data.seed_urls
-        self._num_articles = self._config_data.total_articles_to_find_and_parse
-        self._headers = self._config_data.headers
-        self._encoding = self._config_data.encoding
-        self._timeout = self._config_data.timeout
-        self._should_verify_certificate = self._config_data.should_verify_certificate
-        self._headless_mode = self._config_data.headless_mode
+        self._seed_urls: list[str] = self._config_data.seed_urls
+        self._num_articles: int = self._config_data.total_articles_to_find_and_parse
+        self._headers: dict[str, str] = self._config_data.headers
+        self._encoding: str = self._config_data.encoding
+        self._timeout: int = self._config_data.timeout
+        self._should_verify_certificate: bool = self._config_data.should_verify_certificate
+        self._headless_mode: bool = self._config_data.headless_mode
         self.url_pattern = re.compile(
             r'^https://www\.kchetverg\.ru/\d{4}/\d{2}/\d{2}/[\w\-]+/?$'
         )
@@ -94,20 +94,15 @@ class Config:
         """
         url_pattern = re.compile(r'https?://(www\.)?.+')
 
-        if (
-            not isinstance(self._config_data.seed_urls, list)
-            or not self._config_data.seed_urls
-        ):
+        if not isinstance(self._config_data.seed_urls, list) or not self._config_data.seed_urls:
             raise IncorrectSeedURLError("seed_urls must be a non-empty list")
 
         for url in self._config_data.seed_urls:
             if not re.match(url_pattern, url):
                 raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
 
-        if (
-            not isinstance(self._config_data.total_articles_to_find_and_parse, int)
-            or self._config_data.total_articles_to_find_and_parse < 1
-        ):
+        if not isinstance(self._config_data.total_articles_to_find_and_parse, int) or \
+                self._config_data.total_articles_to_find_and_parse < 1:
             raise IncorrectNumberOfArticlesError("total_articles_to_find_and_parse must be an integer >= 1")
 
         if self._config_data.total_articles_to_find_and_parse > NUM_ARTICLES_UPPER_LIMIT:
@@ -140,15 +135,15 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
-        return self._config_data.seed_urls
+        return self._seed_urls
 
-    def get_num_articles(self) -> int:
+    def get_total_articles(self) -> int:
         """
         Retrieve total number of articles to scrape.
         Returns:
             int: Total number of articles to scrape
         """
-        return int(self._config_data.total_articles_to_find_and_parse)
+        return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -156,7 +151,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
-        return self._config_data.headers
+        return self._headers
 
     def get_encoding(self) -> str:
         """
@@ -164,7 +159,7 @@ class Config:
         Returns:
             str: Encoding
         """
-        return self._config_data.encoding
+        return self._encoding
 
     def get_timeout(self) -> int:
         """
@@ -172,7 +167,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
-        return self._config_data.timeout
+        return self._timeout
 
     def get_verify_cert(self) -> bool:
         """
@@ -180,7 +175,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self._config_data.should_verify_certificate
+        return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -188,10 +183,10 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-        return self._config_data.headless_mode
+        return self._headless_mode
 
 
-def make_request(url: str, config: Config) -> requests.Response:
+def make_request(url: str, config: Config) -> requests.models.Response:
     """
     Make an HTTP request with custom headers and timeout.
 
@@ -225,25 +220,27 @@ class Crawler:
             list[str]: List of article URLs
         """
         seed_urls = self.config.get_seed_urls()
-        max_articles = self.config.get_num_articles()
+        max_articles = self.config.get_total_articles()
 
         for url in seed_urls:
             if len(self.urls) >= max_articles:
                 break
+
             try:
                 response = make_request(url, self.config)
-                soup = BeautifulSoup(response.text, "html.parser")
-                article_tags = soup.find_all("article")
-                for tag in article_tags:
-                    if len(self.urls) >= max_articles:
-                        break
-                    a_tag = tag.find("a", href=True)
-                    if a_tag:
-                        href = a_tag["href"]
-                        if href not in self.urls:
-                            self.urls.append(href)
             except requests.RequestException:
                 continue
+
+            soup = BeautifulSoup(response.text, "html.parser")
+            article_tags = soup.find_all("article")
+            for tag in article_tags:
+                if len(self.urls) >= max_articles:
+                    break
+                a_tag = tag.find("a", href=True)
+                if a_tag:
+                    href = a_tag["href"]
+                    if href not in self.urls:
+                        self.urls.append(href)
 
         return self.urls
 
@@ -255,24 +252,26 @@ class HTMLParser:
         self.config = config
         self.article: Article | None = None
 
-    def parse(self) -> Union[Article, bool, list]:
+    def unify_date_format(self, date_str: str) -> datetime.datetime:
         """
-        Parse each article.
+        Unify date format.
 
-        Returns:
-            Union[Article, bool, list]: Article instance
+        Args:
+            date_str (str): Date in text format
+            Returns:
+            datetime.datetime: Datetime object
         """
-        try:
-            response = make_request(self.full_url, self.config)
-            if not response or response.status_code != 200:
-                return False
-            soup = BeautifulSoup(response.text, "html.parser")
-            self._fill_article_with_meta_information(soup)
-            return self.article if self.article else False
-        except requests.RequestException:
-            return False
-        except Exception:
-            return False
+        months_ru = {
+            'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04',
+            'мая': '05', 'июня': '06', 'июля': '07', 'августа': '08',
+            'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12'
+        }
+        parts = date_str.strip().split()
+        day = parts[0]
+        month = months_ru[parts[1].lower()]
+        year = parts[2]
+        time = parts[4]
+        return datetime.datetime.strptime(f'{year}-{month}-{day} {time}', '%Y-%m-%d %H:%M')
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         title_tag = article_soup.find("h1")
@@ -306,26 +305,26 @@ class HTMLParser:
 
         self.article.topics = topics
 
-    def unify_date_format(self, date_str: str) -> datetime.datetime:
+    def parse(self) -> Union[Article, bool, list]:
         """
-        Unify date format.
+        Parse each article.
 
-        Args:
-            date_str (str): Date in text format
-            Returns:
-            datetime.datetime: Datetime object
+        Returns:
+            Union[Article, bool, list]: Article instance
         """
-        months_ru = {
-            'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04',
-            'мая': '05', 'июня': '06', 'июля': '07', 'августа': '08',
-            'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12'
-        }
-        parts = date_str.strip().split()
-        day = parts[0]
-        month = months_ru[parts[1].lower()]
-        year = parts[2]
-        time = parts[4]
-        return datetime.datetime.strptime(f'{year}-{month}-{day} {time}', '%Y-%m-%d %H:%M')
+        try:
+            response = make_request(self.full_url, self.config)
+            if not response or response.status_code != 200:
+                return False
+            article_soup = BeautifulSoup(response.text, 'html.parser')
+            self._fill_article_with_meta_information(article_soup)
+            return self.article
+        except requests.exceptions.RequestException as e:
+            print(f"Request error when fetching article {self.full_url}: {e}")
+            return False
+        except AttributeError as e:
+            print(f"Attribute error when parsing article {self.full_url}: {e}")
+            return False
 
 
 def main() -> None:
@@ -343,7 +342,7 @@ def main() -> None:
             to_raw(article)
             to_meta(article)
         else:
-            print(f"Failed to parse article #{i}: {url}")
+            print("Parsing failed or returned unexpected result.")
 
 
 if __name__ == "__main__":
