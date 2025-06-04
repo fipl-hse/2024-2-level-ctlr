@@ -20,12 +20,21 @@ def main() -> None:
     analyzer = UDPipeAnalyzer()
     all_conllu: list[str] = []
 
+    sentence_counter = 1
     for txt in assets_dir.glob("*.txt"):
         with open(txt, "r", encoding="utf-8") as file:
             text = file.read().strip()
 
         conllu_data = analyzer.analyze([text])[0]
-        all_conllu.append(str(conllu_data).strip())
+
+        conllu_modified = []
+        for line in str(conllu_data).split("\n"):
+            if line.startswith("# sent_id = "):
+                line = f"# sent_id = {sentence_counter}"
+                sentence_counter += 1
+            conllu_modified.append(line)
+
+        all_conllu.append("\n".join(conllu_modified).strip())
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
