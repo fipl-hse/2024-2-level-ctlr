@@ -3,7 +3,8 @@ Crawler implementation.
 """
 
 # pylint: disable=too-many-arguments, too-many-instance-attributes,
-# unused-import, unused-argument
+# unused-import, undefined-variable, unused-argument
+
 import datetime
 import json
 import pathlib
@@ -15,7 +16,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
-from core_utils.article.io import to_meta, to_raw, prepare_environment
+from core_utils.article.io import prepare_environment, to_meta, to_raw
 from core_utils.config_dto import ConfigDTO
 from core_utils.constants import (
     ASSETS_PATH,
