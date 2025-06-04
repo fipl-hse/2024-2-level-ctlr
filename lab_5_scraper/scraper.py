@@ -98,7 +98,7 @@ class Config:
 
     def _validate_config_content(self) -> None:
         url_pattern = re.compile(r'https?://(www\.)?.+')
-        if (
+        if(
     not isinstance(self._config_data.seed_urls, list)
     or not self._config_data.seed_urls
     ):
@@ -107,7 +107,7 @@ class Config:
                 if not re.match(url_pattern, url):
                     raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
 
-        if (
+        if(
     not isinstance(self._config_data.total_articles_to_find_and_parse, int)
     or self._config_data.total_articles_to_find_and_parse < 1:
     ):
