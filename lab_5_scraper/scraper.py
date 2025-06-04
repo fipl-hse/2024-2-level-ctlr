@@ -457,8 +457,7 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    article_urls = self._extract_url(soup).split(', ')
-    for i, url in enumerate(article_urls, start=1):
+    for i, url in enumerate(crawler.urls, start=1):
         parser = HTMLParser(
             full_url=url,
             article_id=i,
