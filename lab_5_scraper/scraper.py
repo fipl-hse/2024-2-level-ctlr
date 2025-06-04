@@ -109,7 +109,7 @@ class Config:
 
         if(
     not isinstance(self._config_data.total_articles_to_find_and_parse, int)
-    or self._config_data.total_articles_to_find_and_parse < 1:
+        or self._config_data.total_articles_to_find_and_parse < 1:
     ):
           raise IncorrectNumberOfArticlesError("total_articles_to_find_and_parse must be an integer >= 1")
         if self._config_data.total_articles_to_find_and_parse > NUM_ARTICLES_UPPER_LIMIT:
