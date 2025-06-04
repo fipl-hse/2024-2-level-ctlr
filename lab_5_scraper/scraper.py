@@ -148,7 +148,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self._config_data.total_articles_to_find_and_parse
+        return int(self._config_data.total_articles_to_find_and_parse)
 
     def get_headers(self) -> dict[str, str]:
         """
