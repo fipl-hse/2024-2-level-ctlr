@@ -17,6 +17,7 @@ def main() -> None:
 
     combined_txt = ""
 
+
     for txt in assets_dir.glob("*.txt"):
         with open(txt, "r", encoding="utf-8") as file:
             combined_txt += file.read() + "\n"
