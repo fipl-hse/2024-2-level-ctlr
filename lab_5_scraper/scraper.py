@@ -306,25 +306,26 @@ class HTMLParser:
         self.article.topics = topics
 
     def parse(self) -> Union[Article, bool, list]:
-        """
-        Parse each article.
+    """
+    Parse each article.
 
-        Returns:
-            Union[Article, bool, list]: Article instance
-        """
-        try:
-            response = make_request(self.full_url, self.config)
-            if not response or response.status_code != 200:
-                return False
-            article_soup = BeautifulSoup(response.text, 'html.parser')
-            self._fill_article_with_meta_information(article_soup)
-            return self.article
-        except requests.exceptions.RequestException as e:
-            print(f"Request error when fetching article {self.full_url}: {e}")
+    Returns:
+        Union[Article, bool, list]: Article instance
+    """
+    try:
+        response = make_request(self.full_url, self.config)
+        if not response or response.status_code != 200:
             return False
-        except AttributeError as e:
-            print(f"Attribute error when parsing article {self.full_url}: {e}")
-            return False
+        article_soup = BeautifulSoup(response.text, 'html.parser')
+        self._fill_article_with_meta_information(article_soup)
+        return self.article if self.article is not None else False
+    except requests.exceptions.RequestException as e:
+        print(f"Request error when fetching article {self.full_url}: {e}")
+        return False
+    except AttributeError as e:
+        print(f"Attribute error when parsing article {self.full_url}: {e}")
+        return False
+
 
 
 def main() -> None:
