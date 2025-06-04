@@ -103,9 +103,9 @@ class Config:
     or not self._config_data.seed_urls
     ):
           raise IncorrectSeedURLError("seed_urls must be a non-empty list")
-            for url in self._config_data.seed_urls:
-                if not re.match(url_pattern, url):
-                    raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
+    for url in self._config_data.seed_urls:
+        if not re.match(url_pattern, url):
+            raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
 
         if(
     not isinstance(self._config_data.total_articles_to_find_and_parse, int)
