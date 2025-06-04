@@ -18,20 +18,20 @@ def main() -> None:
     output_dir = project_dir / "dist"
     output_file = output_dir / "auto_annotated.conllu"
 
-    combined_txt = ""
-
+    analyzer = UDPipeAnalyzer()
+    all_conllu = []
 
     for txt in assets_dir.glob("*.txt"):
         with open(txt, "r", encoding="utf-8") as file:
-            combined_txt += file.read() + "\n"
+            text = file.read().strip()
 
-    analyzer = UDPipeAnalyzer()
-    conllu_data = analyzer.analyze([combined_txt])[0]
+        conllu_data = analyzer.analyze([text])[0]
+        all_conllu.append(conllu_data)
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with open(output_file, "w", encoding="utf-8") as file:
-        file.write(str(conllu_data))
+        file.write("\n\n".join(all_conllu))
 
 if __name__ == "__main__":
     main()
