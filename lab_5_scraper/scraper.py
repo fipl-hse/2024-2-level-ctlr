@@ -271,8 +271,8 @@ class Crawler:
         """
         Find articles.
         """
-        max_articles = self.config.get_num_articles()
-        seed_urls = self.config.get_seed_urls()
+        max_articles = self._config.get_num_articles()
+        seed_urls = self._config.get_seed_urls()       
         for url in seed_urls:
             if len(self.urls) >= max_articles:
                 break
