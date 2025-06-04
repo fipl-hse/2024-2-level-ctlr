@@ -73,6 +73,7 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.path_to_config = path_to_config
         self._seed_urls: list[str]
         self._num_articles: int
         self._headers: dict[str, str]
