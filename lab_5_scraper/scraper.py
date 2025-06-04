@@ -131,28 +131,71 @@ class Config:
             raise IncorrectVerifyError("headless_mode must be a boolean")
 
     def get_seed_urls(self) -> list[str]:
+         """
+        Retrieve seed urls.
+        Returns:
+            list[str]: Seed urls
+        """
         return self._config_data.seed_urls
 
     def get_num_articles(self) -> int:
+         """
+        Retrieve total number of articles to scrape.
+        Returns:
+            int: Total number of articles to scrape
+        """
         return self._config_data.total_articles
 
     def get_headers(self) -> dict[str, str]:
+        """
+        Retrieve headers to use during requesting.
+        Returns:
+            dict[str, str]: Headers
+        """
         return self._config_data.headers
 
     def get_encoding(self) -> str:
+        """
+        Retrieve encoding to use during parsing.
+        Returns:
+            str: Encoding
+        """
         return self._config_data.encoding
 
     def get_timeout(self) -> int:
+        """
+        Retrieve number of seconds to wait for response.
+        Returns:
+            int: Number of seconds to wait for response
+        """
         return self._config_data.timeout
 
     def get_verify_certificate(self) -> bool:
+        """
+        Retrieve whether to verify certificate.
+        Returns:
+            bool: Whether to verify certificate or not
+        """
         return self._config_data.should_verify_certificate
 
     def get_headless_mode(self) -> bool:
+        """
+        Retrieve whether to use headless mode.
+        Returns:
+            bool: Whether to use headless mode or not
+        """
         return self._config_data.headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
+    """
+    Deliver a response from a request with given configuration.
+    Args:
+        url (str): Site url
+        config (Config): Configuration
+    Returns:
+        requests.models.Response: A response from a request
+    """
     response = requests.get(
         url,
         headers=config.get_headers(),
