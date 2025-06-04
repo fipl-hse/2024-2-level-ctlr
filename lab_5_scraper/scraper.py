@@ -9,7 +9,6 @@ import datetime
 import json
 import pathlib
 import re
-from re import Pattern
 from typing import Union
 
 import requests
@@ -62,13 +61,6 @@ class Config:
 
     def __init__(self, path_to_config: pathlib.Path) -> None:
         self.path_to_config = path_to_config
-        self._seed_urls: list[str]
-        self._num_articles: int
-        self._headers: dict[str, str]
-        self._encoding: str
-        self._timeout: int
-        self._should_verify_certificate: bool
-        self._headless_mode: bool
         self._config_data = self._extract_config_content()
         self._validate_config_content()
         self._seed_urls = self._config_data.seed_urls
@@ -156,7 +148,6 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        assert isinstance(self._config_data.total_articles_to_find_and_parse, int)
         return self._config_data.total_articles_to_find_and_parse
 
     def get_headers(self) -> dict[str, str]:
@@ -183,7 +174,7 @@ class Config:
         """
         return self._config_data.timeout
 
-    def get_verify_certificate(self) -> bool:
+    def get_verify_cert(self) -> bool:
         """
         Retrieve whether to verify certificate.
         Returns:
@@ -200,7 +191,7 @@ class Config:
         return self._config_data.headless_mode
 
 
-def make_request(url: str, config: Config) -> requests.models.Response:
+def make_request(url: str, config: Config) -> requests.Response:
     """
     Make an HTTP request with custom headers and timeout.
 
@@ -234,27 +225,25 @@ class Crawler:
             list[str]: List of article URLs
         """
         seed_urls = self.config.get_seed_urls()
-        max_articles = self.config.get_total_articles()
+        max_articles = self.config.get_num_articles()
 
         for url in seed_urls:
             if len(self.urls) >= max_articles:
                 break
-
             try:
                 response = make_request(url, self.config)
+                soup = BeautifulSoup(response.text, "html.parser")
+                article_tags = soup.find_all("article")
+                for tag in article_tags:
+                    if len(self.urls) >= max_articles:
+                        break
+                    a_tag = tag.find("a", href=True)
+                    if a_tag:
+                        href = a_tag["href"]
+                        if href not in self.urls:
+                            self.urls.append(href)
             except requests.RequestException:
                 continue
-
-            soup = BeautifulSoup(response.text, "html.parser")
-            article_tags = soup.find_all("article")
-            for tag in article_tags:
-                if len(self.urls) >= max_articles:
-                    break
-                a_tag = tag.find("a", href=True)
-                if a_tag:
-                    href = a_tag["href"]
-                    if href not in self.urls:
-                        self.urls.append(href)
 
         return self.urls
 
@@ -266,24 +255,24 @@ class HTMLParser:
         self.config = config
         self.article: Article | None = None
 
-    def parse(self) -> bool:
+    def parse(self) -> Union[Article, bool, list]:
         """
-        Parse an article from the web.
+        Parse each article.
 
         Returns:
-            bool: Whether parsing was successful
+            Union[Article, bool, list]: Article instance
         """
         try:
             response = make_request(self.full_url, self.config)
+            if not response or response.status_code != 200:
+                return False
+            soup = BeautifulSoup(response.text, "html.parser")
+            self._fill_article_with_meta_information(soup)
+            return self.article if self.article else False
         except requests.RequestException:
             return False
-
-        if response.status_code != 200:
+        except Exception:
             return False
-
-        soup = BeautifulSoup(response.text, "html.parser")
-        self._fill_article_with_meta_information(soup)
-        return self.article is not None
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
         title_tag = article_soup.find("h1")
@@ -294,10 +283,11 @@ class HTMLParser:
 
         if not text:
             self.article = None
-        else:
-            self.article = Article(url=self.full_url, article_id=self.article_id)
-            self.article.title = title
-            self.article.text = text
+            return
+
+        self.article = Article(url=self.full_url, article_id=self.article_id)
+        self.article.title = title
+        self.article.text = text
 
         author_tags = article_soup.find_all(class_=re.compile(r'post_author', re.I))
         authors = [tag.get_text(strip=True) for tag in author_tags if tag.get_text(strip=True)]
@@ -337,28 +327,6 @@ class HTMLParser:
         time = parts[4]
         return datetime.datetime.strptime(f'{year}-{month}-{day} {time}', '%Y-%m-%d %H:%M')
 
-    def parse(self) -> Union[Article, bool, list]:
-        """
-        Parse each article.
-
-        Returns:
-            Union[Article, bool, list]: Article instance
-        """
-        try:
-            response = make_request(self.full_url, self.config)
-            if not response or response.status_code != 200:
-                return False
-            article_soup = BeautifulSoup(response.text, 'html.parser')
-            self._fill_article_with_meta_information(article_soup)
-            self._fill_article_with_text(article_soup)
-            return self.article
-        except requests.exceptions.RequestException as e:
-            print(f"Request error when fetching article {self.full_url}: {e}")
-            return False
-        except AttributeError as e:
-            print(f"Attribute error when parsing article {self.full_url}: {e}")
-            return False
-
 
 def main() -> None:
     """
@@ -375,7 +343,7 @@ def main() -> None:
             to_raw(article)
             to_meta(article)
         else:
-            print("Parsing failed or returned unexpected result.")
+            print(f"Failed to parse article #{i}: {url}")
 
 
 if __name__ == "__main__":
