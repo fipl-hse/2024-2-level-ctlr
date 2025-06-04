@@ -306,7 +306,7 @@ class HTMLParser:
         self.article.topics = topics
 
     def parse(self) -> Union[Article, bool, list]:
-    """
+        """
     Parse each article.
 
     Returns:
