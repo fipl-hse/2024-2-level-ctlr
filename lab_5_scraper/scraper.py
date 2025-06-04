@@ -315,7 +315,7 @@ class HTMLParser:
         try:
             response = make_request(self.full_url, self.config)
             if not response or response.status_code != 200:
-            return False
+                return False
             article_soup = BeautifulSoup(response.text, 'html.parser')
             self._fill_article_with_meta_information(article_soup)
             return self.article if self.article is not None else False
