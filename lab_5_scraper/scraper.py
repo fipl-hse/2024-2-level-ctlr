@@ -88,7 +88,7 @@ class Config:
 
         return ConfigDTO(
             seed_urls=config_data["seed_urls"],
-            total_articles_to_find_and_parse_to_find_and_parse=config_data["total_articles_to_find_and_parse_to_find_and_parse"],
+            total_articles_to_find_and_parse=config_data["total_articles_to_find_and_parse"],
             headers=config_data["headers"],
             encoding=config_data["encoding"],
             timeout=config_data["timeout"],
