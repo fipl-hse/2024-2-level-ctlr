@@ -4,6 +4,7 @@ Final project implementation.
 
 # pylint: disable=unused-import
 from pathlib import Path
+
 from lab_6_pipeline.pipeline import UDPipeAnalyzer
 
 
@@ -11,8 +12,10 @@ def main() -> None:
     """
     Generate conllu file for provided corpus of texts.
     """
-    assets_dir = Path("assets/blok")
-    output_dir = Path("dist")
+    project_dir = Path(__file__).parent
+
+    assets_dir = project_dir / "assets/blok"
+    output_dir = project_dir / "dist"
     output_file = output_dir / "auto_annotated.conllu"
 
     combined_txt = ""
@@ -28,7 +31,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with open(output_file, "w", encoding="utf-8") as file:
-        file.write(conllu_data)
+        file.write(str(conllu_data))
 
 if __name__ == "__main__":
     main()
