@@ -151,7 +151,7 @@ class Config:
         Returns:
             list[str]: Seed urls
         """
-        return self._config.get_seed_urls()
+        return self._config_data.seed_urls
 
     def get_num_articles(self) -> int:
         """
@@ -160,7 +160,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        return self._config.get_total_articles()
+        return self._config_data.total_articles
 
     def get_headers(self) -> dict[str, str]:
         """
@@ -169,7 +169,7 @@ class Config:
         Returns:
             dict[str, str]: Headers
         """
-        return self._config.get_headers()
+        return self._config_data.headers
 
     def get_encoding(self) -> str:
         """
@@ -178,7 +178,7 @@ class Config:
         Returns:
             str: Encoding
         """
-        return self._config.get_encoding()
+        return self._config_data.encoding
 
     def get_timeout(self) -> int:
         """
@@ -187,7 +187,7 @@ class Config:
         Returns:
             int: Number of seconds to wait for response
         """
-        return self._config.get_timeout()
+        return self._config_data.timeout
 
     def get_verify_certificate(self) -> bool:
         """
@@ -196,7 +196,7 @@ class Config:
         Returns:
             bool: Whether to verify certificate or not
         """
-        return self._config.get_verify_certificate()
+        return self._config_data.should_verify_certificate
 
     def get_headless_mode(self) -> bool:
         """
@@ -205,7 +205,7 @@ class Config:
         Returns:
             bool: Whether to use headless mode or not
         """
-        return self._config.get_headless_mode()
+        return self._config_data.headless_mode
 
 
 def make_request(url: str, config: Config) -> requests.models.Response:
