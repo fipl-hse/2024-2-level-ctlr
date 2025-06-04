@@ -100,8 +100,6 @@ class Config:
         """
         Ensure configuration parameters are not corrupt.
         """
-        seed_urls = self._config_data.seed_urls
-        total_articles = self._config_data.total_articles
 
         url_pattern = re.compile(r'https?://(www\.)?.+')
         if not isinstance(self._config_data.seed_urls, list) or not self._config_data.seed_urls:
