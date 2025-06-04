@@ -286,7 +286,7 @@ class HTMLParser:
     """
 
     def __init__(self, full_url: str, article_id: int, config: Config) -> None:
-         """
+        """
         Initialize an instance of the HTMLParser class.
         Args:
             full_url (str): Site url
