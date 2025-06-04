@@ -98,15 +98,20 @@ class Config:
 
     def _validate_config_content(self) -> None:
         url_pattern = re.compile(r'https?://(www\.)?.+')
-        if not isinstance((self._config_data.seed_urls, list)
-                          or not (self._config_data.seed_urls)):
+        if (
+    not isinstance(self._config_data.seed_urls, list)
+    or not self._config_data.seed_urls
+):
+    raise IncorrectSeedURLError("seed_urls must be a non-empty list")
             raise IncorrectSeedURLError("seed_urls must be a non-empty list")
         for url in self._config_data.seed_urls:
             if not re.match(url_pattern, url):
                 raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
 
-        if not isinstance((self._config_data.total_articles_to_find_and_parse, int)
-                          or (self._config_data.total_articles_to_find_and_parse < 1)):
+        if (
+    not isinstance(self._config_data.total_articles_to_find_and_parse, int)
+    or self._config_data.total_articles_to_find_and_parse < 1:
+):
             raise IncorrectNumberOfArticlesError("total_articles_to_find_and_parse must be an integer >= 1")
         if self._config_data.total_articles_to_find_and_parse > NUM_ARTICLES_UPPER_LIMIT:
             raise NumberOfArticlesOutOfRangeError(
