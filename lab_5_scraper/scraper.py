@@ -102,45 +102,45 @@ class Config:
         """
         url_pattern = re.compile(r'https?://(www\.)?.+')
 
-    if (
-        not isinstance(self._config_data.seed_urls, list)
-        or not self._config_data.seed_urls
-    ):
-        raise IncorrectSeedURLError("seed_urls must be a non-empty list")
+        if (
+            not isinstance(self._config_data.seed_urls, list)
+            or not self._config_data.seed_urls
+        ):
+            raise IncorrectSeedURLError("seed_urls must be a non-empty list")
 
-    for url in self._config_data.seed_urls:
-        if not re.match(url_pattern, url):
-            raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
+        for url in self._config_data.seed_urls:
+            if not re.match(url_pattern, url):
+                raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
 
-    if (
-        not isinstance(self._config_data.total_articles_to_find_and_parse, int)
-        or self._config_data.total_articles_to_find_and_parse < 1
-    ):
-        raise IncorrectNumberOfArticlesError("total_articles_to_find_and_parse must be an integer >= 1")
+        if (
+            not isinstance(self._config_data.total_articles_to_find_and_parse, int)
+            or self._config_data.total_articles_to_find_and_parse < 1
+        ):
+            raise IncorrectNumberOfArticlesError("total_articles_to_find_and_parse must be an integer >= 1")
 
-    if self._config_data.total_articles_to_find_and_parse > NUM_ARTICLES_UPPER_LIMIT:
-        raise NumberOfArticlesOutOfRangeError(
-            f"total_articles_to_find_and_parse must be <= {NUM_ARTICLES_UPPER_LIMIT}"
-        )
+        if self._config_data.total_articles_to_find_and_parse > NUM_ARTICLES_UPPER_LIMIT:
+            raise NumberOfArticlesOutOfRangeError(
+                f"total_articles_to_find_and_parse must be <= {NUM_ARTICLES_UPPER_LIMIT}"
+            )
 
-    if not isinstance(self._config_data.headers, dict):
-        raise IncorrectHeadersError("headers must be a dictionary")
+        if not isinstance(self._config_data.headers, dict):
+            raise IncorrectHeadersError("headers must be a dictionary")
 
-    if not isinstance(self._config_data.encoding, str) or not self._config_data.encoding:
-        raise IncorrectEncodingError("encoding must be a non-empty string")
+        if not isinstance(self._config_data.encoding, str) or not self._config_data.encoding:
+            raise IncorrectEncodingError("encoding must be a non-empty string")
 
-    if not isinstance(self._config_data.timeout, int) or not (
-        TIMEOUT_LOWER_LIMIT <= self._config_data.timeout < TIMEOUT_UPPER_LIMIT
-    ):
-        raise IncorrectTimeoutError(
-            f"timeout must be an integer in range [{TIMEOUT_LOWER_LIMIT}, {TIMEOUT_UPPER_LIMIT})"
-        )
+        if not isinstance(self._config_data.timeout, int) or not (
+            TIMEOUT_LOWER_LIMIT <= self._config_data.timeout < TIMEOUT_UPPER_LIMIT
+        ):
+            raise IncorrectTimeoutError(
+                f"timeout must be an integer in range [{TIMEOUT_LOWER_LIMIT}, {TIMEOUT_UPPER_LIMIT})"
+            )
 
-    if not isinstance(self._config_data.should_verify_certificate, bool):
-        raise IncorrectVerifyError("should_verify_certificate must be a boolean")
+        if not isinstance(self._config_data.should_verify_certificate, bool):
+            raise IncorrectVerifyError("should_verify_certificate must be a boolean")
 
-    if not isinstance(self._config_data.headless_mode, bool):
-        raise IncorrectVerifyError("headless_mode must be a boolean")
+        if not isinstance(self._config_data.headless_mode, bool):
+            raise IncorrectVerifyError("headless_mode must be a boolean")
 
     def get_seed_urls(self) -> list[str]:
         """
