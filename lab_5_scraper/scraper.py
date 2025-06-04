@@ -72,7 +72,7 @@ class Config:
         self._config_data = self._extract_config_content()
         self._validate_config_content()
         self._seed_urls = self._config_data.seed_urls
-        self._num_articles = self._config_data.total_articles_to_find_and_parse
+        self._num_articles = self._config_data.total_articles
         self._headers = self._config_data.headers
         self._encoding = self._config_data.encoding
         self._timeout = self._config_data.timeout
@@ -88,7 +88,7 @@ class Config:
 
         return ConfigDTO(
             seed_urls=config_data["seed_urls"],
-            total_articles_to_find_and_parse=config_data["total_articles_to_find_and_parse"],
+            total_articles=config_data["total_articles"],
             headers=config_data["headers"],
             encoding=config_data["encoding"],
             timeout=config_data["timeout"],
@@ -105,12 +105,12 @@ class Config:
             if not re.match(url_pattern, url):
                 raise IncorrectSeedURLError(f"Invalid seed URL: {url}")
 
-        if not isinstance((self._config_data.total_articles_to_find_and_parse, int)
-                          or (self._config_data.total_articles_to_find_and_parse < 1)):
-            raise IncorrectNumberOfArticlesError("total_articles_to_find_and_parse must be an integer >= 1")
-        if self._config_data.total_articles_to_find_and_parse > NUM_ARTICLES_UPPER_LIMIT:
+        if not isinstance((self._config_data.total_articles, int)
+                          or (self._config_data.total_articles < 1)):
+            raise IncorrectNumberOfArticlesError("total_articles must be an integer >= 1")
+        if self._config_data.total_articles > NUM_ARTICLES_UPPER_LIMIT:
             raise NumberOfArticlesOutOfRangeError(
-                f"total_articles_to_find_and_parse must be <= {NUM_ARTICLES_UPPER_LIMIT}"
+                f"total_articles must be <= {NUM_ARTICLES_UPPER_LIMIT}"
             )
 
         if not isinstance(self._config_data.headers, dict):
@@ -147,7 +147,7 @@ class Config:
         Returns:
             int: Total number of articles to scrape
         """
-        assert isinstance(self._config_data.total_articles_to_find_and_parse, int)
+        assert isinstance(self._config_data.total_articles, int)
         return self._config_data.total_articles_to_find_and_pars
 
     def get_headers(self) -> dict[str, str]:
