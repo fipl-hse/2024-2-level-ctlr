@@ -76,12 +76,12 @@ class Config:
         self.path_to_config = path_to_config  
         self._config_data = self._extract_config_content() 
         self._validate_config_content()
-        self._seed_urls = self._config.get_seed_urls()
-        self._num_articles = self._config.get_total_articles()
-        self._headers = self._config.get_headers()
-        self._encoding = self._config.get_encoding()
-        self._timeout = self._config.get_timeout()
-        self._should_verify_certificate = self._config.get_verify_cert()
+        self._seed_urls = self._config_data["seed_urls"]
+        self._num_articles = self._config_data["total_articles"]
+        self._headers = self._config_data["headers"]
+        self._encoding = self._config_data["encoding"]
+        self._timeout = self._config_data["timeout"]
+        self._should_verify_certificate = self._config_data["verify_certificate"]
 
     def _extract_config_content(self) -> ConfigDTO:
         """
