@@ -202,10 +202,12 @@ class Config:
 
 def make_request(url: str, config: Config) -> requests.models.Response:
     """
-    Deliver a response from a request with given configuration.
+    Make an HTTP request with custom headers and timeout.
+
     Args:
-        url (str): Site url
-        config (Config): Configuration
+        url (str): URL to make request to.
+        config (Config): Configuration object.
+
     Returns:
         requests.models.Response: A response from a request
     """
@@ -213,128 +215,89 @@ def make_request(url: str, config: Config) -> requests.models.Response:
         url,
         headers=config.get_headers(),
         timeout=config.get_timeout(),
-        verify=config.get_verify_certificate()
+        verify=config.get_verify_cert()
     )
     response.raise_for_status()
     return response
 
 
 class Crawler:
-    """
-    Crawler implementation.
-    """
-
-    url_pattern: Union[Pattern, str]
-
     def __init__(self, config: Config) -> None:
-        """
-        Initialize an instance of the Crawler class.
-        Args:
-            config (Config): Configuration
-        """
-        self._config = config
-        self.urls = []
+        self.config = config
+        self.urls: list[str] = []
 
-    def _extract_url(self, article_bs: BeautifulSoup) -> list[str]:
+    def find_articles(self) -> list[str]:
         """
-        Find and retrieve url from HTML.
-
-        Args:
-            article_bs (bs4.BeautifulSoup): BeautifulSoup instance
+        Find article URLs from seed URLs.
 
         Returns:
-            str: Url from HTML
+            list[str]: List of article URLs
         """
-        article_urls = []
-        pattern = re.compile(
-            r'^https://www\.kchetverg\.ru/\d{4}/\d{2}/\d{2}/[\w\-]+/?$'
-        )
+        seed_urls = self.config.get_seed_urls()
+        max_articles = self.config.get_total_articles()
 
-        for a_tag in article_bs.find_all('a', href=True):
-            href = a_tag['href']
-            if pattern.match(href):
-                article_urls.append(href)
-
-        return article_urls
-
-    def find_articles(self) -> None:
-        """
-        Find articles.
-        """
-        max_articles = self._config.get_num_articles()
-        seed_urls = self._config.get_seed_urls()
         for url in seed_urls:
             if len(self.urls) >= max_articles:
                 break
+
             try:
-                response = make_request(url, self._config)
-                soup = BeautifulSoup(response.text, 'html.parser')
+                response = make_request(url, self.config)
+            except requests.RequestException:
+                continue
 
-                article_urls = self._extract_url(soup)
+            soup = BeautifulSoup(response.text, "html.parser")
+            article_tags = soup.find_all("article")
+            for tag in article_tags:
+                if len(self.urls) >= max_articles:
+                    break
+                a_tag = tag.find("a", href=True)
+                if a_tag:
+                    href = a_tag["href"]
+                    if href not in self.urls:
+                        self.urls.append(href)
 
-                for article_url in article_urls:
-                    if article_url not in self.urls:
-                        self.urls.append(article_url)
-                    if len(self.urls) >= max_articles:
-                        break
-
-            except requests.RequestException as e:
-                print(f"Error fetching {url}: {e}")
-
-    def get_search_urls(self) -> list:
-        """
-        Get seed_urls param.
-        Returns:
-            list: seed_urls param
-        """
-        return self._config.get_seed_urls()
+        return self.urls
 
 
 class HTMLParser:
-    """
-    HTMLParser implementation.
-    """
-
     def __init__(self, full_url: str, article_id: int, config: Config) -> None:
-        """
-        Initialize an instance of the HTMLParser class.
-        Args:
-            full_url (str): Site url
-            article_id (int): Article id
-            config (Config): Configuration
-        """
         self.full_url = full_url
         self.article_id = article_id
         self.config = config
-        self.article = Article(url=self.full_url, article_id=self.article_id)
+        self.article: Article | None = None
 
-    def _fill_article_with_text(self, article_soup: BeautifulSoup) -> None:
+    def parse(self) -> bool:
         """
-        Find text of article.
-        Args:
-            article_soup (bs4.BeautifulSoup): BeautifulSoup instance
+        Parse an article from the web.
+
+        Returns:
+            bool: Whether parsing was successful
         """
-        article = article_soup.find("div", class_="entry-inner")
-        full_text = ""
-        paragraphs = article.find_all("p") if article else []
+        try:
+            response = make_request(self.full_url, self.config)
+        except requests.RequestException:
+            return False
 
-        if not paragraphs:
-            full_text += article.get_text(strip=True, separator=" ") + "\n" if article else ""
-        else:
-            for p in paragraphs:
-                full_text += p.get_text(strip=True) + "\n"
+        if response.status_code != 200:
+            return False
 
-        self.article.text = full_text.strip()
+        soup = BeautifulSoup(response.text, "html.parser")
+        self._fill_article_with_meta_information(soup)
+        return self.article is not None
 
     def _fill_article_with_meta_information(self, article_soup: BeautifulSoup) -> None:
-        """
-        Find meta information of article.
+        title_tag = article_soup.find("h1")
+        text_tag = article_soup.find("div", class_="entry-content")
 
-        Args:
-            article_soup (bs4.BeautifulSoup): BeautifulSoup instance
-        """
-        title_tag = article_soup.find('h1')
-        self.article.title = title_tag.get_text(strip=True) if title_tag else 'NOT FOUND'
+        title = title_tag.get_text(strip=True) if title_tag else ""
+        text = text_tag.get_text(strip=True) if text_tag else ""
+
+        if not text:
+            self.article = None
+        else:
+            self.article = Article(url=self.full_url, article_id=self.article_id)
+            self.article.title = title
+            self.article.text = text
 
         author_tags = article_soup.find_all(class_=re.compile(r'post_author', re.I))
         authors = [tag.get_text(strip=True) for tag in author_tags if tag.get_text(strip=True)]
