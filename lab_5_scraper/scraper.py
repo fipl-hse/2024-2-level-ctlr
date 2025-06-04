@@ -414,59 +414,59 @@ class HTMLParser:
             f'{year}-{month}-{day} {time}', '%Y-%m-%d %H:%M')
         return dt
 
-    def parse(self) -> Union[Article, bool, list]:
-    """
-    Parse each article.
-
-    Returns:
-        Union[Article, bool, list]: Article instance, False on error
-    """
-    try:
-        response = make_request(self.full_url, self.config)
-        if not response or response.status_code != 200:
-            return False
-
-        article_soup = BeautifulSoup(response.text, 'html.parser')
-        self._fill_article_with_meta_information(article_soup)
-        self._fill_article_with_text(article_soup)
-
-        return self.article
-
-    except requests.exceptions.RequestException as e:
-        print(f"Request error when fetching article {self.full_url}: {e}")
-        return False
-
-    except AttributeError as e:
-        print(f"Attribute error when parsing article {self.full_url}: {e}")
-        return False
+        def parse(self) -> Union[Article, bool, list]:
+        """
+        Parse each article.
     
-        except Exception as e:
-            print(f"Error during parsing {self.full_url}: {e}")
+        Returns:
+            Union[Article, bool, list]: Article instance, False on error
+        """
+        try:
+            response = make_request(self.full_url, self.config)
+            if not response or response.status_code != 200:
+                return False
+    
+            article_soup = BeautifulSoup(response.text, 'html.parser')
+            self._fill_article_with_meta_information(article_soup)
+            self._fill_article_with_text(article_soup)
+    
             return self.article
+    
+        except requests.exceptions.RequestException as e:
+            print(f"Request error when fetching article {self.full_url}: {e}")
+            return False
+    
+        except AttributeError as e:
+            print(f"Attribute error when parsing article {self.full_url}: {e}")
+            return False
+        
+            except Exception as e:
+                print(f"Error during parsing {self.full_url}: {e}")
+                return self.article
 
-def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
-    """
-    Create ASSETS_PATH folder if no created and remove existing folder.
-
-    Args:
-        base_path (Union[pathlib.Path, str]): Path where articles stores
-    """
-    path = pathlib.Path(base_path)
-
-    if path.exists():
-        for child in path.iterdir():
-            if child.is_file():
-                child.unlink()
-            elif child.is_dir():
-                for subchild in child.rglob('*'):
-                    if subchild.is_file():
-                        subchild.unlink()
-                    elif subchild.is_dir():
-                        subchild.rmdir()
-                child.rmdir()
-        path.rmdir()
-
-    path.mkdir(parents=True)
+    def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
+        """
+        Create ASSETS_PATH folder if no created and remove existing folder.
+    
+        Args:
+            base_path (Union[pathlib.Path, str]): Path where articles stores
+        """
+        path = pathlib.Path(base_path)
+    
+        if path.exists():
+            for child in path.iterdir():
+                if child.is_file():
+                    child.unlink()
+                elif child.is_dir():
+                    for subchild in child.rglob('*'):
+                        if subchild.is_file():
+                            subchild.unlink()
+                        elif subchild.is_dir():
+                            subchild.rmdir()
+                    child.rmdir()
+            path.rmdir()
+    
+        path.mkdir(parents=True)
 
 
 def main() -> None:
