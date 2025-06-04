@@ -439,29 +439,6 @@ class HTMLParser:
     except AttributeError as e:
         print(f"Attribute error when parsing article {self.full_url}: {e}")
         return False
-    def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
-        """
-        Create ASSETS_PATH folder if no created and remove existing folder.
-    
-        Args:
-            base_path (Union[pathlib.Path, str]): Path where articles stores
-        """
-        path = pathlib.Path(base_path)
-    
-        if path.exists():
-            for child in path.iterdir():
-                if child.is_file():
-                    child.unlink()
-                elif child.is_dir():
-                    for subchild in child.rglob('*'):
-                        if subchild.is_file():
-                            subchild.unlink()
-                        elif subchild.is_dir():
-                            subchild.rmdir()
-                    child.rmdir()
-            path.rmdir()
-    
-        path.mkdir(parents=True)
 
 
 def main() -> None:
