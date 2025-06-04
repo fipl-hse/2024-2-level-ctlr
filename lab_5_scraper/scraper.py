@@ -76,6 +76,8 @@ class Config:
         self.path_to_config = path_to_config
         self._config_data = self._extract_config_content()
         self._validate_config_content()
+        self.url_pattern = re.compile(
+            r'^https://www\.kchetverg\.ru/\d{4}/\d{2}/\d{2}/[\w\-]+/?$')
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -455,7 +457,7 @@ def main() -> None:
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    article_urls = crawler.urls
+    article_urls = self._extract_url(soup).split(', ')
     for i, url in enumerate(article_urls, start=1):
         parser = HTMLParser(
             full_url=url,
