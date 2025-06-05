@@ -329,6 +329,7 @@ class HTMLParser:
         except AttributeError as e:
             print(f"Attribute error when parsing article {self.full_url}: {e}")
             return False
+            
     def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
         """
         Create ASSETS_PATH folder if no created and remove existing folder.
