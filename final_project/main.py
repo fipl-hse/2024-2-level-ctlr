@@ -26,7 +26,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with open(output_file, "w", encoding="utf-8") as file:
-        file.write(str(conllu_data))
+        file.write(conllu_data) # type: ignore
 
 if __name__ == "__main__":
     main()
