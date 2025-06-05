@@ -330,14 +330,14 @@ class HTMLParser:
             print(f"Attribute error when parsing article {self.full_url}: {e}")
             return False
     def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
-        """
-        Create ASSETS_PATH folder if no created and remove existing folder.
-        Args:
-            base_path (Union[pathlib.Path, str]): Path where articles stores
-        """
-        if base_path.exists():
-          shutil.rmtree(base_path)
-        base_path.mkdir(parents=True)
+    """
+    Create ASSETS_PATH folder if no created and remove existing folder.
+    Args:
+        base_path (Union[pathlib.Path, str]): Path where articles stores
+    """
+    if base_path.exists():
+        shutil.rmtree(base_path)
+    base_path.mkdir(parents=True)
 
 
 
