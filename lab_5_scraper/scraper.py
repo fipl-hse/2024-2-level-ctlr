@@ -106,7 +106,8 @@ class Config:
             raise IncorrectNumberOfArticlesError("total_articles_to_find_and_parse must be an integer >= 1")
 
         if (self._config_data.total_articles_to_find_and_parse
-            > NUM_ARTICLES_UPPER_LIMIT):
+            > NUM_ARTICLES_UPPER_LIMIT
+           ):
             raise NumberOfArticlesOutOfRangeError(
                 f"total_articles_to_find_and_parse must be <= {NUM_ARTICLES_UPPER_LIMIT}"
             )
