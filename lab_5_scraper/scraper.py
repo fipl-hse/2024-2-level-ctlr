@@ -335,9 +335,9 @@ class HTMLParser:
         Args:
             base_path (Union[pathlib.Path, str]): Path where articles stores
         """
-    if base_path.exists():
-        shutil.rmtree(base_path)
-    base_path.mkdir(parents=True)
+        if base_path.exists():
+            shutil.rmtree(base_path)
+        base_path.mkdir(parents=True)
 
 
 
