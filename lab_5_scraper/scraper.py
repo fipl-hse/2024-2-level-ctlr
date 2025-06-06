@@ -1,4 +1,3 @@
-
 """
 Парсер и краулер для лабораторной работы 5 (lab_5_scraper).
 
@@ -25,17 +24,19 @@ from pathlib import Path
 from typing import Union
 from urllib.parse import urljoin
 
-import pathlib
 import requests
 from bs4 import BeautifulSoup
 
-# Добавляем путь к родительской директории проекта, чтобы imports core_utils работали
-PROJECT_ROOT = pathlib.Path(__file__).parent.parent.resolve()
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
 from core_utils.article.article import Article
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
+
+# ──────────────────────────────────────────────────────────────────────────
+# Добавляем путь к родительской директории проекта, чтобы imports core_utils работали
+PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+# ──────────────────────────────────────────────────────────────────────────
+
 
 class IncorrectSeedURLError(Exception):
     """Ошибка: seed_urls должны быть списком строк (валидных URL)."""
@@ -103,7 +104,7 @@ class Config:
       get_headless_mode() -> bool
     """
 
-    path_to_config: pathlib.Path
+    path_to_config: Path
     _seed_urls: list[str]
     _num_articles: int
     _headers: dict[str, str]
@@ -112,7 +113,7 @@ class Config:
     _should_verify_certificate: bool
     _headless_mode: bool
 
-    def __init__(self, path_to_config: pathlib.Path) -> None:
+    def __init__(self, path_to_config: Path) -> None:
         self.path_to_config = path_to_config
         self._validate_config_content()
         self._load_and_set_attributes()
@@ -442,11 +443,11 @@ class HTMLParser:
         return self.article
 
 
-def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
+def prepare_environment(base_path: Union[Path, str]) -> None:
     """
     Создаёт (или очищает, если уже есть) папку base_path для сохранения артефактов.
     """
-    path = pathlib.Path(base_path)
+    path = Path(base_path)
     if path.exists():
         shutil.rmtree(path)
     path.mkdir(parents=True, exist_ok=True)
