@@ -1,9 +1,12 @@
 {
-    "seed_urls": [],
-    "headers": {},
-    "total_articles_to_find_and_parse": 0,
-    "encoding": "",
-    "timeout": 0,
+    "seed_urls": ["https://www.riakchr.ru/news/", "https://www.riakchr.ru/news/?PAGEN_1=2", "https://www.riakchr.ru/news/?PAGEN_1=3", "https://www.riakchr.ru/news/?PAGEN_1=4", "https://www.riakchr.ru/news/?PAGEN_1=5", "https://www.riakchr.ru/news/?PAGEN_1=6"],
+    "headers": {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0",
+    "Accept":  "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "Accept-language": "ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
+    "Cookie": "adtech_uid=f14c1b6d-2f3f-43db-a122-f6e0fd3f759b%3Ariakchr.ru; top100_id=t1.2947488.1990738163.1744319828358; tmr_lvid=1b463cc2b86a79ef32e455bf52bdae1f; tmr_lvidTS=1744319842835; _ym_uid=1744319843282425220; _ym_d=1744319843; _ga=GA1.2.1680865798.1744319843; BX_USER_ID=407de0ec11f5797f48ce4d1a668da1a6; _gid=GA1.2.1306887928.1744903874; _ym_isad=2; PHPSESSID=u9gl4mastbit65gbmrskle1dhvtyv4o5; _gat=1; _ym_visorc=w; domain_sid=qmyX2CI-wyIQXic752mNz%3A1745095784853; t3_sid_2947488=s1.1309755095.1745095781899.1745095827306.7.5.3.1; _ga_J98BMZ7X0M=GS1.2.1745095783.7.1.1745095827.0.0.0; tmr_detect=0%7C1745095829812"},
+    "total_articles_to_find_and_parse": 20,
+    "encoding": "UTF-8",
+    "timeout": 20,
     "should_verify_certificate": true,
     "headless_mode": true
 }
