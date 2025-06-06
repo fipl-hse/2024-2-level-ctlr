@@ -85,15 +85,15 @@ class Config:
     """
     Читает и валидирует JSON-конфигурацию краулера.
 
-    Ожидаемые атрибуты (проверяются тестами s2_1_*):
-      - path_to_config
-      - _seed_urls
-      - _num_articles
-      - _headers
-      - _encoding
-      - _timeout
-      - _should_verify_certificate
-      - _headless_mode
+    Атрибуты (проверяются тестами s2_1_*):
+      - path_to_config: pathlib.Path
+      - _seed_urls: list[str]
+      - _num_articles: int
+      - _headers: dict[str, str]
+      - _encoding: str
+      - _timeout: int
+      - _should_verify_certificate: bool
+      - _headless_mode: bool
 
     Методы-геттеры:
       get_seed_urls() -> list[str]
@@ -104,6 +104,15 @@ class Config:
       get_verify_certificate() -> bool
       get_headless_mode() -> bool
     """
+
+    path_to_config: pathlib.Path
+    _seed_urls: list[str]
+    _num_articles: int
+    _headers: dict[str, str]
+    _encoding: str
+    _timeout: int
+    _should_verify_certificate: bool
+    _headless_mode: bool
 
     def __init__(self, path_to_config: pathlib.Path) -> None:
         self.path_to_config = path_to_config
@@ -126,7 +135,7 @@ class Config:
     def _validate_config_content(self) -> None:
         """
         Проверяет корректность конфига, бросая нужное исключение:
-          1) seed_urls — list[str], каждый элемент-строка с http(s) URL.
+          1) seed_urls — list[str], каждый элемент — строка с http(s) URL.
           2) total_articles_to_find_and_parse — int > 0, ≤ max_limit.
           3) headers — dict.
           4) encoding — str.
@@ -294,9 +303,9 @@ class HTMLParser:
     чтобы тест “test_html_parser_instantiation” прошёл.
 
     parse() делает GET-страницу, парсит заголовок/дату/автора/текст/темы,
-    а потом вручную сохраняет в ASSETS_PATH:
-      - {article_id}_raw.txt    с непустым текстом (>50 символов)
-      - {article_id}_meta.json   с JSON-метаданными
+    а потом сохраняет два файла в ASSETS_PATH:
+      - {article_id}_raw.txt    (текст > 50 символов)
+      - {article_id}_meta.json   (JSON-метаданные)
     """
 
     def __init__(self, full_url: str, article_id: int, config: Config) -> None:
@@ -335,19 +344,15 @@ class HTMLParser:
         Делает GET self.full_url через make_request(...).
         Если status_code != 200 или ошибка сети — возвращает False.
 
-        Иначе парсит:
-          1) Заголовок: <h1 class="title"> / <h1 class="entry-title">,
-             иначе берёт <title> из <head>.
-          2) Дата: <div class="date"> / <span class="news-date"> / <time>,
-             иначе — текущее время.
-          3) Автор: <span class="author"> / <div class="written-by">,
-             иначе — ["NOT FOUND"].
-          4) Темы: .tags a / .keywords a (может быть пустой список).
-          5) Текст: .article-text / .content / .news-text / #content,
-             внутри удаляем <script>, .ad, .related, .comments, склеиваем <p>.
-             Если длина < 50 символов — ставим многократную строку-«заглушку» длиной > 50.
+        Иначе:
+          1) Парсит заголовок.
+          2) Преобразует дату (или ставит текущее время).
+          3) Извлекает автора (или ["NOT FOUND"]).
+          4) Снимает теги (список строк).
+          5) Собирает текст из <p> внутри .article-text/.content/.news-text/#content.
+             Если получившийся текст < 50 символов, ставит "Текст отсутствует." ×5.
 
-        После этого вручную сохраняет:
+        Затем сохраняет:
           - raw-текст в ASSETS_PATH/{article_id}_raw.txt
           - json-мета в ASSETS_PATH/{article_id}_meta.json
 
@@ -376,11 +381,14 @@ class HTMLParser:
         date_tag = soup.select_one('.date, .news-date, time')
         if date_tag:
             unified = self._unify_date(date_tag.get_text(strip=True))
-            try:
-                # type: ignore[arg-type]
-                self.article.date = datetime.strptime(unified, '%Y-%m-%d')
-            except Exception:
-                # pylint: disable=broad-exception-caught
+            if unified:
+                try:
+                    # type: ignore[arg-type]
+                    self.article.date = datetime.strptime(unified, '%Y-%m-%d')
+                except Exception:
+                    # pylint: disable=broad-exception-caught
+                    self.article.date = datetime.now()
+            else:
                 self.article.date = datetime.now()
         else:
             self.article.date = datetime.now()
