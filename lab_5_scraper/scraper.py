@@ -31,7 +31,8 @@ from core_utils.article.article import Article
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 # ──────────────────────────────────────────────────────────────────────────
-# Добавляем путь к родительской директории проекта, чтобы imports core_utils работали
+# Добавляем путь к родительской директории проекта, чтобы imports
+# core_utils работали
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -155,14 +156,17 @@ class Config:
 
         total = data.get('total_articles_to_find_and_parse')
         if not isinstance(total, int) or total <= 0:
-            raise IncorrectNumberOfArticlesError('Num articles must be a positive integer.')
+            raise IncorrectNumberOfArticlesError(
+                'Num articles must be a positive integer.')
         max_limit = 1000
         if total > max_limit:
-            raise NumberOfArticlesOutOfRangeError('Num articles must not be too large.')
+            raise NumberOfArticlesOutOfRangeError(
+                'Num articles must not be too large.')
 
         headers = data.get('headers')
         if not isinstance(headers, dict):
-            raise IncorrectHeadersError('Headers must be a dictionary with string keys and values.')
+            raise IncorrectHeadersError(
+                'Headers must be a dictionary with string keys and values.')
 
         encoding = data.get('encoding')
         if not isinstance(encoding, str):
@@ -173,15 +177,18 @@ class Config:
         timeout_upper_limit = 60
         if not isinstance(timeout, int) or timeout < timeout_lower_limit \
            or timeout > timeout_upper_limit:
-            raise IncorrectTimeoutError('Timeout must be integer between 0 and 60.')
+            raise IncorrectTimeoutError(
+                'Timeout must be integer between 0 and 60.')
 
         verify = data.get('should_verify_certificate')
         if not isinstance(verify, bool):
-            raise IncorrectVerifyError('Verify certificate must be either True or False.')
+            raise IncorrectVerifyError(
+                'Verify certificate must be either True or False.')
 
         headless = data.get('headless_mode')
         if not isinstance(headless, bool):
-            raise IncorrectVerifyError('Headless mode must be either True or False.')
+            raise IncorrectVerifyError(
+                'Headless mode must be either True or False.')
 
     def get_seed_urls(self) -> list[str]:
         """Возвращает список seed_urls."""
@@ -218,14 +225,13 @@ def make_request(url: str, config: Config) -> requests.Response:
     После получения сразу присваивает resp.encoding = config.get_encoding().
     Добавляет паузу 1 сек., чтобы не перегружать сервер.
     """
-    
+
     resp = requests.get(
-            url,
-            headers=config.get_headers(),
-            timeout=config.get_timeout(),
-            verify=config.get_verify_certificate()
-        )
-    
+        url,
+        headers=config.get_headers(),
+        timeout=config.get_timeout(),
+        verify=config.get_verify_certificate()
+    )
 
     resp.encoding = config.get_encoding()
     time.sleep(1)
@@ -397,10 +403,12 @@ class HTMLParser:
 
         # 4) Темы
         tags = soup.select('.tags a, .keywords a')
-        self.article.topics = [t.get_text(strip=True) for t in tags] if tags else []
+        self.article.topics = [t.get_text(strip=True)
+                               for t in tags] if tags else []
 
         # 5) Основной текст
-        content = soup.select_one('.article-text, .content, .news-text, #content')
+        content = soup.select_one(
+            '.article-text, .content, .news-text, #content')
         if content:
             for bad in content.select('script, .ad, .related, .comments'):
                 bad.decompose()
@@ -458,8 +466,12 @@ def main() -> None:
     crawler = Crawler(config=configuration)
     crawler.find_articles()
 
-    for idx, link in enumerate(crawler.urls[:configuration.get_num_articles()], start=1):
-        parser = HTMLParser(full_url=link, article_id=idx, config=configuration)
+    for idx, link in enumerate(
+            crawler.urls[:configuration.get_num_articles()], start=1):
+        parser = HTMLParser(
+            full_url=link,
+            article_id=idx,
+            config=configuration)
         parser.parse()
 
 
