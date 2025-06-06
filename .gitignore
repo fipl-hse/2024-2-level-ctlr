@@ -164,3 +164,7 @@ lab_6_pipeline/assets
 page.html
 file.txt
 analyzed_text.conllu
+
+
+lab_5_scraper/articles_meta/
+lab_5_scraper/articles_raw/
