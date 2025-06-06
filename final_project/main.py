@@ -27,6 +27,7 @@ def main() -> None:
 
     with open(output_file, "w", encoding="utf-8") as file:
         file.write(conllu_data) # type: ignore
+        file.write("\n")
 
 if __name__ == "__main__":
     main()
