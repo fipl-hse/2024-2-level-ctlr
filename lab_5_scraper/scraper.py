@@ -218,16 +218,14 @@ def make_request(url: str, config: Config) -> requests.Response:
     После получения сразу присваивает resp.encoding = config.get_encoding().
     Добавляет паузу 1 сек., чтобы не перегружать сервер.
     """
-    try:
-        resp = requests.get(
+    
+    resp = requests.get(
             url,
             headers=config.get_headers(),
             timeout=config.get_timeout(),
             verify=config.get_verify_certificate()
         )
-    except requests.RequestException:
-        # pylint: disable=broad-exception-caught
-        raise
+    
 
     resp.encoding = config.get_encoding()
     time.sleep(1)
@@ -384,7 +382,7 @@ class HTMLParser:
                 try:
                     # type: ignore[arg-type]
                     self.article.date = datetime.strptime(unified, '%Y-%m-%d')
-                except Exception:
+                except requests.RequestException:
                     # pylint: disable=broad-exception-caught
                     self.article.date = datetime.now()
             else:

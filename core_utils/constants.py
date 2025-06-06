@@ -1,10 +1,9 @@
-import os
-import tempfile
+"""
+Модуль содержит константы, используемые в проекте.
+"""
 from pathlib import Path
 
-"""
-Useful constant variables.
-"""
+
 
 PROJECT_ROOT = Path(__file__).parent.parent
 ASSETS_PATH = PROJECT_ROOT / "tmp" / "articles"
