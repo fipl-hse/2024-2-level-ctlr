@@ -1,11 +1,10 @@
-"""
-Useful constant variables.
-"""
-
-import pathlib
 import os
 import tempfile
 from pathlib import Path
+
+"""
+Useful constant variables.
+"""
 
 PROJECT_ROOT = Path(__file__).parent.parent
 ASSETS_PATH = PROJECT_ROOT / "tmp" / "articles"
@@ -15,8 +14,8 @@ CONFIG_DIR = PROJECT_ROOT / "config"
 
 NUM_ARTICLES_UPPER_LIMIT = 150
 
-# Предполагаем, что у вас есть папка lab_5_scraper со scraper_config.json
-CWD = pathlib.Path(__file__).parent.parent
+
+CWD = Path(__file__).parent.parent
 CRAWLER_CONFIG_PATH = CWD / "lab_5_scraper" / "scraper_config.json"
 
 TIMEOUT_LOWER_LIMIT = 0
