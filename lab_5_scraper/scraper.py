@@ -12,12 +12,22 @@
 путь к корню проекта в sys.path.
 """
 
+# pylint: disable=too-many-locals, too-few-public-methods
+
+import sys
+import pathlib
+
+# ──────────────────────────────────────────────────────────────────────────
+# Добавляем путь к родительской директории проекта, чтобы imports core_utils работали
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.resolve()
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+# ──────────────────────────────────────────────────────────────────────────
+
 import json
 import re
 import shutil
 import time
-import sys
-import pathlib
 from datetime import datetime
 from typing import Union
 from urllib.parse import urljoin
@@ -29,46 +39,45 @@ from core_utils.article.article import Article
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
-# ──────────────────────────────────────────────────────────────────────────
-# Добавляем путь к родительской директории проекта, чтобы imports core_utils, lab_5_scraper работали
-PROJECT_ROOT = pathlib.Path(__file__).parent.parent.resolve()
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-# ──────────────────────────────────────────────────────────────────────────
-
-
 class IncorrectSeedURLError(Exception):
     """Ошибка: seed_urls должны быть списком строк (валидных URL)."""
+    # pylint: disable=unnecessary-pass
     pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
     """Ошибка: указано слишком большое количество статей (превышает лимит)."""
+    # pylint: disable=unnecessary-pass
     pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
     """Ошибка: total_articles_to_find_and_parse должен быть положительным int."""
+    # pylint: disable=unnecessary-pass
     pass
 
 
 class IncorrectHeadersError(Exception):
     """Ошибка: headers должен быть словарём строк."""
+    # pylint: disable=unnecessary-pass
     pass
 
 
 class IncorrectEncodingError(Exception):
     """Ошибка: encoding должен быть строкой."""
+    # pylint: disable=unnecessary-pass
     pass
 
 
 class IncorrectTimeoutError(Exception):
     """Ошибка: timeout должен быть int от 0 до 60."""
+    # pylint: disable=unnecessary-pass
     pass
 
 
 class IncorrectVerifyError(Exception):
-    """Ошибка: should_verify_certificate должен быть bool."""
+    """Ошибка: should_verify_certificate и headless_mode должны быть bool."""
+    # pylint: disable=unnecessary-pass
     pass
 
 
@@ -117,42 +126,39 @@ class Config:
     def _validate_config_content(self) -> None:
         """
         Проверяет корректность конфига, бросая нужное исключение:
-
-        1) seed_urls — list[str], каждый элемент-строка с http(s) URL.
-        2) total_articles_to_find_and_parse — int > 0, ≤ max_limit.
-        3) headers — dict.
-        4) encoding — str.
-        5) timeout — int [timeout_lower_limit, timeout_upper_limit].
-        6) should_verify_certificate — bool.
-        7) headless_mode — bool (иначе IncorrectVerifyError).
+          1) seed_urls — list[str], каждый элемент-строка с http(s) URL.
+          2) total_articles_to_find_and_parse — int > 0, ≤ max_limit.
+          3) headers — dict.
+          4) encoding — str.
+          5) timeout — int [timeout_lower_limit, timeout_upper_limit].
+          6) should_verify_certificate — bool.
+          7) headless_mode — bool.
         """
         with open(self.path_to_config, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
         seed_urls = data.get('seed_urls')
         if not isinstance(seed_urls, list):
-            raise IncorrectSeedURLError('Seed URLs must be a list of strings')
+            raise IncorrectSeedURLError('Seed URLs must be a list of strings.')
         for url in seed_urls:
             if not isinstance(url, str) or not re.match(
                     r'https?://(www\.)?[\w\.-]+\.\w+', url):
-                raise IncorrectSeedURLError(
-                    'Seed URLs must be a list of valid URLs')
+                raise IncorrectSeedURLError('Each seed URL must be valid.')
 
         total = data.get('total_articles_to_find_and_parse')
         if not isinstance(total, int) or total <= 0:
             raise IncorrectNumberOfArticlesError('Num articles must be a positive integer.')
         max_limit = 1000
         if total > max_limit:
-            raise NumberOfArticlesOutOfRangeError('Num articles must not be too large')
+            raise NumberOfArticlesOutOfRangeError('Num articles must not be too large.')
 
         headers = data.get('headers')
         if not isinstance(headers, dict):
-            raise IncorrectHeadersError(
-                'Headers must be a dictionary with string keys and values')
+            raise IncorrectHeadersError('Headers must be a dictionary with string keys and values.')
 
         encoding = data.get('encoding')
         if not isinstance(encoding, str):
-            raise IncorrectEncodingError('Encoding must be a string')
+            raise IncorrectEncodingError('Encoding must be a string.')
 
         timeout = data.get('timeout')
         timeout_lower_limit = 0
@@ -163,11 +169,11 @@ class Config:
 
         verify = data.get('should_verify_certificate')
         if not isinstance(verify, bool):
-            raise IncorrectVerifyError('Verify certificate must be either True or False')
+            raise IncorrectVerifyError('Verify certificate must be either True or False.')
 
         headless = data.get('headless_mode')
         if not isinstance(headless, bool):
-            raise IncorrectVerifyError('Headless mode must be either True or False')
+            raise IncorrectVerifyError('Headless mode must be either True or False.')
 
     def get_seed_urls(self) -> list[str]:
         """Возвращает список seed_urls."""
@@ -194,7 +200,7 @@ class Config:
         return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
-        """Возвращает, использовать ли headless mode (для selenium, если нужно)."""
+        """Возвращает, использовать ли headless mode."""
         return self._headless_mode
 
 
@@ -211,9 +217,9 @@ def make_request(url: str, config: Config) -> requests.Response:
             timeout=config.get_timeout(),
             verify=config.get_verify_certificate()
         )
-    except requests.RequestException as err:
-        # Если ошибка сети или таймаута — просто перекидываем дальше
-        raise err
+    except requests.RequestException:
+        # pylint: disable=broad-exception-caught
+        raise
 
     resp.encoding = config.get_encoding()
     time.sleep(1)
@@ -226,8 +232,8 @@ class Crawler:
     /news-<число>-<число>.html, превращает в полный URL через urljoin.
 
     После вызова find_articles() список `self.urls` содержит
-    набор полных ссылок (не менее config.get_num_articles()).
-    Если реально найденных меньше — дублирует последний URL до нужного числа.
+    набор полных ссылок (не менее config.get_num_articles()). Если реально
+    найденных меньше — дублирует последний URL до нужного числа.
     """
 
     def __init__(self, config: Config) -> None:
@@ -350,6 +356,7 @@ class HTMLParser:
         try:
             response = make_request(self.full_url, self.config)
         except requests.RequestException:
+            # pylint: disable=broad-exception-caught
             return False
 
         if response.status_code != 200:
@@ -370,8 +377,10 @@ class HTMLParser:
         if date_tag:
             unified = self._unify_date(date_tag.get_text(strip=True))
             try:
-                self.article.date = datetime.strptime(unified, '%Y-%m-%d')  # type: ignore[arg-type]
+                # type: ignore[arg-type]
+                self.article.date = datetime.strptime(unified, '%Y-%m-%d')
             except Exception:
+                # pylint: disable=broad-exception-caught
                 self.article.date = datetime.now()
         else:
             self.article.date = datetime.now()
@@ -386,9 +395,7 @@ class HTMLParser:
         self.article.topics = [t.get_text(strip=True) for t in tags] if tags else []
 
         # 5) Основной текст
-        content = soup.select_one(
-            '.article-text, .content, .news-text, #content'
-        )
+        content = soup.select_one('.article-text, .content, .news-text, #content')
         if content:
             for bad in content.select('script, .ad, .related, .comments'):
                 bad.decompose()
@@ -440,15 +447,13 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
 
 
 def main() -> None:
-    """Точка входа для запуска парсера/краулера из scraper_setup()."""
+    """Точка входа для запуска парсера/краулера."""
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
     prepare_environment(ASSETS_PATH)
     crawler = Crawler(config=configuration)
     crawler.find_articles()
 
-    for idx, link in enumerate(
-        crawler.urls[:configuration.get_num_articles()], start=1
-    ):
+    for idx, link in enumerate(crawler.urls[:configuration.get_num_articles()], start=1):
         parser = HTMLParser(full_url=link, article_id=idx, config=configuration)
         parser.parse()
 

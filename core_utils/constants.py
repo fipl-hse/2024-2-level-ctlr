@@ -2,6 +2,9 @@
 Useful constant variables.
 """
 
+import pathlib
+import os
+import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -11,8 +14,6 @@ PROJECT_CONFIG_PATH = PROJECT_ROOT / "project_config.json"
 CONFIG_DIR = PROJECT_ROOT / "config"
 
 NUM_ARTICLES_UPPER_LIMIT = 150
-
-import pathlib
 
 # Предполагаем, что у вас есть папка lab_5_scraper со scraper_config.json
 CWD = pathlib.Path(__file__).parent.parent
