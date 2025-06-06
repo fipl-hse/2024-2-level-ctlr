@@ -1,3 +1,4 @@
+
 """
 Парсер и краулер для лабораторной работы 5 (lab_5_scraper).
 
@@ -14,30 +15,27 @@
 
 # pylint: disable=too-many-locals, too-few-public-methods
 
+import json
+import re
+import shutil
 import sys
-import pathlib
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Union
+from urllib.parse import urljoin
 
-# ──────────────────────────────────────────────────────────────────────────
+import pathlib
+import requests
+from bs4 import BeautifulSoup
+
 # Добавляем путь к родительской директории проекта, чтобы imports core_utils работали
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.resolve()
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-# ──────────────────────────────────────────────────────────────────────────
-
-import json
-import re
-import shutil
-import time
-from datetime import datetime
-from typing import Union
-from urllib.parse import urljoin
-
-import requests
-from bs4 import BeautifulSoup
 
 from core_utils.article.article import Article
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
-
 
 class IncorrectSeedURLError(Exception):
     """Ошибка: seed_urls должны быть списком строк (валидных URL)."""
