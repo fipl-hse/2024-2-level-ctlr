@@ -217,7 +217,7 @@ class UDPipeAnalyzer(LibraryWrapper):
         path = article.get_file_path(ArtifactType.UDPIPE_CONLLU)
         if pathlib.Path(path).stat().st_size == 0:
             raise EmptyFileError('no conllu file')
-        with open(article.get_file_path(ArtifactType.UDPIPE_CONLLU),
+        with open(path,
                   "r",
                   encoding="utf-8") as f:
             conllu_text = f.read()
@@ -329,7 +329,7 @@ class POSFrequencyPipeline:
         """
         freq_pos = {}
         for token in self._analyzer.from_conllu(article):
-            freq_pos[token.pos_] = freq_pos.get(token.pos_, 0) + 1
+            freq_pos[f'lol - {token.pos_}'] = freq_pos.get(f'lol - {token.pos_}', 0) + 1
         return freq_pos
 
     def run(self) -> None:
