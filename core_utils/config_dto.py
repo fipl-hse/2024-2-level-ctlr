@@ -3,44 +3,23 @@
 ConfigDTO class implementation: stores the configuration information.
 """
 
+# Убрали второе определение класса, оставили единственную версию
 
 class ConfigDTO:
     """
     Type annotations for configurations.
     """
 
-    #: List of seed urls
-    seed_urls: list[str]
-
-    #: Number of total articles
-    total_articles: int
-
-    #: Headers
-    headers: dict[str, str]
-
-    #: Encoding
-    encoding: str
-
-    #: Number of seconds to wait for response
-    timeout: int
-
-    #: Should verify certificate or not
-    should_verify_certificate: bool
-
-    #: Require headless mode or not
-    headless_mode: bool
-
-class ConfigDTO:
     def __init__(
         self,
-        seed_urls: list,
-        headers: dict,
+        seed_urls: list[str],
+        headers: dict[str, str],
         total_articles_to_find_and_parse: int,
         encoding: str,
         timeout: int,
         should_verify_certificate: bool,
         headless_mode: bool
-    ):
+    ) -> None:
         self.seed_urls = seed_urls
         self.total_articles_to_find_and_parse = total_articles_to_find_and_parse
         self.headers = headers

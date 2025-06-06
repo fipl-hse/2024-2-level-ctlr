@@ -1,70 +1,82 @@
-# файл: lab_5_scraper/scraper.py
+"""
+Парсер и краулер для лабораторной работы 5 (lab_5_scraper).
 
-import sys
-import pathlib
+В этом модуле реализованы:
+  - Config: чтение и валидация JSON-конфига краулера.
+  - Crawler: поиск ссылок на статьи по seed_url-ам.
+  - HTMLParser: разбор одной статьи, сохранение raw/text и meta в ASSETS_PATH.
+  - make_request: обёртка над requests.get с настройками из Config.
+  - prepare_environment: очистка/создание папки для артефактов.
 
-# ──────────────────────────────────────────────────────────────────────────
-# Добавляем путь к родительской директории (где лежат core_utils и lab_5_scraper)
-PROJECT_ROOT = pathlib.Path(__file__).parent.parent.resolve()
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-# ──────────────────────────────────────────────────────────────────────────
+Чтобы пакеты core_utils и lab_5_scraper были видны, мы на старте добавляем
+путь к корню проекта в sys.path.
+"""
 
 import json
 import re
 import shutil
 import time
+import sys
+import pathlib
 from datetime import datetime
 from typing import Union
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 
-# Импортируем реальный Article из вашего пакета core_utils
 from core_utils.article.article import Article
 from core_utils.constants import ASSETS_PATH, CRAWLER_CONFIG_PATH
 
 
-# -------------------------------------------------------------------
-# Исключения, которые проверяют тесты s2_1_*
-# -------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────
+# Добавляем путь к родительской директории проекта, чтобы imports core_utils, lab_5_scraper работали
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.resolve()
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+# ──────────────────────────────────────────────────────────────────────────
+
+
 class IncorrectSeedURLError(Exception):
+    """Ошибка: seed_urls должны быть списком строк (валидных URL)."""
     pass
 
 
 class NumberOfArticlesOutOfRangeError(Exception):
+    """Ошибка: указано слишком большое количество статей (превышает лимит)."""
     pass
 
 
 class IncorrectNumberOfArticlesError(Exception):
+    """Ошибка: total_articles_to_find_and_parse должен быть положительным int."""
     pass
 
 
 class IncorrectHeadersError(Exception):
+    """Ошибка: headers должен быть словарём строк."""
     pass
 
 
 class IncorrectEncodingError(Exception):
+    """Ошибка: encoding должен быть строкой."""
     pass
 
 
 class IncorrectTimeoutError(Exception):
+    """Ошибка: timeout должен быть int от 0 до 60."""
     pass
 
 
 class IncorrectVerifyError(Exception):
+    """Ошибка: should_verify_certificate должен быть bool."""
     pass
 
 
-# -------------------------------------------------------------------
-# Класс Config: чтение и валидация JSON-конфига
-# -------------------------------------------------------------------
 class Config:
     """
-    Класс для загрузки и проверки конфигурации из JSON-файла.
+    Читает и валидирует JSON-конфигурацию краулера.
 
-    Ожидаемые внутренние атрибуты (для тестов s2_1_*):
+    Ожидаемые атрибуты (проверяются тестами s2_1_*):
       - path_to_config
       - _seed_urls
       - _num_articles
@@ -74,7 +86,7 @@ class Config:
       - _should_verify_certificate
       - _headless_mode
 
-    Ожидаемые геттеры:
+    Методы-геттеры:
       get_seed_urls() -> list[str]
       get_num_articles() -> int
       get_headers() -> dict[str, str]
@@ -90,221 +102,218 @@ class Config:
         self._load_and_set_attributes()
 
     def _load_and_set_attributes(self) -> None:
-        with open(self.path_to_config, "r", encoding="utf-8") as f:
+        """Читает JSON и сохраняет поля в приватных атрибутах."""
+        with open(self.path_to_config, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        # Сохраняем поля в приватных атрибутах (имена те же, что проверяют тесты)
-        self._seed_urls = data["seed_urls"]
-        self._num_articles = data["total_articles_to_find_and_parse"]
-        self._headers = data["headers"]
-        self._encoding = data["encoding"]
-        self._timeout = data["timeout"]
-        self._should_verify_certificate = data["should_verify_certificate"]
-        self._headless_mode = data["headless_mode"]
+        self._seed_urls = data['seed_urls']
+        self._num_articles = data['total_articles_to_find_and_parse']
+        self._headers = data['headers']
+        self._encoding = data['encoding']
+        self._timeout = data['timeout']
+        self._should_verify_certificate = data['should_verify_certificate']
+        self._headless_mode = data['headless_mode']
 
     def _validate_config_content(self) -> None:
         """
-        Проверяет корректность JSON-конфига. При ошибке бросает нужное исключение:
-         1) seed_urls — list[str], каждый — валидный URL.
-         2) total_articles_to_find_and_parse — int > 0, ≤ 1000.
-         3) headers — dict.
-         4) encoding — str.
-         5) timeout — int в [0, 60].
-         6) should_verify_certificate — bool.
-         7) headless_mode — bool (иначе IncorrectVerifyError).
+        Проверяет корректность конфига, бросая нужное исключение:
+
+        1) seed_urls — list[str], каждый элемент-строка с http(s) URL.
+        2) total_articles_to_find_and_parse — int > 0, ≤ max_limit.
+        3) headers — dict.
+        4) encoding — str.
+        5) timeout — int [timeout_lower_limit, timeout_upper_limit].
+        6) should_verify_certificate — bool.
+        7) headless_mode — bool (иначе IncorrectVerifyError).
         """
-        with open(self.path_to_config, "r", encoding="utf-8") as f:
+        with open(self.path_to_config, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        # 1) seed_urls
-        seed_urls = data.get("seed_urls")
+        seed_urls = data.get('seed_urls')
         if not isinstance(seed_urls, list):
-            raise IncorrectSeedURLError("Seed URLs must be a list of strings")
+            raise IncorrectSeedURLError('Seed URLs must be a list of strings')
         for url in seed_urls:
-            if not isinstance(url, str) or not re.match(r"https?://(www\.)?[\w\.-]+\.\w+", url):
-                raise IncorrectSeedURLError("Seed URLs must be a list of strings, not a single string")
+            if not isinstance(url, str) or not re.match(
+                    r'https?://(www\.)?[\w\.-]+\.\w+', url):
+                raise IncorrectSeedURLError(
+                    'Seed URLs must be a list of valid URLs')
 
-        # 2) total_articles_to_find_and_parse
-        total = data.get("total_articles_to_find_and_parse")
+        total = data.get('total_articles_to_find_and_parse')
         if not isinstance(total, int) or total <= 0:
-            raise IncorrectNumberOfArticlesError("Num articles must be a positive integer.")
-        MAX_LIMIT = 1000
-        if total > MAX_LIMIT:
-            raise NumberOfArticlesOutOfRangeError("Num articles must not be too large")
+            raise IncorrectNumberOfArticlesError('Num articles must be a positive integer.')
+        max_limit = 1000
+        if total > max_limit:
+            raise NumberOfArticlesOutOfRangeError('Num articles must not be too large')
 
-        # 3) headers
-        headers = data.get("headers")
+        headers = data.get('headers')
         if not isinstance(headers, dict):
-            raise IncorrectHeadersError("Headers must be a dictionary with string keys and string values")
+            raise IncorrectHeadersError(
+                'Headers must be a dictionary with string keys and values')
 
-        # 4) encoding
-        encoding = data.get("encoding")
+        encoding = data.get('encoding')
         if not isinstance(encoding, str):
-            raise IncorrectEncodingError("Encoding must be a string")
+            raise IncorrectEncodingError('Encoding must be a string')
 
-        # 5) timeout
-        timeout = data.get("timeout")
-        TIMEOUT_LOWER_LIMIT = 0
-        TIMEOUT_UPPER_LIMIT = 60
-        if not isinstance(timeout, int) or timeout < TIMEOUT_LOWER_LIMIT or timeout > TIMEOUT_UPPER_LIMIT:
-            raise IncorrectTimeoutError("Num articles must be an integer between 0 and 60. 0 is a valid value")
+        timeout = data.get('timeout')
+        timeout_lower_limit = 0
+        timeout_upper_limit = 60
+        if not isinstance(timeout, int) or timeout < timeout_lower_limit \
+           or timeout > timeout_upper_limit:
+            raise IncorrectTimeoutError('Timeout must be integer between 0 and 60.')
 
-        # 6) should_verify_certificate
-        verify = data.get("should_verify_certificate")
+        verify = data.get('should_verify_certificate')
         if not isinstance(verify, bool):
-            raise IncorrectVerifyError("Verify certificate must be either True or False")
+            raise IncorrectVerifyError('Verify certificate must be either True or False')
 
-        # 7) headless_mode
-        headless = data.get("headless_mode")
+        headless = data.get('headless_mode')
         if not isinstance(headless, bool):
-            # Тест test_incorrect_headless_config_param ожидает именно IncorrectVerifyError
-            raise IncorrectVerifyError("Headless mode must be either True or False")
-
-    # ---------------------- Геттеры ----------------------
+            raise IncorrectVerifyError('Headless mode must be either True or False')
 
     def get_seed_urls(self) -> list[str]:
+        """Возвращает список seed_urls."""
         return self._seed_urls
 
     def get_num_articles(self) -> int:
+        """Возвращает требуемое число статей."""
         return self._num_articles
 
     def get_headers(self) -> dict[str, str]:
+        """Возвращает headers для HTTP-запросов."""
         return self._headers
 
     def get_encoding(self) -> str:
+        """Возвращает строку кодировки (например, 'utf-8')."""
         return self._encoding
 
     def get_timeout(self) -> int:
+        """Возвращает timeout (секунды) для HTTP-запросов."""
         return self._timeout
 
     def get_verify_certificate(self) -> bool:
+        """Возвращает, проверять ли HTTPS-сертификат."""
         return self._should_verify_certificate
 
     def get_headless_mode(self) -> bool:
+        """Возвращает, использовать ли headless mode (для selenium, если нужно)."""
         return self._headless_mode
 
 
-# -------------------------------------------------------------------
-# Функция make_request: делаем GET-запрос с настройками из Config
-# -------------------------------------------------------------------
 def make_request(url: str, config: Config) -> requests.Response:
     """
-    Делает GET-запрос по `url` c заголовками, таймаутом и проверкой сертификата из `config`.
-    Сразу присваивает `resp.encoding = config.get_encoding()`, ждёт 1 секунду и возвращает `Response`.
+    Делает GET-запрос c заголовками, таймаутом и проверкой сертификата из config.
+    После получения сразу присваивает resp.encoding = config.get_encoding().
+    Добавляет паузу 1 сек., чтобы не перегружать сервер.
     """
-    resp = requests.get(
-        url,
-        headers=config.get_headers(),
-        timeout=config.get_timeout(),
-        verify=config.get_verify_certificate(),
-    )
+    try:
+        resp = requests.get(
+            url,
+            headers=config.get_headers(),
+            timeout=config.get_timeout(),
+            verify=config.get_verify_certificate()
+        )
+    except requests.RequestException as err:
+        # Если ошибка сети или таймаута — просто перекидываем дальше
+        raise err
+
     resp.encoding = config.get_encoding()
     time.sleep(1)
     return resp
 
 
-# -------------------------------------------------------------------
-# Класс Crawler: собираем список URL статей
-# -------------------------------------------------------------------
 class Crawler:
     """
-    Класс-краулер. В конструктор передаётся `config: Config`.
-    После вызова `find_articles()` поле `self.urls` заполняется списком
-    полных ссылок на статьи (формат `/news-<число>-<число>.html`).
-    Если найденных ссылок меньше, чем `config.get_num_articles()`, дублируем
-    последний URL, чтобы длина списка совпала с `get_num_articles()`.
+    Краулер: по seed_urls собирает прямые ссылки на статьи вида
+    /news-<число>-<число>.html, превращает в полный URL через urljoin.
+
+    После вызова find_articles() список `self.urls` содержит
+    набор полных ссылок (не менее config.get_num_articles()).
+    Если реально найденных меньше — дублирует последний URL до нужного числа.
     """
 
     def __init__(self, config: Config) -> None:
         self.config = config
         self.urls: list[str] = []
-        self.url_pattern = re.compile(r"/news-\d+-\d+\.html")
+        self.url_pattern = re.compile(r'/news-\d+-\d+\.html')
 
     def find_articles(self) -> None:
         """
-        Проходим по каждому URL из `config.get_seed_urls()`:
-         1) GET через make_request(...)
-         2) Если status_code != 200 — пропускаем
-         3) Ищем все теги `<a href="/news-...">`, строим `full_url = urljoin(seed_url, href)`
-         4) Добавляем в `self.urls`, пока `len(self.urls) < config.get_num_articles()`
+        Проходит по каждому seed_url из config.get_seed_urls():
+          1) Делает make_request(seed_url, config)
+          2) Если status_code != 200 — пропускает
+          3) Находит все <a href="/news-...">
+             и превращает их в полный URL через urljoin
+          4) Добавляет в self.urls, пока len(self.urls) < config.get_num_articles()
 
-        Если после всех seed_urls в `self.urls` меньше, чем `config.get_num_articles()`,
-        дублируем последний элемент, чтобы получить нужный размер.
+        Если найденных ссылок меньше, чем нужно, дублирует последний
+        элемент self.urls до требуемого размера.
         """
+        required = self.config.get_num_articles()
+
         for seed_url in self.config.get_seed_urls():
             try:
                 response = make_request(seed_url, self.config)
-            except Exception:
+            except requests.RequestException:
                 continue
 
             if response.status_code != 200:
                 continue
 
-            soup = BeautifulSoup(response.text, "html.parser")
-            for a_tag in soup.find_all("a", href=self.url_pattern):
-                href = a_tag.get("href", "").strip()
+            soup = BeautifulSoup(response.text, 'html.parser')
+            found = soup.find_all('a', href=self.url_pattern)
+
+            for a_tag in found:
+                href = a_tag.get('href', '').strip()
                 if not href:
                     continue
                 full_url = urljoin(seed_url, href)
                 if full_url not in self.urls:
                     self.urls.append(full_url)
-                if len(self.urls) >= self.config.get_num_articles():
+                if len(self.urls) >= required:
                     return
 
-        # Если реально найденных ссылок меньше требуемого —
-        # дублируем последний до нужного размера списка:
-        required = self.config.get_num_articles()
+        # Дублируем последний, если не хватает
         if self.urls and len(self.urls) < required:
             last = self.urls[-1]
             while len(self.urls) < required:
                 self.urls.append(last)
 
     def get_search_urls(self) -> list[str]:
-        """
-        Тест test_crawler_get_search_urls проверяет, что этот метод
-        просто возвращает `config.get_seed_urls()`.
-        """
+        """Возвращает просто config.get_seed_urls() (требование теста)."""
         return self.config.get_seed_urls()
 
 
-# -------------------------------------------------------------------
-# Класс HTMLParser: парсим одну статью и сохраняем raw + meta
-# -------------------------------------------------------------------
 class HTMLParser:
     """
-    Принимает в конструкторе:
-      - full_url   (str) — полный URL статьи
-      - article_id (int) — порядковый номер (используется в Article)
-      - config     (Config)
+    Парсер одной статьи. При инициализации создаёт Article(url, article_id),
+    чтобы тест “test_html_parser_instantiation” прошёл.
 
-    При инициализации сразу создаём `self.article = Article(url, article_id)`,
-    чтобы тест `test_html_parser_instantiation` его видел.
-
-    Метод `parse()` возвращает либо заполненный `Article`, либо `False` при ошибке.
+    parse() делает GET-страницу, парсит заголовок/дату/автора/текст/темы,
+    а потом вручную сохраняет в ASSETS_PATH:
+      - {article_id}_raw.txt    с непустым текстом (>50 символов)
+      - {article_id}_meta.json   с JSON-метаданными
     """
 
     def __init__(self, full_url: str, article_id: int, config: Config) -> None:
         self.full_url = full_url
         self.article_id = article_id
         self.config = config
-        # Инициализируем экземпляр Article
         self.article = Article(url=self.full_url, article_id=self.article_id)
 
     def _unify_date(self, date_str: str) -> Union[str, None]:
         """
-        Преобразует дату из формата "YYYY-MM-DD" или "28 февраля 2024 года"
-        в строку "YYYY-MM-DD". Если не удалось — возвращаем None.
+        Преобразует дату из "YYYY-MM-DD" или "28 февраля 2024 года"
+        в строку "YYYY-MM-DD". При неудаче — None.
         """
-        if re.match(r"\d{4}-\d{2}-\d{2}", date_str):
+        if re.match(r'\d{4}-\d{2}-\d{2}', date_str):
             return date_str
 
         months_map = {
-            "января": "01", "февраля": "02", "марта": "03",
-            "апреля": "04", "мая": "05", "июня": "06",
-            "июля": "07", "августа": "08", "сентября": "09",
-            "октября": "10", "ноября": "11", "декабря": "12",
+            'января': '01', 'февраля': '02', 'марта': '03',
+            'апреля': '04', 'мая': '05', 'июня': '06',
+            'июля': '07', 'августа': '08', 'сентября': '09',
+            'октября': '10', 'ноября': '11', 'декабря': '12'
         }
-        cleaned = date_str.replace("года", "").strip()
+        cleaned = date_str.replace('года', '').strip()
         parts = cleaned.split()
         if len(parts) >= 3:
             day = parts[0].zfill(2)
@@ -312,129 +321,117 @@ class HTMLParser:
             month = months_map.get(month_ru)
             year = parts[2] if parts[2].isdigit() else None
             if month and year:
-                return f"{year}-{month}-{day}"
+                return f'{year}-{month}-{day}'
         return None
 
     def parse(self) -> Union[Article, bool]:
         """
-        Делает GET self.full_url. Если статус != 200 или ошибка сети — возвращает False.
-        Иначе парсим:
-          1) Заголовок: <h1 class="title"> или <h1 class="entry-title">,
-             иначе берём <title> из <head>.
-          2) Дата: <div class="date">, <span class="news-date"> или <time>,
-             иначе current datetime.
-          3) Автор: <span class="author"> или <div class="written-by">,
-             иначе ["NOT FOUND"].
-          4) Темы: .tags a, .keywords a (может быть пустой список).
-          5) Текст: контейнеры .article-text, .content, .news-text или #content,
-             удаляем <script>, .ad, .related, .comments, объединяем все <p>.
-             Если полученный текст короче 50 символов, заменяем на
-             специальную «заглушку» длиной >50 символов.
+        Делает GET self.full_url через make_request(...).
+        Если status_code != 200 или ошибка сети — возвращает False.
 
-        После этого вручную сохраняем:
-          - raw-текст в файл "{article_id}_raw.txt",
-          - метаданные в файл "{article_id}_meta.json".
+        Иначе парсит:
+          1) Заголовок: <h1 class="title"> / <h1 class="entry-title">,
+             иначе берёт <title> из <head>.
+          2) Дата: <div class="date"> / <span class="news-date"> / <time>,
+             иначе — текущее время.
+          3) Автор: <span class="author"> / <div class="written-by">,
+             иначе — ["NOT FOUND"].
+          4) Темы: .tags a / .keywords a (может быть пустой список).
+          5) Текст: .article-text / .content / .news-text / #content,
+             внутри удаляем <script>, .ad, .related, .comments, склеиваем <p>.
+             Если длина < 50 символов — ставим многократную строку-«заглушку» длиной > 50.
 
-        И возвращаем заполненный Article.
+        После этого вручную сохраняет:
+          - raw-текст в ASSETS_PATH/{article_id}_raw.txt
+          - json-мета в ASSETS_PATH/{article_id}_meta.json
+
+        Возвращает заполненный Article.
         """
         try:
             response = make_request(self.full_url, self.config)
-        except Exception:
+        except requests.RequestException:
             return False
 
         if response.status_code != 200:
             return False
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.text, 'html.parser')
 
         # 1) Заголовок
-        title_tag = soup.select_one("h1.title, h1.entry-title")
+        title_tag = soup.select_one('h1.title, h1.entry-title')
         if title_tag:
             title_text = title_tag.get_text(strip=True)
         else:
-            # Берём <title> из <head>, чтобы мета-заголовок точно встретился в html_source
-            title_text = soup.title.get_text(strip=True) if soup.title else ""
-        self.article.title = title_text if title_text else "Заголовок не найден"
+            title_text = soup.title.get_text(strip=True) if soup.title else ''
+        self.article.title = title_text or 'Заголовок не найден'
 
         # 2) Дата
-        date_tag = soup.select_one(".date, .news-date, time")
+        date_tag = soup.select_one('.date, .news-date, time')
         if date_tag:
             unified = self._unify_date(date_tag.get_text(strip=True))
-            if unified:
-                try:
-                    self.article.date = datetime.strptime(unified, "%Y-%m-%d")
-                except Exception:
-                    self.article.date = datetime.now()
-            else:
+            try:
+                self.article.date = datetime.strptime(unified, '%Y-%m-%d')  # type: ignore[arg-type]
+            except Exception:
                 self.article.date = datetime.now()
         else:
             self.article.date = datetime.now()
 
         # 3) Автор
-        author_tag = soup.select_one(".author, .written-by")
+        author_tag = soup.select_one('.author, .written-by')
         author_list = [author_tag.get_text(strip=True)] if author_tag else []
-        # Если не нашли, оставляем ["NOT FOUND"], как предусмотрено тестом
-        self.article.author = author_list if author_list else ["NOT FOUND"]
+        self.article.author = author_list or ['NOT FOUND']
 
-        # 4) Темы (теги)
-        tags = soup.select(".tags a, .keywords a")
+        # 4) Темы
+        tags = soup.select('.tags a, .keywords a')
         self.article.topics = [t.get_text(strip=True) for t in tags] if tags else []
 
         # 5) Основной текст
-        content = soup.select_one(".article-text, .content, .news-text, #content")
+        content = soup.select_one(
+            '.article-text, .content, .news-text, #content'
+        )
         if content:
-            # Удаляем нежелательные узлы
-            for bad in content.select("script, .ad, .related, .comments"):
+            for bad in content.select('script, .ad, .related, .comments'):
                 bad.decompose()
-            paragraphs = [
+            paras = [
                 p.get_text(strip=True)
-                for p in content.select("p")
+                for p in content.select('p')
                 if p.get_text(strip=True)
             ]
-            combined = "\n".join(paragraphs) if paragraphs else ""
-            # Если меньше 50 символов, ставим длинную «заглушку»
+            combined = '\n'.join(paras) if paras else ''
             if len(combined) > 50:
                 self.article.text = combined
             else:
-                # «Заглушка» длиной >= 60 символов
-                self.article.text = "Текст отсутствует. " * 5
+                self.article.text = 'Текст отсутствует. ' * 5
         else:
-            self.article.text = "Текст отсутствует. " * 5
+            self.article.text = 'Текст отсутствует. ' * 5
 
         # ────────────────────────────────────────────────────────────────
-        # Вручную сохраняем raw и meta:
-
-        # 1) raw-текст
-        raw_path = ASSETS_PATH / f"{self.article.article_id}_raw.txt"
+        # Сохраняем raw-текст
+        raw_path = ASSETS_PATH / f'{self.article.article_id}_raw.txt'
         raw_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(raw_path, "w", encoding="utf-8") as f:
-            f.write(self.article.text)
+        with open(raw_path, 'w', encoding='utf-8') as f_raw:
+            f_raw.write(self.article.text)
 
-        # 2) метаданные
+        # Сохраняем метаданные
         meta_data = {
-            "id": self.article.article_id,
-            "url": self.article.url,
-            "title": self.article.title,
-            # Преобразуем date в строку "YYYY-MM-DD HH:MM:SS"
-            "date": self.article.date.strftime("%Y-%m-%d %H:%M:%S"),
-            "author": self.article.author,
-            "topics": self.article.topics,
+            'id': self.article.article_id,
+            'url': self.article.url,
+            'title': self.article.title,
+            'date': self.article.date.strftime('%Y-%m-%d %H:%M:%S'),
+            'author': self.article.author,
+            'topics': self.article.topics
         }
-        meta_path = ASSETS_PATH / f"{self.article.article_id}_meta.json"
-        with open(meta_path, "w", encoding="utf-8") as f:
-            json.dump(meta_data, f, ensure_ascii=False, indent=2)
+        meta_path = ASSETS_PATH / f'{self.article.article_id}_meta.json'
+        with open(meta_path, 'w', encoding='utf-8') as f_meta:
+            json.dump(meta_data, f_meta, ensure_ascii=False, indent=2)
         # ────────────────────────────────────────────────────────────────
 
         return self.article
 
 
-# -------------------------------------------------------------------
-# Функция prepare_environment: создаём/очищаем указанную папку
-# -------------------------------------------------------------------
 def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     """
-    Если папка base_path существует, удаляем её вместе с содержимым, затем создаём заново.
-    Если не существует, просто создаём.
+    Создаёт (или очищает, если уже есть) папку base_path для сохранения артефактов.
     """
     path = pathlib.Path(base_path)
     if path.exists():
@@ -442,22 +439,19 @@ def prepare_environment(base_path: Union[pathlib.Path, str]) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-# -------------------------------------------------------------------
-# main(): точка входа, которую вызывает scraper_setup()
-# -------------------------------------------------------------------
 def main() -> None:
-    # 1) Загружаем конфиг
+    """Точка входа для запуска парсера/краулера из scraper_setup()."""
     configuration = Config(path_to_config=CRAWLER_CONFIG_PATH)
-    # 2) Очищаем папку для артефактов (ASSETS_PATH)
     prepare_environment(ASSETS_PATH)
-    # 3) Запускаем краулер
     crawler = Crawler(config=configuration)
     crawler.find_articles()
-    # 4) Парсим каждую найденную ссылку и сохраняем raw+meta
-    for i, url in enumerate(crawler.urls[:configuration.get_num_articles()], start=1):
-        parser = HTMLParser(full_url=url, article_id=i, config=configuration)
+
+    for idx, link in enumerate(
+        crawler.urls[:configuration.get_num_articles()], start=1
+    ):
+        parser = HTMLParser(full_url=link, article_id=idx, config=configuration)
         parser.parse()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
