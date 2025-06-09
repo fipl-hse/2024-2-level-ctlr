@@ -2,14 +2,17 @@
 Final project implementation.
 """
 
+import json
+from collections import defaultdict
+
 # pylint: disable=unused-import
 from pathlib import Path
-from lab_6_pipeline.pipeline import UDPipeAnalyzer
-from collections import defaultdict
-from spacy_conll.parser import ConllParser
-from core_utils.constants import PROJECT_ROOT
+
 import spacy_udpipe
-import json
+from spacy_conll.parser import ConllParser
+
+from core_utils.constants import PROJECT_ROOT
+from lab_6_pipeline.pipeline import UDPipeAnalyzer
 
 
 def main() -> None:
@@ -29,7 +32,7 @@ def main() -> None:
     conllu_dir = Path(__file__).parent / "dist"
     with open(conllu_dir / "auto_annotated.conllu", 'w', encoding='utf-8') \
             as file:
-        file.write(conllu)
+        file.write(str(conllu))
 
     model_path = Path(PROJECT_ROOT) / "lab_6_pipeline" / \
                  "assets" / "model" / "russian-syntagrus-ud-2.0-170801.udpipe"
@@ -47,8 +50,8 @@ def main() -> None:
     lemmas_frequencies = defaultdict(int)
     for token in conllu_doc:
         lemmas_frequencies[token.text.lower()] += 1
-    lemmas_frequencies_sorted = {k: v for k, v in sorted(lemmas_frequencies.items(),
-                                                         key=lambda item: item[1], reverse=True)}
+    lemmas_frequencies_sorted = dict(sorted(lemmas_frequencies.items(), key=lambda item: item[1],
+                                            reverse=True))
     with open(Path(__file__).parent / "data" / "tokens_frequencies.json", 'w',
               encoding='utf-8') \
             as file:
