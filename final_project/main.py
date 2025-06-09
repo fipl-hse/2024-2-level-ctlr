@@ -23,8 +23,6 @@ def main() -> None:
             combined_poems.append(file.read())
 
     combined_text = '\n\n\n'.join(combined_poems)
-    with open(assets_dir / "mrtz_combined" / "1_raw.txt", 'w', encoding='utf-8') as file:
-        file.write(combined_text)
 
     udpipe_analyzer = UDPipeAnalyzer()
     conllu = udpipe_analyzer.analyze([combined_text])[0]
