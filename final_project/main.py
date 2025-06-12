@@ -19,11 +19,19 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     txt_files = sorted(input_dir.glob("*.txt"))
-    texts = [f.read_text(encoding="utf-8") for f in txt_files]
+    for txt_file in txt_files:
+        original_text = txt_file.read_text(encoding="utf-8")
+        if original_text and not original_text.endswith('\n'):
+            txt_file.write_text(original_text + '\n', encoding="utf-8")
 
+    texts = [f.read_text(encoding="utf-8") for f in txt_files]
     analyzer = UDPipeAnalyzer()
     conllu_results = analyzer.analyze(texts)
-    output_file.write_text("\n".join(conllu_results), encoding="utf-8")
+
+    result_text = "\n".join(conllu_results)
+    if not result_text.endswith('\n'):
+        result_text += '\n'
+    output_file.write_text(result_text, encoding="utf-8")
 
 
 if __name__ == "__main__":
