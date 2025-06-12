@@ -34,6 +34,7 @@ def main() -> None:
     with open(base_dir / "final_project" / "token_frequencies.json", "w", encoding="utf-8") as f:
         json.dump(sorted(token_freq.items(),
                          key=lambda x: x[1], reverse=False), f, ensure_ascii=False, indent=2)
+        f.write('\n')
 
 
 if __name__ == "__main__":
