@@ -16,22 +16,12 @@ def main() -> None:
     output_dir = base_dir / "final_project" / "dist"
     output_file = output_dir / "auto_annotated.conllu"
 
+    texts = [txt.read_text(encoding="utf-8") for txt in sorted(input_dir.glob("*.txt"))]
+    combined_text = "\n".join(texts) + ("\n" if texts else "")
+
+    analyzed_data = UDPipeAnalyzer().analyze([combined_text])[0]
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    txt_files = sorted(input_dir.glob("*.txt"))
-    for txt_file in txt_files:
-        original_text = txt_file.read_text(encoding="utf-8")
-        if original_text and not original_text.endswith('\n'):
-            txt_file.write_text(original_text + '\n', encoding="utf-8")
-
-    texts = [f.read_text(encoding="utf-8") for f in txt_files]
-    analyzer = UDPipeAnalyzer()
-    conllu_results = analyzer.analyze(texts)
-
-    result_text = "\n".join(conllu_results)
-    if not result_text.endswith('\n'):
-        result_text += '\n'
-    output_file.write_text(result_text, encoding="utf-8")
+    output_file.write_text(analyzed_data, encoding="utf-8")
 
 
 if __name__ == "__main__":
