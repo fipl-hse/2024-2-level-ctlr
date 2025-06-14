@@ -19,27 +19,27 @@ def main() -> None:
     """
     Generate conllu file for provided corpus of texts.
     """
+    project_path = Path(__file__).parent.parent / "final_project"
+    assets_path = project_path / "assets"
+    dist_path = project_path / "dist"
+    dist_path.mkdir(parents=True, exist_ok=True)
+    data_path = project_path / "data"
+    data_path.mkdir(parents=True, exist_ok=True)
 
-    with open(PROJECT_ROOT / "final_project" / "assets" / "output-file.txt", 'w',
-              encoding='utf-8') as output_file:
-        for file_path in Path(PROJECT_ROOT / "final_project" / "assets").glob("cvet*.txt"):
-            with open(file_path, 'r', encoding='utf-8') as input_file:
-                output_file.write(input_file.read() + '\n')
+    single_file = []
 
-    with open(PROJECT_ROOT / "final_project" / "assets" / "output-file.txt", 'r',
-              encoding='utf-8') as file:
-        file_to_analyze = file.read()
+    for file_path in Path(assets_path).glob("cvet*.txt"):
+        with open(file_path, 'r', encoding='utf-8') as input_file:
+            single_file.append(input_file.read())
+
+    file_to_analyze = ''.join(single_file)
 
     udpipe_analyzer = UDPipeAnalyzer()
     analyzed_file = udpipe_analyzer.analyze([file_to_analyze])
-    print(analyzed_file)
 
-    base_path = Path(PROJECT_ROOT / "final_project" / "dist")
-    base_path.mkdir(parents=True, exist_ok=True)
-
-    with open(base_path / "auto_annotated.conllu", "w", encoding="utf-8") as annotation_file:
+    with open(dist_path / "auto_annotated.conllu", "w", encoding="utf-8") as annotation_file:
         annotation_file.write('\n'.join([str(elem) for elem in analyzed_file]))
-        annotation_file.write("\n")
+        annotation_file.write('\n')
 
     model = spacy_udpipe.load_from_path(lang="ru",
                                         path=str(PROJECT_ROOT / "lab_6_pipeline" / "assets" /
@@ -53,11 +53,17 @@ def main() -> None:
 
     parsed_doc = ConllParser(model).parse_conll_text_as_spacy(analyzed_file[0].strip('\n'))
 
-    frequency = dict(sorted(Counter([token.text.lower() for token in parsed_doc
-                                     if token.pos_ != 'PUNCT']).items(), key=lambda x: x[1]))
-    with open(PROJECT_ROOT / "final_project" / "data" / "frequencies.json", 'w',
-              encoding='utf-8') as freq_file:
-        json.dump(frequency, freq_file, indent=4, ensure_ascii=False)
+    tokens_frequency = dict(sorted(Counter([token.text.lower() for token in parsed_doc]).items(),
+                            key=lambda x: x[1]))
+
+    with open(data_path / "frequencies.json", 'w', encoding='utf-8') as freq_file:
+        json.dump(tokens_frequency, freq_file, indent=4, ensure_ascii=False)
+
+    # pos_frequency = dict(sorted(Counter([pos.pos_ for pos in parsed_doc]).items(),
+    #                             key=lambda x: x[1], reverse=True))
+    #
+    # with open(data_path / "pos_frequencies.json", 'w', encoding='utf-8') as freq_file:
+    #     json.dump(pos_frequency, freq_file, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":
