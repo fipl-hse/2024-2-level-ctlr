@@ -74,21 +74,22 @@ class CorpusManager:
             raise NotADirectoryError("The path to articles leads to a file, not a directory")
         if not any(self.path_to_raw.iterdir()):
             raise EmptyDirectoryError("The path to articles leads to an empty directory")
-        indices = [1, 1]
-        files_to_check = [file.name for file in self.path_to_raw.iterdir()
-                          if file.is_file() and
-                          (file.name.endswith("_raw.txt") or file.name.endswith("_meta.json"))]
-        for file_name in sorted(files_to_check,
-                                key=lambda name: int(name[:name.index("_")])):
-            current_ind = int("meta" in file_name)
-            if (file_name[:file_name.index("_")] == str(indices[current_ind])
-                    and indices[0] == indices[1]-1+current_ind):
-                indices[current_ind] += 1
+        ind = 1
+        files_to_check_raw = [int(file.name[:file.name.index("_")])
+                              for file in self.path_to_raw.iterdir()
+                          if file.is_file() and file.name.endswith("_raw.txt")]
+        files_to_check_meta = [int(file.name[:file.name.index("_")])
+                               for file in self.path_to_raw.iterdir()
+                              if file.is_file() and file.name.endswith("_meta.json")]
+        for file_ind in sorted(files_to_check_raw):
+            if file_ind == ind and ind in files_to_check_meta:
+                ind += 1
             else:
                 raise InconsistentDatasetError(
                     "There are slips in file IDs or the number of raw and meta files is not equal"
                 )
-            if not (self.path_to_raw / file_name).stat().st_size:
+            if not ((self.path_to_raw / (str(file_ind)+"_raw.txt")).stat().st_size
+                    or not (self.path_to_raw / (str(file_ind)+"_meta.json")).stat().st_size):
                 raise InconsistentDatasetError("At least one file is empty")
 
     def _scan_dataset(self) -> None:
@@ -349,7 +350,7 @@ class POSFrequencyPipeline:
                 pos_freq_dict[pos] = pos_freq_dict.get(pos, 0) + 1
         dict_for_graph = {}
         for key, value in pos_freq_dict.items():
-            dict_for_graph[key+"_"+str(value)] = value
+            dict_for_graph[key] = value
         return dict_for_graph
 
     def run(self) -> None:
