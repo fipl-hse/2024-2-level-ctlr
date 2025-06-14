@@ -1,3 +1,8 @@
+"""
+Final project implementation.
+"""
+
+# pylint: disable=unused-import
 from pathlib import Path
 from typing import Union
 
@@ -20,6 +25,9 @@ def unite_texts(corpus: Union[Path, str], result: Union[Path, str]) -> None:
 
 
 def main() -> None:
+    """
+    Generate conllu file for provided corpus of texts.
+    """
     ROOT = Path(__file__).parent
     path_mand = ROOT / "assets" / "mandelstamm"
     path_united = ROOT / "assets" / "mandl-all.txt"
