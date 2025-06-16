@@ -6,7 +6,6 @@ Final project implementation.
 from pathlib import Path
 from core_utils.constants import PROJECT_ROOT
 from lab_6_pipeline.pipeline import UDPipeAnalyzer
-from collections import defaultdict
 
 
 def main() -> None:
@@ -29,7 +28,7 @@ def main() -> None:
 
     with open(dist_path / 'auto_annotated.conllu', 'w', encoding='utf-8') as file:
         file.write(analyzed[0])
-
+        file.write('\n')
 
 
 if __name__ == "__main__":
