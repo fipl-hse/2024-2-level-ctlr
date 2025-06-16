@@ -38,7 +38,8 @@ def main() -> None:
 
     udpipe_analyzer = UDPipeAnalyzer()
     with open(path_united, "r", encoding="utf-8") as read_file:
-        auto_annotated = str(udpipe_analyzer.analyze([read_file.read()])[0])
+        auto_annotated_list = udpipe_analyzer.analyze([read_file.read()])
+        auto_annotated = str(auto_annotated_list[0])
     # Lock the 2 following lines if the .conllu file exists
     with open(path_conllu, "w", encoding="utf-8") as conllu_file:
         conllu_file.write(auto_annotated)
