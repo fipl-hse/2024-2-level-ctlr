@@ -19,7 +19,7 @@ def main() -> None:
     """
     Generate conllu file for provided corpus of texts.
     """
-    project_path = Path(__file__).parent.parent / "final_project"
+    project_path = Path(__file__).parent / "final_project"
     assets_path = project_path / "assets"
     dist_path = project_path / "dist"
     dist_path.mkdir(parents=True, exist_ok=True)
@@ -58,12 +58,6 @@ def main() -> None:
 
     with open(data_path / "frequencies.json", 'w', encoding='utf-8') as freq_file:
         json.dump(tokens_frequency, freq_file, indent=4, ensure_ascii=False)
-
-    # pos_frequency = dict(sorted(Counter([pos.pos_ for pos in parsed_doc]).items(),
-    #                             key=lambda x: x[1], reverse=True))
-    #
-    # with open(data_path / "pos_frequencies.json", 'w', encoding='utf-8') as freq_file:
-    #     json.dump(pos_frequency, freq_file, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":
