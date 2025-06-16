@@ -4,7 +4,6 @@ Final project implementation.
 
 # pylint: disable=unused-import
 from pathlib import Path
-from core_utils.constants import PROJECT_ROOT
 from lab_6_pipeline.pipeline import UDPipeAnalyzer
 
 
@@ -12,9 +11,9 @@ def main() -> None:
     """
     Generate conllu file for provided corpus of texts.
     """
-    path = PROJECT_ROOT / 'final_project'
-    assets_path = path / 'assets' / 'pasternak'
-    dist_path = path / 'dist'
+    root = Path(__file__).parent
+    assets_path = root / 'assets' / 'pasternak'
+    dist_path = root / 'dist'
     if not dist_path.exists():
         dist_path.mkdir(parents=True)
     text = ''
