@@ -28,20 +28,20 @@ def main() -> None:
     """
     Generate conllu file for provided corpus of texts.
     """
-    ROOT = Path(__file__).parent
-    path_mand = ROOT / "assets" / "mandelstamm"
-    path_united = ROOT / "assets" / "mandl-all.txt"
-    path_conllu = ROOT / "dist" / "auto_annotated.conllu"
+    root = Path(__file__).parent
+    path_mand = root / "assets" / "mandelstamm"
+    path_united = root / "assets" / "mandl-all.txt"
+    path_conllu = root / "dist" / "auto_annotated.conllu"
 
     # Lock the following line if the file with all texts exists
     unite_texts(path_mand, path_united)
 
     udpipe_analyzer = UDPipeAnalyzer()
     with open(path_united, "r", encoding="utf-8") as read_file:
-        auto_annotated = udpipe_analyzer.analyze([read_file.read()])
+        auto_annotated = str(udpipe_analyzer.analyze([read_file.read()])[0])
     # Lock the 2 following lines if the .conllu file exists
     with open(path_conllu, "w", encoding="utf-8") as conllu_file:
-        conllu_file.write(auto_annotated[0])
+        conllu_file.write(auto_annotated)
 
 
 if __name__ == "__main__":
