@@ -178,8 +178,8 @@ class UDPipeAnalyzer(LibraryWrapper):
         """
         ru = spacy_udpipe.load_from_path(
             "ru",
-            str(PROJECT_ROOT) +
-            "\\lab_6_pipeline\\assets\\model\\russian-syntagrus-ud-2.0-170801.udpipe"
+            str(PROJECT_ROOT / "lab_6_pipeline" / "assets" / "model" /
+                "russian-syntagrus-ud-2.0-170801.udpipe")
         )
         ru.add_pipe(
             "conll_formatter",
