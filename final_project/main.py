@@ -31,7 +31,7 @@ def main() -> None:
     ROOT = Path(__file__).parent
     path_mand = ROOT / "assets" / "mandelstamm"
     path_united = ROOT / "assets" / "mandl-all.txt"
-    path_conllu = ROOT / "assets" / "mandl-auto_annotated.conllu"
+    path_conllu = ROOT / "dist" / "auto_annotated.conllu"
 
     # Lock the following line if the file with all texts exists
     unite_texts(path_mand, path_united)
