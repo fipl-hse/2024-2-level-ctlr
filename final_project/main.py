@@ -65,6 +65,7 @@ def main() -> None:
     text_modifyer.text_join()
     text_modifyer.save_text()
     path_to_conllu = PROJECT_ROOT / "final_project" / "dist"
+    path_to_conllu.mkdir()
     text_modifyer.conllu_analysis(path_to_conllu)
     frequency_dictionary = text_modifyer.connlu_freq(path_to_conllu)
     path_to_freq = PROJECT_ROOT / "final_project" / "data" / "table_work" / "frequency_dictionary.json"
