@@ -4,7 +4,6 @@ Final project implementation.
 
 # pylint: disable=unused-import
 from pathlib import Path
-import pyconll
 import shutil
 import json
 from lab_6_pipeline.pipeline import UDPipeAnalyzer
@@ -42,22 +41,6 @@ class Text_Modifyer:
         conllu_file.write('\n')
         conllu_file.close()
 
-    def connlu_freq(self, file_path: Path) -> dict:
-        freq = {}
-        true_path = file_path / "auto_annotated.conllu"
-        corpus = pyconll.load_from_file(true_path)
-        for sentence in corpus:
-            for token in sentence:
-                lemma = str(token.lemma)
-                if lemma not in list(freq.keys()):
-                    freq[lemma] = 1
-                else:
-                    freq[lemma] += 1
-        freq = sorted(freq.items(), key=lambda x: x[1], reverse=True)
-        freq_new = {line[0]: line[1] for line in freq}
-        return freq_new
-
-
 def main() -> None:
     """
     Generate conllu file for provided corpus of texts.
@@ -71,10 +54,6 @@ def main() -> None:
         shutil.rmtree(path_to_conllu)
     path_to_conllu.mkdir()
     text_modifyer.conllu_analysis(path_to_conllu)
-    frequency_dictionary = text_modifyer.connlu_freq(path_to_conllu)
-    path_to_freq = PROJECT_ROOT / "final_project" / "data" / "table_work" / "frequency_dictionary.json"
-    with open(path_to_freq, 'w', encoding="UTF-8") as f:
-        json.dump(frequency_dictionary, f, indent=4, ensure_ascii=False, separators=(",", ": "))
     print("Done!")
 
 
