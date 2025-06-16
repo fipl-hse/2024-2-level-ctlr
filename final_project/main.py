@@ -23,8 +23,8 @@ def main() -> None:
     assets_path = project_path / "assets" / "cvetaeva"
     dist_path = project_path / "dist"
     dist_path.mkdir(parents=True, exist_ok=True)
-    conllu_path = dist_path / "auto_annotated.conllu"
     data_path = project_path / "data"
+    data_path.mkdir(parents=True, exist_ok=True)
 
     single_file = []
 
@@ -37,7 +37,7 @@ def main() -> None:
     udpipe_analyzer = UDPipeAnalyzer()
     analyzed_file = udpipe_analyzer.analyze([file_to_analyze])
 
-    with open(conllu_path, "w", encoding="utf-8") as annotation_file:
+    with open(dist_path / "auto_annotated.conllu", "w", encoding="utf-8") as annotation_file:
         annotation_file.write(analyzed_file[0])
         annotation_file.write('\n')
 
