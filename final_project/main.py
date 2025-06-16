@@ -22,7 +22,7 @@ def main() -> None:
     project_path = Path(__file__).parent
     assets_path = project_path / "assets" / "cvetaeva"
     dist_path = project_path / "dist"
-    dist_path.mkdir()
+    dist_path.mkdir(parents=True, exist_ok=True)
     data_path = project_path / "data"
 
     single_file = []
