@@ -5,6 +5,7 @@ Final project implementation.
 # pylint: disable=unused-import
 from pathlib import Path
 import pyconll
+import shutil
 import json
 from lab_6_pipeline.pipeline import UDPipeAnalyzer
 from core_utils.constants import PROJECT_ROOT
@@ -65,6 +66,8 @@ def main() -> None:
     text_modifyer.text_join()
     text_modifyer.save_text()
     path_to_conllu = PROJECT_ROOT / "final_project" / "dist"
+    if path_to_conllu.exists():
+        shutil.rmtree(path_to_conllu)
     path_to_conllu.mkdir()
     text_modifyer.conllu_analysis(path_to_conllu)
     frequency_dictionary = text_modifyer.connlu_freq(path_to_conllu)
