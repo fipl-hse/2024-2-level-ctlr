@@ -11,7 +11,7 @@ from core_utils.constants import PROJECT_ROOT
 from lab_6_pipeline.pipeline import UDPipeAnalyzer
 
 
-class Text_Modifyer:
+class TextModifyer:
 
     def __init__(self, path: Path):
         self.path = path
@@ -38,7 +38,8 @@ class Text_Modifyer:
             conllu_data = self._analyser.analyze(texts=texts)
         final_path = path_to_save / 'auto_annotated.conllu'
         conllu_file = open(final_path, 'w', encoding="UTF-8")
-        conllu_file.write('\n'.join(conllu_data))
+        list_data = list(map(str, conllu_data))
+        conllu_file.write('\n'.join(list_data))
         conllu_file.write('\n')
         conllu_file.close()
 
@@ -47,7 +48,7 @@ def main() -> None:
     Generate conllu file for provided corpus of texts.
     """
     path = PROJECT_ROOT / "final_project" / "assets" / "cerny"
-    text_modifyer = Text_Modifyer(path)
+    text_modifyer = TextModifyer(path)
     text_modifyer.text_join()
     text_modifyer.save_text()
     path_to_conllu = PROJECT_ROOT / "final_project" / "dist"
