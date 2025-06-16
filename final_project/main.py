@@ -36,7 +36,10 @@ def main() -> None:
 
     udpipe_analyzer = UDPipeAnalyzer()
     analyzed_file = udpipe_analyzer.analyze([file_to_analyze])
-    conllu_path.write_text(analyzed_file[0], encoding="utf-8")
+
+    with open(conllu_path, "w", encoding="utf-8") as annotation_file:
+        annotation_file.write(analyzed_file[0])
+        annotation_file.write('\n')
 
     model = spacy_udpipe.load_from_path(lang="ru",
                                         path=str(PROJECT_ROOT / "lab_6_pipeline" / "assets" /
