@@ -329,7 +329,7 @@ class POSFrequencyPipeline:
         """
         freq_pos = {}
         for token in self._analyzer.from_conllu(article):
-            freq_pos[f'lol - {token.pos_}'] = freq_pos.get(f'lol - {token.pos_}', 0) + 1
+            freq_pos[f'{token.pos_}'] = freq_pos.get(f'{token.pos_}', 0) + 1
         return freq_pos
 
     def run(self) -> None:
