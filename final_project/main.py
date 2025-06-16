@@ -22,6 +22,7 @@ def main() -> None:
     udpipe_analyzer = UDPipeAnalyzer()
     with open(RAW_CONLLU, "w", encoding="utf-8") as f:
         f.write(str(udpipe_analyzer.analyze([all_txt])[0]))
+        f.write("\n")
 
 
 if __name__ == "__main__":

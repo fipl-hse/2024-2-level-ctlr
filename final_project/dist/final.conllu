@@ -63,9 +63,9 @@
 4	косогорах	косогор	NOUN	_	Animacy=Inan|Case=Loc|Gender=Masc|Number=Plur	1	nmod	_	_
 5	Как	как	ADV	_	Degree=Pos	9	parataxis	_	_
 6	желто	желто	ADV	_	Degree=Pos	5	punct	_	SpaceAfter=No
-7   -	-	PUNCT	_	_	9	punct	_	_
+7	-	-	PUNCT	_	_	6	punct	_	SpaceAfter=No
 8	красный	красный	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	9	amod	_	_
-9	лисий	лисий	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	9	amod	_	_
+9	лисий	лисий	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	10	amod	_	_
 10	мех	мех	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	0	ROOT	_	SpaceAfter=No
 11	.	.	PUNCT	_	_	9	punct	_	_
 
@@ -103,14 +103,14 @@
 6	,	,	PUNCT	_	_	5	punct	_	_
 7	Где	где	ADV	_	Degree=Pos	8	advmod	_	_
 8	серо	серо	ADJ	_	Degree=Pos	3	conj	_	SpaceAfter=No
-9   -	-	PUNCT	_	_	9	punct	_	_
-10  сизый   сизый   ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing
+9	-	-	PUNCT	_	_	8	punct	_	SpaceAfter=No
+10	сизый	сизый	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	12	conj	_	SpaceAfter=No
 11	,	,	PUNCT	_	_	8	punct	_	_
 12	неживой	неживой	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	11	amod	_	_
 13	Осыпался	осыпаться	VERB	_	Aspect=Imp|Gender=Masc|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Mid	2	parataxis	_	_
 14	осинник	осинник	NOUN	_	Animacy=Anim|Case=Nom|Gender=Masc|Number=Sing	11	nsubj	_	_
 15	голый	голый	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	12	amod	_	_
-16	Лимонной	Лимонный	ADJ	_	Case=Ins|Degree=Pos|Gender=Fem|Number=Sing	16	amod	_	_
+16	Лимонной	Лимонный	ADJ	_	Case=Ins|Degree=Pos|Gender=Fem|Number=Sing	13	amod	_	_
 17	мелкою	мелкый	ADJ	_	Case=Ins|Degree=Pos|Gender=Fem|Number=Sing	16	amod	_	_
 18	листвой	листва	NOUN	_	Animacy=Inan|Case=Ins|Gender=Fem|Number=Sing	13	nmod	_	SpaceAfter=No
 19	.	.	PUNCT	_	_	16	punct	_	_
@@ -466,7 +466,7 @@
 11	жемчужна	жемчужный	ADJ	_	Degree=Pos|Gender=Fem|Number=Sing|Variant=Short	3	conj	_	_
 12	смуглость	смуглость	NOUN	_	Animacy=Inan|Case=Nom|Gender=Fem|Number=Sing	11	nsubj	_	_
 13	щек	щека	NOUN	_	Animacy=Inan|Case=Gen|Gender=Fem|Number=Plur	12	nmod	_	SpaceAfter=No
-14  .	.	PUNCT	_	_	13	punct	_	_
+14	.	.	PUNCT	_	_	13	punct	_	SpaceAfter=No
 15	.	.	PUNCT	_	_	13	punct	_	SpaceAfter=No
 16	.	.	PUNCT	_	_	13	punct	_	_
 
@@ -603,9 +603,9 @@
 14	ветер	ветер	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	17	advmod	_	_
 15	звоном	звон	NOUN	_	Animacy=Inan|Case=Ins|Gender=Masc|Number=Sing	17	obl	_	_
 16	однотонным	однотонный	ADJ	_	Case=Ins|Degree=Pos|Gender=Masc|Number=Sing	15	amod	_	_
-17	Гудит	гудеть	VERB	_	Aspect=Imp|Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin|Voice=Act	10	conj	_	_
-18  -	-	PUNCT	_	_	17	punct	_	_
-19  поет петь VERB	_	Aspect=Imp|Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin|Voice=Act	10	conj	_	_
+17	Гудит	гудеть	VERB	_	Aspect=Imp|Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin|Voice=Act	10	conj	_	SpaceAfter=No
+18	-	-	PUNCT	_	_	17	punct	_	SpaceAfter=No
+19	поет	петь	VERB	_	Aspect=Imp|Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin|Voice=Act	10	conj	_	_
 20	в	в	ADP	_	_	19	case	_	_
 21	стволы	ствол	NOUN	_	Animacy=Inan|Case=Acc|Gender=Masc|Number=Plur	17	obl	_	_
 22	ружья	ружье	NOUN	_	Animacy=Inan|Case=Gen|Gender=Neut|Number=Sing	19	nmod	_	SpaceAfter=No
@@ -952,7 +952,7 @@
 68	,	,	PUNCT	_	_	67	punct	_	_
 69	волчьи	волчий	DET	_	Case=Nom|Number=Plur	70	amod	_	_
 70	очи	око	NOUN	_	Animacy=Inan|Case=Acc|Gender=Neut|Number=Plur	67	obl	_	SpaceAfter=No
-71  .	.	PUNCT	_	_	70	punct	_	_
+71	.	.	PUNCT	_	_	70	punct	_	SpaceAfter=No
 72	.	.	PUNCT	_	_	70	punct	_	SpaceAfter=No
 73	.	.	PUNCT	_	_	70	punct	_	_
 
@@ -1485,7 +1485,7 @@
 # text = Но, Боже!
 1	Но	но	CCONJ	_	_	3	cc	_	SpaceAfter=No
 2	,	,	PUNCT	_	_	1	punct	_	_
-3	Боже	боже    INTJ	_	_	0	ROOT	_	SpaceAfter=No
+3	Боже	боже	INTJ	_	_	0	ROOT	_	SpaceAfter=No
 4	!	!	PUNCT	_	_	3	punct	_	_
 
 # sent_id = 88
@@ -1552,7 +1552,7 @@
 # sent_id = 91
 # text = Для чего звучит во храме Снова скорбный стон, Снова дымными огнями Лик твой озарен?
 1	Для	для	ADP	_	_	2	case	_	_
-2	чего	что	PRON	_	Case=Gen|Animacy=Inan	3	obl	_	_
+2	чего	что	PRON	_	Animacy=Inan|Case=Gen	3	obl	_	_
 3	звучит	звучать	VERB	_	Aspect=Imp|Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin|Voice=Act	0	ROOT	_	_
 4	во	в	ADP	_	_	5	case	_	_
 5	храме	храм	NOUN	_	Animacy=Inan|Case=Loc|Gender=Masc|Number=Sing	3	obl	_	_
@@ -1602,7 +1602,7 @@
 2	Он	он	PRON	_	Case=Nom|Gender=Masc|Number=Sing|Person=3	1	nsubj	_	SpaceAfter=No
 3	,	,	PUNCT	_	_	2	punct	_	_
 4	тобой	ты	PRON	_	Case=Ins|Number=Sing|Person=2	5	obl	_	_
-5	согрет	согреть	VERB	_	Aspect=Perf|Mood=Ind|Number=Sing|Gender=Masc|Tense=Fut|VerbForm=Part|Voice=Act|Variant=short	1	conj	_	SpaceAfter=No
+5	согрет	согреть	VERB	_	Aspect=Perf|Gender=Masc|Mood=Ind|Number=Sing|Tense=Fut|Variant=Short|VerbForm=Part|Voice=Act	1	conj	_	SpaceAfter=No
 6	,	,	PUNCT	_	_	5	punct	_	_
 7	В	в	ADP	_	_	8	case	_	_
 8	небесах	небеса	NOUN	_	Animacy=Inan|Case=Loc|Number=Plur	10	obl	_	_
@@ -1659,7 +1659,7 @@
 12	в	в	ADP	_	_	13	case	_	_
 13	поля	поле	NOUN	_	Animacy=Inan|Case=Acc|Gender=Neut|Number=Plur	11	obl	_	_
 14	мои	мой	DET	_	Case=Nom|Number=Plur	15	amod	_	_
-15	родные	родные	ADJ	_	Degree=Pos|Case=Nom|Number=Plur|Case=Acc	11	nsubj	_	SpaceAfter=No
+15	родные	родные	ADJ	_	Case=Acc|Degree=Pos|Number=Plur	11	nsubj	_	SpaceAfter=No
 16	,	,	PUNCT	_	_	15	punct	_	_
 17	Я	я	PRON	_	Case=Nom|Number=Sing|Person=1	19	nsubj	_	_
 18	странником	странник	NOUN	_	Animacy=Anim|Case=Ins|Gender=Masc|Number=Sing	19	obl	_	_
@@ -1685,9 +1685,9 @@
 6	я	я	PRON	_	Case=Nom|Number=Sing|Person=1	8	nsubj	_	_
 7	на	на	ADP	_	_	8	case	_	_
 8	пути	путь	NOUN	_	Animacy=Inan|Case=Loc|Gender=Masc|Number=Sing	4	conj	_	_
-9	стою	стоять	VERB	_	Aspect=Imp|Number=Sing|Tense=Pres|VerbForm=Fin|Voice=Act|Person=1	8	nmod	_	_
+9	стою	стоять	VERB	_	Aspect=Imp|Number=Sing|Person=1|Tense=Pres|VerbForm=Fin|Voice=Act	8	nmod	_	_
 10	И	и	CCONJ	_	_	11	cc	_	_
-11	пью	пить	VERB	_	Aspect=Imp|Number=Sing|Tense=Pres|VerbForm=Fin|Voice=Act|Person=1	9	conj	_	_
+11	пью	пить	VERB	_	Aspect=Imp|Number=Sing|Person=1|Tense=Pres|VerbForm=Fin|Voice=Act	9	conj	_	_
 12	лесных	лесной	ADJ	_	Case=Gen|Degree=Pos|Number=Plur	13	amod	_	_
 13	ветров	ветер	NOUN	_	Animacy=Inan|Case=Gen|Gender=Masc|Number=Plur	11	nmod	_	_
 14	живительную	живительный	ADJ	_	Case=Acc|Degree=Pos|Gender=Fem|Number=Sing	15	amod	_	_
@@ -1700,7 +1700,7 @@
 # text = О, возврати, мой край, мне молодость мою, И юных блеск очей, и юную отвагу!
 1	О	о	INTJ	_	_	3	parataxis	_	SpaceAfter=No
 2	,	,	PUNCT	_	_	1	punct	_	_
-3	возврати	возвратить	VERB	_	Aspect=Imp|Number=Sing|Tense=Pres|VerbForm=Fin|Voice=Act|Person=2|Mood=Imp	0	ROOT	_	SpaceAfter=No
+3	возврати	возвратить	VERB	_	Aspect=Imp|Mood=Imp|Number=Sing|Person=2|Tense=Pres|VerbForm=Fin|Voice=Act	0	ROOT	_	SpaceAfter=No
 4	,	,	PUNCT	_	_	3	punct	_	_
 5	мой	мой	DET	_	Case=Nom|Gender=Masc|Number=Sing	6	amod	_	_
 6	край	край	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	3	conj	_	SpaceAfter=No
@@ -1808,7 +1808,7 @@
 7	темной	темный	ADJ	_	Case=Loc|Degree=Pos|Gender=Fem|Number=Sing	8	amod	_	_
 8	воде	вода	NOUN	_	Animacy=Inan|Case=Loc|Gender=Fem|Number=Sing	32	obl	_	_
 9	Под	под	ADP	_	_	10	case	_	_
-10	кривою	кривой	ADJ	_	Degre=Pos|Case=Ins|Gender=Masc|Number=Sing	32	obl	_	_
+10	кривою	кривой	ADJ	_	Case=Ins|Degree=Pos|Gender=Masc|Number=Sing	32	obl	_	_
 11	ракитой	ракита	NOUN	_	Animacy=Inan|Case=Ins|Gender=Masc|Number=Sing	10	amod	_	_
 12	в	в	ADP	_	_	14	case	_	_
 13	заглохшем	заглохнуть	VERB	_	Aspect=Perf|Case=Loc|Gender=Masc|Number=Sing|Tense=Past|VerbForm=Part|Voice=Act	14	amod	_	_
@@ -1908,7 +1908,7 @@
 6	утром	утро	NOUN	_	Animacy=Inan|Case=Ins|Gender=Neut|Number=Sing	13	obl	_	_
 7	в	в	ADP	_	_	8	case	_	_
 8	воздухе	воздух	NOUN	_	Animacy=Inan|Case=Loc|Gender=Masc|Number=Sing	6	nmod	_	_
-9	нагретом	нагрет	ADJ	_	Case=Ins|Degree=Pos|Number=Sing|Gender=Masc	13	obl	_	_
+9	нагретом	нагрет	ADJ	_	Case=Ins|Degree=Pos|Gender=Masc|Number=Sing	13	obl	_	_
 10	Густые	густой	ADJ	_	Case=Nom|Degree=Pos|Number=Plur	12	amod	_	_
 11	белые	белый	ADJ	_	Case=Nom|Degree=Pos|Number=Plur	12	amod	_	_
 12	пары	пар	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Plur	13	nsubj:pass	_	_
@@ -2329,7 +2329,8 @@
 6	Долетает	долетать	VERB	_	Aspect=Imp|Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin|Voice=Act	0	ROOT	_	_
 7	тихо	тихо	NOUN	_	Animacy=Inan|Case=Acc|Gender=Fem|Number=Plur	6	obj	_	SpaceAfter=No
 8	.	.	PUNCT	_	_	7	punct	_	SpaceAfter=No
-9	.	.	PUNCT	_	_	7	punct	_	_
+9	.	.	PUNCT	_	_	7	punct	_	SpaceAfter=No
+10	.	.	PUNCT	_	_	7	punct	_	SpaceAfter=No
 
 # sent_id = 135
 # text = А вдали кукушка в роще Медленно кукует...
@@ -3033,10 +3034,11 @@
 4	-	-	PUNCT	_	_	2	punct	_	_
 5	и	и	CCONJ	_	_	6	cc	_	_
 6	темнеет	темнеть	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	2	conj	_	_
-7	Бледно-синий	Бледно-синий	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	6	punct	_	SpaceAfter=No
-8	восток	восток	NOUN	_	Animacy=Anim|Case=Ins|Gender=Masc|Number=Sing	8	nmod	_	SpaceAfter=No
-9	.	.	PUNCT	_	_	9	punct	_	SpaceAfter=No
-10	.	.	PUNCT	_	_	9	punct	_	_
+7	Бледно-синий	Бледно-синий	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	6	punct	_	_
+8	восток	восток	NOUN	_	Animacy=Anim|Case=Ins|Gender=Masc|Number=Sing	6	nmod	_	SpaceAfter=No
+9	.	.	PUNCT	_	_	8	punct	_	SpaceAfter=No
+10	.	.	PUNCT	_	_	8	punct	_	SpaceAfter=No
+11	.	.	PUNCT	_	_	8	punct	_	SpaceAfter=No
 
 # sent_id = 177
 # text = От одежд ее веет По полям ветерок.
@@ -3090,8 +3092,8 @@
 # sent_id = 181
 # text = Спи-усни, мое сердце!
 1	Спи	спать	VERB	_	Mood=Imp|Number=Sing|Person=2|Tense=Pres|VerbForm=Fin|Voice=Act	0	ROOT	_	SpaceAfter=No
-2   -	-	PUNCT	_	_	1	punct	_	_
-3   усни	уснуть	VERB	_	Mood=Imp|Number=Sing|Person=2|Tense=Pres|VerbForm=Fin|Voice=Act    1	conj	_	SpaceAfter=No
+2	-	-	PUNCT	_	_	1	punct	_	SpaceAfter=No
+3	усни	уснуть	VERB	_	Mood=Imp|Number=Sing|Person=2|Tense=Pres|VerbForm=Fin|Voice=Act	1	conj	_	SpaceAfter=No
 4	,	,	PUNCT	_	_	1	punct	_	_
 5	мое	мой	DET	_	Case=Nom|Gender=Neut|Number=Sing	4	amod	_	_
 6	сердце	сердце	NOUN	_	Animacy=Inan|Case=Nom|Gender=Neut|Number=Sing	1	conj	_	SpaceAfter=No
@@ -3100,7 +3102,7 @@
 # sent_id = 182
 # text = Отдохни...
 1	Отдохни	отдохнуть	NOUN	_	Mood=Imp|Number=Sing|Person=2|Tense=Pres|VerbForm=Fin|Voice=Act	0	ROOT	_	SpaceAfter=No
-2   .	.	PUNCT	_	_	1	punct	_	_
+2	.	.	PUNCT	_	_	1	punct	_	SpaceAfter=No
 3	.	.	PUNCT	_	_	1	punct	_	SpaceAfter=No
 4	.	.	PUNCT	_	_	1	punct	_	_
 
@@ -3115,7 +3117,7 @@
 2	.	.	PUNCT	_	_	4	punct	_	SpaceAfter=No
 3	.	.	PUNCT	_	_	4	punct	_	SpaceAfter=No
 4	И	и	CCONJ	_	_	5	cc	_	_
-5	снилося	сниться	VERB	_	Aspect=Perf|Mood=Ind|Number=Sing|Gender=Neut|Person=2|Tense=Past|VerbForm=Fin|Voice=Mid	0	ROOT	_	_
+5	снилося	сниться	VERB	_	Aspect=Perf|Gender=Neut|Mood=Ind|Number=Sing|Person=2|Tense=Past|VerbForm=Fin|Voice=Mid	0	ROOT	_	_
 6	мне	я	PRON	_	Case=Dat|Number=Sing|Person=1	5	obl	_	SpaceAfter=No
 7	,	,	PUNCT	_	_	6	punct	_	_
 8	что	что	SCONJ	_	_	5	mark	_	_
@@ -3193,7 +3195,7 @@
 # sent_id = 189
 # text = И сжалося сердце от боли во мне, Когда я кругом поглядел при огне!
 1	И	и	CCONJ	_	_	12	cc	_	_
-2	сжалося	сжалося	VERB	_	Aspect=Perf|Mood=Ind|Number=Sing|Gender=Neut|Person=2|Tense=Past|VerbForm=Fin|Voice=Mid	12	advcl	_	_
+2	сжалося	сжалося	VERB	_	Aspect=Perf|Gender=Neut|Mood=Ind|Number=Sing|Person=2|Tense=Past|VerbForm=Fin|Voice=Mid	12	advcl	_	_
 3	сердце	сердце	NOUN	_	Animacy=Inan|Case=Acc|Gender=Neut|Number=Sing	2	obj	_	_
 4	от	от	ADP	_	_	5	case	_	_
 5	боли	боль	NOUN	_	Animacy=Inan|Case=Gen|Gender=Fem|Number=Sing	2	obl	_	_
@@ -3210,7 +3212,7 @@
 
 # sent_id = 190
 # text = Навис потолок, обвалились углы, Повсюду скрипят под ногами полы И пахнет печами...
-1	Навис	Навис	VERB	_	Aspect=Perf|Tense=Past|Number=Sing|Gender=Masc|VerbForm=Fin|Voice=Act	4	nsubj	_	_
+1	Навис	Навис	VERB	_	Aspect=Perf|Gender=Masc|Mood=Ind|Number=Sing|Person=3|Tense=Past|VerbForm=Fin|Voice=Act	4	nsubj	_	_
 2	потолок	потолок	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	1	nmod	_	SpaceAfter=No
 3	,	,	PUNCT	_	_	2	punct	_	_
 4	обвалились	обваливаться	VERB	_	Aspect=Perf|Mood=Ind|Number=Plur|Tense=Past|VerbForm=Fin|Voice=Mid	0	ROOT	_	_
@@ -3254,7 +3256,7 @@
 # sent_id = 193
 # text = Что осталося в нем, И если осталось -- о чем говорит?
 1	Что	что	PRON	_	Case=Nom	2	obj	_	_
-2	осталося	осталосить	VERB	_	Aspect=Perf|Tence=Past|Number=Sing|Gender=Masc|VerbForm=Fin|Voice=Mid	0	ROOT	_	_
+2	осталося	осталосить	VERB	_	Aspect=Perf|Gender=Masc|Mood=Ind|Number=Sing|Person=3|Tence=Past|VerbForm=Fin|Voice=Mid	0	ROOT	_	_
 3	в	в	ADP	_	_	4	case	_	_
 4	нем	он	PRON	_	Case=Loc|Gender=Masc|Number=Sing|Person=3	2	obl	_	SpaceAfter=No
 5	,	,	PUNCT	_	_	4	punct	_	_
@@ -3271,7 +3273,7 @@
 # sent_id = 194
 # text = И снилося мне, что всю ночь я ходил По саду, где ветер кружился и выл, Искал я отцом посаженную ель, Тех комнат искал, где сбиралась семья, Где мама качала мою колыбель И с нежною грустью ласкала меня, -- С безумной тоскою кого-то я звал, И сад обнаженный гудел и стонал...
 1	И	и	CCONJ	_	_	19	cc	_	_
-2	снилося	сниться	VERB	_	Aspect=Perf|Mood=Ind|Number=Sing|Gender=Neut|Person=2|Tense=Past|VerbForm=Fin|Voice=Mid	19	advcl	_	_
+2	снилося	сниться	VERB	_	Aspect=Perf|Gender=Neut|Mood=Ind|Number=Sing|Person=2|Tense=Past|VerbForm=Fin|Voice=Mid	19	advcl	_	_
 3	мне	я	PRON	_	Case=Dat|Number=Sing|Person=1	2	obl	_	SpaceAfter=No
 4	,	,	PUNCT	_	_	3	punct	_	_
 5	что	что	SCONJ	_	_	2	mark	_	_
@@ -3329,7 +3331,7 @@
 57	гудел	гудел	VERB	_	Aspect=Imp|Gender=Masc|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	52	conj	_	_
 58	и	и	PART	_	_	59	advmod	_	_
 59	стонал	стонать	VERB	_	Aspect=Imp|Gender=Masc|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	57	advmod	_	SpaceAfter=No
-60  .	.	PUNCT	_	_	59	punct	_	_
+60	.	.	PUNCT	_	_	59	punct	_	SpaceAfter=No
 61	.	.	PUNCT	_	_	59	punct	_	SpaceAfter=No
 62	.	.	PUNCT	_	_	59	punct	_	_
 
@@ -3420,7 +3422,7 @@
 # sent_id = 199
 # text = Она мерцавшую свечу Старинной книгой заслонила И, положив дитя к плечу, Все напевала и ходила...
 1	Она	она	PRON	_	Case=Nom|Gender=Fem|Number=Sing|Person=3	6	nsubj	_	_
-2	мерцавшую	мерцать	VERB	_	Aspect=Imp|Tense=Pres|VerbForm=Part|Number=Sing|Gender=Fem|Voice=Act	3	amod	_	_
+2	мерцавшую	мерцать	VERB	_	Aspect=Imp|Gender=Fem|Number=Sing|Tense=Pres|VerbForm=Part|Voice=Act	3	amod	_	_
 3	свечу	свеча	NOUN	_	Animacy=Inan|Case=Acc|Gender=Fem|Number=Sing	6	obj	_	_
 4	Старинной	старинный	ADJ	_	Case=Ins|Degree=Pos|Gender=Fem|Number=Sing	5	amod	_	_
 5	книгой	книга	NOUN	_	Animacy=Inan|Case=Ins|Gender=Fem|Number=Sing	6	obl	_	_
@@ -3894,7 +3896,7 @@
 12	,	,	PUNCT	_	_	11	punct	_	_
 13	отошло	отходить	VERB	_	Aspect=Perf|Gender=Neut|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	11	conj	_	_
 14	и	и	CCONJ	_	_	15	cc	_	_
-15	скрылося	скрыться	VERB	_	Aspect=Perf|Tense=Past|VerbForm=Fin|Voice=Mid|Number=Sing|Gender=Neut	11	conj	_	_
+15	скрылося	скрыться	VERB	_	Aspect=Perf|Gender=Neut|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Mid	11	conj	_	_
 16	из	из	ADP	_	_	17	case	_	_
 17	глаз	глаз	NOUN	_	Animacy=Inan|Case=Gen|Gender=Masc|Number=Plur	15	obl	_	SpaceAfter=No
 18	.	.	PUNCT	_	_	17	punct	_	_
@@ -4033,3 +4035,4 @@
 28	узор	узор	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	27	appos	_	_
 29	живой	живой	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	28	amod	_	SpaceAfter=No
 30	.	.	PUNCT	_	_	29	punct	_	SpaceAfter=No
+
