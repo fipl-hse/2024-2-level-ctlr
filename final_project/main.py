@@ -36,10 +36,25 @@ def main() -> None:
 
     udpipe_analyzer = UDPipeAnalyzer()
     analyzed_file = udpipe_analyzer.analyze([file_to_analyze])
+    conllu_path.write_text(analyzed_file[0], encoding="utf-8")
 
-    with open(conllu_path, "w", encoding="utf-8") as annotation_file:
-        annotation_file.write(analyzed_file[0])
-        annotation_file.write('\n')
+    model = spacy_udpipe.load_from_path(lang="ru",
+                                        path=str(PROJECT_ROOT / "lab_6_pipeline" / "assets" /
+                                                 "model" /
+                                                 "russian-syntagrus-ud-2.0-170801.udpipe"))
+    model.add_pipe(
+        "conll_formatter",
+        last=True,
+        config={"conversion_maps": {"XPOS": {"": "_"}}, "include_headers": True},
+    )
+
+    parsed_doc = ConllParser(model).parse_conll_text_as_spacy(analyzed_file[0].strip('\n'))
+
+    tokens_frequency = dict(sorted(Counter([token.text.lower() for token in parsed_doc]).items(),
+                            key=lambda x: x[1]))
+
+    with open(data_path / "frequencies.json", 'w', encoding='utf-8') as freq_file:
+        json.dump(tokens_frequency, freq_file, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":
