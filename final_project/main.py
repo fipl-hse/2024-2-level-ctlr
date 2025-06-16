@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 
 import spacy_udpipe
-from spacy_conll.parser import ConllParser
+from spacy_conll.parser import ConllParser # type: ignore[import-untyped]
 
 from core_utils.constants import PROJECT_ROOT
 from lab_6_pipeline.pipeline import UDPipeAnalyzer
@@ -38,7 +38,7 @@ def main() -> None:
     analyzed_file = udpipe_analyzer.analyze([file_to_analyze])
 
     with open(dist_path / "auto_annotated.conllu", "w", encoding="utf-8") as annotation_file:
-        annotation_file.write(analyzed_file[0])
+        annotation_file.write(str(analyzed_file[0]))
         annotation_file.write('\n')
 
     model = spacy_udpipe.load_from_path(lang="ru",
