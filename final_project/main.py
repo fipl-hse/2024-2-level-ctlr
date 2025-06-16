@@ -23,6 +23,7 @@ def main() -> None:
     udpipe_analyzer = UDPipeAnalyzer()
     conllu = udpipe_analyzer.analyze([combined_text])[0]
     conllu_dir = Path(__file__).parent / "dist"
+    conllu_dir.mkdir()
     with open(conllu_dir / "auto_annotated.conllu", 'w', encoding='utf-8') as file:
         file.write(str(conllu))
 
