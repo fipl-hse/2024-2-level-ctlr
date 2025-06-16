@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 
 import spacy_udpipe
-from spacy_conll.parser import ConllParser # type: ignore[import-untyped]
+from spacy_conll.parser import ConllParser  # type: ignore[import-untyped]
 
 from core_utils.constants import PROJECT_ROOT
 from lab_6_pipeline.pipeline import UDPipeAnalyzer
