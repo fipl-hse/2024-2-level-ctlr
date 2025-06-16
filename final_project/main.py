@@ -19,7 +19,7 @@ def main() -> None:
     """
     Generate conllu file for provided corpus of texts.
     """
-    project_path = Path(__file__).parent / "final_project"
+    project_path = Path(__file__).parent
     assets_path = project_path / "assets"
     dist_path = project_path / "dist"
     dist_path.mkdir(parents=True, exist_ok=True)
