@@ -22,8 +22,8 @@ def main() -> None:
     project_path = Path(__file__).parent
     assets_path = project_path / "assets" / "cvetaeva"
     dist_path = project_path / "dist"
-    conllu_path = dist_path / "auto_annotated.conllu"
     dist_path.mkdir(parents=True, exist_ok=True)
+    conllu_path = dist_path / "auto_annotated.conllu"
     data_path = project_path / "data"
 
     single_file = []
