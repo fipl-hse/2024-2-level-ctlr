@@ -22,6 +22,7 @@ def main() -> None:
     project_path = Path(__file__).parent
     assets_path = project_path / "assets" / "cvetaeva"
     dist_path = project_path / "dist"
+    conllu_path = dist_path / "auto_annotated.conllu"
     dist_path.mkdir(parents=True, exist_ok=True)
     data_path = project_path / "data"
 
@@ -36,8 +37,8 @@ def main() -> None:
     udpipe_analyzer = UDPipeAnalyzer()
     analyzed_file = udpipe_analyzer.analyze([file_to_analyze])
 
-    with open(dist_path / "auto_annotated.conllu", "w", encoding="utf-8") as annotation_file:
-        annotation_file.write('\n'.join([str(elem) for elem in analyzed_file]))
+    with open(conllu_path, "w", encoding="utf-8") as annotation_file:
+        annotation_file.write(analyzed_file[0])
         annotation_file.write('\n')
 
     model = spacy_udpipe.load_from_path(lang="ru",
