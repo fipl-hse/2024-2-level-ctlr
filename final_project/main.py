@@ -14,8 +14,7 @@ def main() -> None:
     root = Path(__file__).parent
     assets_path = root / 'assets' / 'pasternak'
     dist_path = root / 'dist'
-    if not dist_path.exists():
-        dist_path.mkdir(parents=True)
+    dist_path.mkdir(parents=True, exist_ok=True)
     text = ''
     for file in sorted(assets_path.iterdir()):
         if file.suffix == '.txt':
