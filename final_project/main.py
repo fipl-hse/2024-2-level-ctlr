@@ -24,7 +24,6 @@ def main() -> None:
     dist_path = project_path / "dist"
     dist_path.mkdir(parents=True, exist_ok=True)
     data_path = project_path / "data"
-    data_path.mkdir(parents=True, exist_ok=True)
 
     single_file = []
 
