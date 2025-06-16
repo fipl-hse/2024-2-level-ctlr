@@ -5,7 +5,6 @@ Final project implementation.
 # pylint: disable=unused-import
 from pathlib import Path
 import shutil
-import json
 from lab_6_pipeline.pipeline import UDPipeAnalyzer
 from core_utils.constants import PROJECT_ROOT
 
@@ -28,8 +27,8 @@ class Text_Modifyer:
 
     def save_text(self) -> None:
         self.path_to_corpus = self.path / "corpus.txt"
-        f = open(self.path_to_corpus, 'w', encoding="UTF-8")
-        f.write(self.txt)
+        with open(self.path_to_corpus, 'w', encoding="UTF-8") as f:
+            f.write(self.txt)
 
     def conllu_analysis(self, path_to_save: Path) -> None:
         with open(self.path_to_corpus, 'r', encoding="UTF-8") as f:
