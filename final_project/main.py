@@ -15,6 +15,7 @@ def main() -> None:
     root = Path(__file__).parent
     assets_path = root / 'assets' / 'pasternak'
     dist_path = root / 'dist'
+    file_path = dist_path / 'auto_annotated.conllu'
     dist_path.mkdir(parents=True, exist_ok=True)
     text = ''
     for file in sorted(assets_path.iterdir()):
@@ -25,7 +26,7 @@ def main() -> None:
     analyzer = UDPipeAnalyzer()
     analyzed = analyzer.analyze([text])
 
-    with open(dist_path / 'auto_annotated.conllu', 'w', encoding='utf-8') as file:
+    with open(str(file_path), 'w', encoding='utf-8') as file:
         file.write(analyzed[0])
         file.write('\n')
 
