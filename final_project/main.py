@@ -40,6 +40,7 @@ class Text_Modifyer:
         conllu_file = open(final_path, 'w', encoding="UTF-8")
         conllu_file.write('\n'.join(conllu_data))
         conllu_file.write('\n')
+        conllu_file.close()
 
     def connlu_freq(self, file_path: Path) -> dict:
         freq = {}
