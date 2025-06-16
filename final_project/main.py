@@ -2,18 +2,21 @@
 Final project implementation.
 """
 
+import shutil
+
 # pylint: disable=unused-import
 from pathlib import Path
-import shutil
-from lab_6_pipeline.pipeline import UDPipeAnalyzer
+
 from core_utils.constants import PROJECT_ROOT
+from lab_6_pipeline.pipeline import UDPipeAnalyzer
+
 
 class Text_Modifyer:
 
     def __init__(self, path: Path):
         self.path = path
         self.txt = ''
-        self.path_to_corpus = None
+        self.path_to_corpus = self.path / "corpus.txt"
         self._analyser = UDPipeAnalyzer()
 
     def text_join(self) -> None:
@@ -26,7 +29,6 @@ class Text_Modifyer:
         self.txt = corpus_text
 
     def save_text(self) -> None:
-        self.path_to_corpus = self.path / "corpus.txt"
         with open(self.path_to_corpus, 'w', encoding="UTF-8") as f:
             f.write(self.txt)
 
@@ -34,7 +36,7 @@ class Text_Modifyer:
         with open(self.path_to_corpus, 'r', encoding="UTF-8") as f:
             texts = [f.read()]
             conllu_data = self._analyser.analyze(texts=texts)
-        final_path = path_to_save / f'auto_annotated.conllu'
+        final_path = path_to_save / 'auto_annotated.conllu'
         conllu_file = open(final_path, 'w', encoding="UTF-8")
         conllu_file.write('\n'.join(conllu_data))
         conllu_file.write('\n')
