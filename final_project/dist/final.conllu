@@ -937,7 +937,8 @@
 4	ты	ты	PRON	_	Case=Nom|Number=Sing|Person=2	5	nsubj	_	_
 5	пела	петь	VERB	_	Aspect=Perf|Case=Nom|Gender=Fem|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	0	ROOT	_	SpaceAfter=No
 6	.	.	PUNCT	_	_	5	punct	_	SpaceAfter=No
-7	.	.	PUNCT	_	_	5	punct	_	_
+7	.	.	PUNCT	_	_	5	punct	_	SpaceAfter=No
+8	.	.	PUNCT	_	_	5	punct	_	_
 
 # sent_id = 64
 # text = Прочь этот грустный, унылый напев, Надо, чтоб песня отвагой гремела, В сердце будила спасительный гнев!
@@ -980,16 +981,18 @@
 14	То	то	PRON	_	Animacy=Inan|Case=Nom|Gender=Neut|Number=Sing	25	obj	_	SpaceAfter=No
 15	,	,	PUNCT	_	_	14	punct	_	_
 16	что	что	SCONJ	_	_	14	mark	_	_
-17	страдалица	страдалица	NOUN	_	Animacy=Anim|Case=Nom|Gender=Fem|Number=Sing	18	punct	_	SpaceAfter=No
-18	мать	мать	NOUN	_	Animacy=Anim|Case=Nom|Gender=Fem|Number=Sing	19	nsubj	_	_
-19	выносила	выносить	VERB	_	Aspect=Perf|Gender=Fem|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	14	advcl	_	SpaceAfter=No
-20	,	,	PUNCT	_	_	19	punct	_	_
-21	Сын	сын	NOUN	_	Animacy=Anim|Case=Nom|Gender=Masc|Number=Sing	24	nsubj	_	SpaceAfter=No
-22	богатырь	богатырь	NOUN	_	Animacy=Anim|Case=Nom|Gender=Masc|Number=Sing	24	advmod	_	_
-23	не	не	PART	_	_	24	advmod	_	_
-24	захочет	захотеть	VERB	_	Aspect=Perf|Mood=Ind|Number=Sing|Person=3|Tense=Fut|VerbForm=Fin|Voice=Act	9	parataxis	_	_
-25	снести	снести	VERB	_	Aspect=Perf|VerbForm=Inf|Voice=Act	24	xcomp	_	SpaceAfter=No
-26	.	.	PUNCT	_	_	25	punct	_	_
+17	страдалица	страдалица	NOUN	_	Animacy=Anim|Case=Nom|Gender=Fem|Number=Sing	18	nsubj	_	SpaceAfter=No
+18	-	-	PUNCT	_	_	5	punct	_	SpaceAfter=No
+19	мать	мать	NOUN	_	Animacy=Anim|Case=Nom|Gender=Fem|Number=Sing	17	appos	_	_
+20	выносила	выносить	VERB	_	Aspect=Perf|Gender=Fem|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	14	advcl	_	SpaceAfter=No
+21	,	,	PUNCT	_	_	19	punct	_	_
+22	Сын	сын	NOUN	_	Animacy=Anim|Case=Nom|Gender=Masc|Number=Sing	23	nsubj	_	SpaceAfter=No
+23	-	-	PUNCT	_	_	5	punct	_	SpaceAfter=No
+24	богатырь	богатырь	NOUN	_	Animacy=Anim|Case=Nom|Gender=Masc|Number=Sing	22	appos	_	_
+25	не	не	PART	_	_	24	advmod	_	_
+26	захочет	захотеть	VERB	_	Aspect=Perf|Mood=Ind|Number=Sing|Person=3|Tense=Fut|VerbForm=Fin|Voice=Act	9	parataxis	_	_
+27	снести	снести	VERB	_	Aspect=Perf|VerbForm=Inf|Voice=Act	24	xcomp	_	SpaceAfter=No
+28	.	.	PUNCT	_	_	25	punct	_	_
 
 # sent_id = 66
 # text = Мысли живой не задушит в нем голод, Сил молодых не надломит борьба.
@@ -1010,7 +1013,7 @@
 
 # sent_id = 67
 # text = Смело возьмет он тяжелый свой молот И разобьет им оковы раба.
-1	Смело	смело	ADV	_	Animacy=Anim|Case=Nom|Gender=Masc|Number=Sing|Degree=Pos	2	nsubj	_	_
+1	Смело	смело	ADV	_	Degree=Pos	2	advmod	_	_
 2	возьмет	взять	VERB	_	Aspect=Perf|Mood=Ind|Number=Sing|Person=3|Tense=Fut|VerbForm=Fin|Voice=Act	0	ROOT	_	_
 3	он	он	PRON	_	Case=Nom|Gender=Masc|Number=Sing|Person=3	6	nsubj	_	_
 4	тяжелый	тяжелый	ADJ	_	Case=Acc|Degree=Pos|Gender=Masc|Number=Sing	6	amod	_	_
@@ -1219,7 +1222,7 @@
 5	,	,	PUNCT	_	_	4	punct	_	_
 6	Всем	весь	DET	_	Case=Dat|Number=Plur	7	amod	_	_
 7	паразитам	паразит	NOUN	_	Animacy=Inan|Case=Dat|Gender=Masc|Number=Plur	4	conj	_	_
-8	трудящихся	трудиться	VERB	_	Aspect=Imp|VerbForm=Part|Case=Gen|Gender=Masc|Number=Plur|Voice=Act	7	nmod	_	_
+8	трудящихся	трудиться	VERB	_	Aspect=Imp|Case=Gen|Gender=Masc|Number=Plur|Tense=Pres|VerbForm=Part|Voice=Act	7	nmod	_	_
 9	масс	масса	NOUN	_	Animacy=Inan|Case=Gen|Gender=Fem|Number=Plur	8	nmod	_	SpaceAfter=No
 10	,	,	PUNCT	_	_	9	punct	_	_
 11	Мщенье	Мщенье	PROPN	_	Animacy=Inan|Case=Nom|Gender=Neut|Number=Sing	19	nsubj	_	_
@@ -1424,14 +1427,14 @@
 
 # sent_id = 92
 # text = Бездушный гнет, тупой, холодный, Готов погибнуть наконец, Нам будет счастьем труд свободный И братство даст ему венец.
-1	Бездушный	Бездушный	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	2	nsubj	_	_
+1	Бездушный	Бездушный	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	2	amod	_	_
 2	гнет	гнет	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	0	ROOT	_	SpaceAfter=No
 3	,	,	PUNCT	_	_	2	punct	_	_
 4	тупой	тупой	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	2	obl	_	SpaceAfter=No
 5	,	,	PUNCT	_	_	4	punct	_	_
 6	холодный	холодный	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	8	amod	_	SpaceAfter=No
 7	,	,	PUNCT	_	_	6	punct	_	_
-8	Готов	готовый	 ADJ	_	Animacy=Anim|Degree=Pos|Gender=Masc|Number=Sing	2	nsubj	_	_
+8	Готов	готовый	ADJ	_	Animacy=Anim|Degree=Pos|Gender=Masc|Number=Sing	2	amod	_	_
 9	погибнуть	погибать	VERB	_	Aspect=Perf|VerbForm=Inf|Voice=Act	8	dep	_	_
 10	наконец	наконец	ADV	_	Degree=Pos	14	parataxis	_	SpaceAfter=No
 11	,	,	PUNCT	_	_	10	punct	_	_
@@ -1613,7 +1616,7 @@
 2	оковы	оковы	NOUN	_	Animacy=Inan|Case=Acc|Number=Plur	0	ROOT	_	SpaceAfter=No
 3	,	,	PUNCT	_	_	2	punct	_	_
 4	Не	не	PART	_	_	5	advmod	_	_
-5	нужно	нужно	PRAED	_	_	2	conj	_	_
+5	нужно	нужно	ADJ	_	Degree=Pos|Gender=Neut|Number=Sing|Variant=Short	2	amod	_	_
 6	старых	старый	ADJ	_	Case=Gen|Degree=Pos|Number=Plur	9	amod	_	SpaceAfter=No
 7	,	,	PUNCT	_	_	6	punct	_	_
 8	рабских	рабский	ADJ	_	Case=Gen|Degree=Pos|Number=Plur	6	conj	_	_
@@ -1964,7 +1967,7 @@
 14	роем	рой	NOUN	_	Animacy=Inan|Case=Ins|Gender=Masc|Number=Sing	13	obl	_	_
 15	Обессиленные	обессилить	VERB	_	Aspect=Perf|Case=Nom|Number=Plur|Tense=Past|VerbForm=Part|Voice=Pass	16	amod	_	_
 16	зноем	зной	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	13	nsubj:pass	_	_
-17	Семьи	семья	NOUN	_	Animacy=Anim|Case=Nom|Animacy=Inan|Gender=Fem|Number=Plur	16	nmod	_	_
+17	Семьи	семья	NOUN	_	Animacy=Inan|Case=Nom|Gender=Fem|Number=Plur	16	nmod	_	_
 18	бабочек	бабочка	NOUN	_	Animacy=Anim|Case=Gen|Gender=Fem|Number=Plur	17	nmod	_	_
 19	и	и	CCONJ	_	_	20	cc	_	_
 20	пчел	пчела	NOUN	_	Animacy=Inan|Case=Gen|Gender=Fem|Number=Plur	18	conj	_	SpaceAfter=No
@@ -2552,7 +2555,7 @@
 21	простора	простор	NOUN	_	Animacy=Inan|Case=Gen|Gender=Masc|Number=Sing	19	nmod	_	SpaceAfter=No
 22	,	,	PUNCT	_	_	21	punct	_	_
 23	Где	где	ADV	_	Degree=Pos	21	conj	_	_
-24	четок	четкий	NOUN	_	Case=Gen|Degree=Pos|Gender=Fem|Number=Plur|Form=Short	23	nmod	_	_
+24	четок	четкий	ADJ	_	Case=Nom|Degree=Pos|Form=Short|Gender=Masc|Number=Sing	23	nmod	_	_
 25	шепот	шепот	NOUN	_	Animacy=Inan|Case=Gen|Gender=Fem|Number=Plur	24	nmod	_	_
 26	сочных	сочный	ADJ	_	Case=Gen|Degree=Pos|Number=Plur	27	amod	_	_
 27	трав	трава	NOUN	_	Animacy=Inan|Case=Gen|Gender=Fem|Number=Plur	24	nmod	_	SpaceAfter=No
@@ -2884,32 +2887,32 @@
 1	Взвились	Взвиться	VERB	_	Aspect=Perf|Mood=Ind|Number=Plur|Tense=Past|VerbForm=Fin|Voice=Mid	0	ROOT	_	_
 2	знамена	знамя	NOUN	_	Animacy=Inan|Case=Nom|Gender=Neut|Number=Plur	1	nsubj	_	_
 3	над	над	ADP	_	_	4	case	_	_
-4	толпою	толпа	NOUN	_	Animacy=Inan|Case=Ins|Gender=Fem|Number=Sing	2	nmod	_	_
+4	толпою	толпа	NOUN	_	Animacy=Inan|Case=Ins|Gender=Fem|Number=Sing	1	obl	_	_
 5	С	с	ADP	_	_	7	case	_	_
 6	могучим	могучий	ADJ	_	Case=Ins|Degree=Pos|Gender=Masc|Number=Sing	7	amod	_	_
 7	лозунгом	лозунг	NOUN	_	Animacy=Inan|Case=Ins|Gender=Masc|Number=Sing	4	nmod	_	_
-8	-	-	PUNCT	_	_	7	punct	_	SpaceAfter=No
-9	-	-	PUNCT	_	_	7	punct	_	_
-10	«	«	PUNCT	_	_	10	punct	_	_
-11	вперед	вперед	ADV	_	Degree=Pos	2	conj	_	SpaceAfter=No
-12	!	!	PUNCT	_	_	10	punct	_	SpaceAfter=No
-13	»	»	PUNCT	_	_	10	punct	_	_
-14	Восстал	восстать	VERB	_	Aspect=Perf|Gender=Masc|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	10	parataxis	_	_
-15	измученный	измучить	VERB	_	Aspect=Perf|Case=Nom|Gender=Masc|Number=Sing|Tense=Past|VerbForm=Part|Voice=Pass	15	amod	_	_
-16	народ	народ	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	13	nsubj	_	_
-17	Несокрушимою	Несокрушимый	ADJ	_	Case=Ins|Degree=Pos|Gender=Fem|Number=Sing	17	amod	_	_
-18	стеною	стена	NOUN	_	Animacy=Inan|Case=Ins|Gender=Fem|Number=Sing	13	obl	_	SpaceAfter=No
-19	,	,	PUNCT	_	_	17	punct	_	_
-20	Как	Как	SCONJ	_	_	13	mark	_	_
-21	беспощадный	беспощадный	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	21	amod	_	_
-22	мститель	мститель	NOUN	_	Animacy=Anim|Case=Nom|Gender=Masc|Number=Sing	27	nsubj	_	_
-23	зол	злой	ADV	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing|Form=Short	21	appos	_	_
-24	-	-	PUNCT	_	_	22	punct	_	SpaceAfter=No
-25	-	-	PUNCT	_	_	22	punct	_	_
-26	Низвергнуть	Низвергнуть	ADJ	_	Case=Gen|Degree=Pos|Number=Plur	27	amod	_	_
-27	дикий	дикий	ADJ	_	Case=Acc|Degree=Pos|Gender=Masc|Number=Sing	27	amod	_	_
-28	произвол	произвол	NOUN	_	Animacy=Inan|Case=Acc|Gender=Masc|Number=Sing	13	advcl	_	SpaceAfter=No
-29	.	.	PUNCT	_	_	27	punct	_	_
+8	-	-	PUNCT	_	_	11	punct	_	SpaceAfter=No
+9	-	-	PUNCT	_	_	11	punct	_	_
+10	«	«	PUNCT	_	_	11	punct	_	SpaceAfter=No
+11	вперед	вперед	ADV	_	Degree=Pos	1	advmod	_	SpaceAfter=No
+12	!	!	PUNCT	_	_	11	punct	_	SpaceAfter=No
+13	»	»	PUNCT	_	_	11	punct	_	_
+14	Восстал	восстать	VERB	_	Aspect=Perf|Gender=Masc|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	1	conj	_	_
+15	измученный	измучить	VERB	_	Aspect=Perf|Case=Nom|Gender=Masc|Number=Sing|Tense=Past|VerbForm=Part|Voice=Pass	16	amod	_	_
+16	народ	народ	NOUN	_	Animacy=Inan|Case=Nom|Gender=Masc|Number=Sing	14	nsubj	_	_
+17	Несокрушимою	Несокрушимый	ADJ	_	Case=Ins|Degree=Pos|Gender=Fem|Number=Sing	18	amod	_	_
+18	стеною	стена	NOUN	_	Animacy=Inan|Case=Ins|Gender=Fem|Number=Sing	14	obl	_	SpaceAfter=No
+19	,	,	PUNCT	_	_	22	punct	_	_
+20	Как	как	SCONJ	_	_	22	mark	_	_
+21	беспощадный	беспощадный	ADJ	_	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	22	amod	_	_
+22	мститель	мститель	NOUN	_	Animacy=Anim|Case=Nom|Gender=Masc|Number=Sing	14	obl	_	_
+23	зол	злой	ADJ	_	Case=Nom|Degree=Pos|Form=Short|Gender=Masc|Number=Sing	22	amod	_	_
+24	-	-	PUNCT	_	_	26	punct	_	SpaceAfter=No
+25	-	-	PUNCT	_	_	26	punct	_	_
+26	Низвергнуть	низвергнуть	VERB	_	Aspect=Perf|VerbForm=Inf|Voice=Act	14	xcomp	_	_
+27	дикий	дикий	ADJ	_	Case=Acc|Degree=Pos|Gender=Masc|Number=Sing	28	amod	_	_
+28	произвол	произвол	NOUN	_	Animacy=Inan|Case=Acc|Gender=Masc|Number=Sing	26	obj	_	SpaceAfter=No
+29	.	.	PUNCT	_	_	1	punct	_	_
 
 # sent_id = 178
 # text = Вперед! товарищи, свобода Усилья требует от нас.
@@ -3015,7 +3018,7 @@
 # text = Не славь бушующего моря, Волны кочующий прибой...
 1	Не	не	PART	_	_	2	advmod	_	_
 2	славь	славить	VERB	_	Aspect=Imp|Mood=Imp|Number=Sing|Person=2|VerbForm=Fin|Voice=Act	6	nsubj	_	_
-3	бушующего	бушевать	VERB	_	Aspect=Imp|Gender=Masc/Neut|Number=Sing|Tense=Pres|VerbForm=Part|Voice=Act	4	amod	_	_
+3	бушующего	бушевать	VERB	_	Aspect=Imp|Gender=Neut|Number=Sing|Tense=Pres|VerbForm=Part|Voice=Act	4	amod	_	_
 4	моря	море	NOUN	_	Animacy=Inan|Case=Gen|Gender=Neut|Number=Sing	2	nmod	_	SpaceAfter=No
 5	,	,	PUNCT	_	_	4	punct	_	_
 6	Волны	волна	NOUN	_	Animacy=Inan|Case=Gen|Gender=Fem|Number=Sing	0	ROOT	_	_
@@ -4082,4 +4085,5 @@
 8	ласкал	ласкал	VERB	_	Aspect=Imp|Gender=Masc|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act	0	ROOT	_	SpaceAfter=No
 9	.	.	PUNCT	_	_	8	punct	_	SpaceAfter=No
 10	.	.	PUNCT	_	_	8	punct	_	SpaceAfter=No
-11	.	.	PUNCT	_	_	8	punct	_	SpaceAfter=No
+11	.	.	PUNCT	_	_	8	punct	_	_
+
